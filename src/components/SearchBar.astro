@@ -1,0 +1,57 @@
+---
+interface Props {
+	placeholder?: string;
+	shortcut?: string;
+	tone?: "dark" | "light";
+	label?: string;
+}
+
+const {
+	placeholder = "Sök i alla anteckningar...",
+	shortcut,
+	tone = "light",
+	label = "Sök",
+} = Astro.props;
+
+const wrapperClasses =
+	tone === "dark"
+		? "border-white/10 bg-white/5 text-white placeholder:text-white/45"
+		: "border-black/10 bg-white text-slate-900 placeholder:text-slate-400";
+---
+
+<label class="block">
+	<span class="sr-only">{label}</span>
+	<span
+		class:list={[
+			"flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-sm transition focus-within:ring-2 focus-within:ring-blue-500/20",
+			wrapperClasses,
+		]}
+	>
+		<svg
+			class="h-4 w-4 shrink-0 opacity-70"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="1.8"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			aria-hidden="true"
+		>
+			<circle cx="11" cy="11" r="7"></circle>
+			<path d="m20 20-3.5-3.5"></path>
+		</svg>
+		<input
+			class="min-w-0 flex-1 bg-transparent text-sm outline-none"
+			type="search"
+			name="q"
+			placeholder={placeholder}
+		/>
+		{
+			shortcut && (
+				<span class="rounded-lg border border-current/10 px-2 py-1 text-xs font-medium opacity-60">
+					{shortcut}
+				</span>
+			)
+		}
+	</span>
+</label>

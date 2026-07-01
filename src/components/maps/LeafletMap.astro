@@ -1,0 +1,27 @@
+---
+import type { ParsedMapBlock } from "../../lib/parseMapBlock";
+
+interface Props {
+	map: ParsedMapBlock;
+}
+
+const { map } = Astro.props;
+---
+
+<div class="surface-card overflow-hidden border-[#e4ddd2] bg-white p-3 shadow-[0_12px_28px_rgba(15,23,42,0.05)] md:p-4">
+	<div
+		data-leaflet-map
+		data-lat={String(map.lat)}
+		data-long={String(map.long)}
+		data-zoom={String(map.defaultZoom)}
+		data-markers={JSON.stringify(map.markers)}
+		class="w-full overflow-hidden rounded-[18px] border border-[#e7dfd3]"
+		style={`height: ${map.height || "400px"}`}
+	></div>
+</div>
+
+<script type="module">
+	import initLeafletMaps from "./LeafletMapClient.ts";
+
+	initLeafletMaps();
+</script>

@@ -1,0 +1,59 @@
+---
+import Sidebar from "../components/Sidebar.astro";
+import { getFavoritesCount } from "../lib/favorites";
+import { getScratchpadNotesCount } from "../lib/scratchpad";
+import { getSidebarCategories, sidebarNavigation } from "../lib/vault";
+import "../styles/global.css";
+
+interface Props {
+	title: string;
+	description?: string;
+}
+
+const {
+	title,
+	description = "A Tailwind-based dashboard shell for mocked vault content.",
+} = Astro.props;
+
+const [favoritesCount, scratchpadNotesCount, sidebarCategories] = await Promise.all([
+	getFavoritesCount(),
+	getScratchpadNotesCount(),
+	getSidebarCategories(),
+]);
+const navigation = sidebarNavigation.map((item) => {
+	if (item.href === "/scratchpad") {
+		return { ...item, count: scratchpadNotesCount };
+	}
+
+	if (item.href === "/favorites") {
+		return { ...item, count: favoritesCount };
+	}
+
+	return item;
+});
+---
+
+<!doctype html>
+<html lang="sv">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+		<meta name="viewport" content="width=device-width" />
+		<meta name="generator" content={Astro.generator} />
+		<meta name="description" content={description} />
+		<title>{title}</title>
+	</head>
+	<body>
+		<div class="min-h-screen bg-[linear-gradient(180deg,_#faf7f2_0%,_#f4efe8_100%)]">
+			<div class="w-full">
+				<div class="grid min-h-screen grid-cols-1 xl:grid-cols-[308px_minmax(0,1fr)]">
+					<Sidebar navigation={navigation} categories={sidebarCategories} />
+					<main class="min-w-0 p-4 md:p-5 xl:px-6 xl:py-6">
+						<slot />
+					</main>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

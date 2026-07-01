@@ -1,0 +1,50 @@
+---
+import Icon from "./Icon.astro";
+
+interface Props {
+	noteId: string;
+	isFavorite: boolean;
+	redirectTo?: string;
+	tone?: "light" | "dark";
+	size?: "sm" | "md";
+}
+
+const {
+	noteId,
+	isFavorite,
+	redirectTo = "/notes",
+	tone = "light",
+	size = "sm",
+} = Astro.props;
+
+const buttonClasses =
+	tone === "dark"
+		? isFavorite
+			? "border-white/18 bg-white/14 text-amber-300 hover:bg-white/18"
+			: "border-white/14 bg-slate-950/18 text-white/72 hover:bg-slate-950/28 hover:text-white"
+		: isFavorite
+			? "border-amber-200 bg-amber-50 text-amber-500 hover:bg-amber-100"
+			: "border-[#e6ddd0] bg-white text-slate-300 hover:border-[#d8cdbd] hover:text-amber-500";
+
+const sizeClasses =
+	size === "md"
+		? "h-11 w-11 rounded-full"
+		: "h-9 w-9 rounded-xl";
+---
+
+<form action="/favorites/toggle" method="post" class="shrink-0">
+	<input type="hidden" name="noteId" value={noteId} />
+	<input type="hidden" name="redirectTo" value={redirectTo} />
+	<button
+		type="submit"
+		class:list={[
+			"inline-flex items-center justify-center border shadow-sm transition",
+			sizeClasses,
+			buttonClasses,
+		]}
+		aria-label={isFavorite ? "Ta bort favorit" : "Markera som favorit"}
+		title={isFavorite ? "Ta bort favorit" : "Markera som favorit"}
+	>
+		<Icon name="star" class="h-4 w-4" />
+	</button>
+</form>

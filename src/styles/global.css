@@ -1,0 +1,42 @@
+@import "leaflet/dist/leaflet.css";
+@import "tailwindcss";
+
+@layer base {
+	html {
+		font-family: "Avenir Next", "Inter", "Segoe UI", sans-serif;
+	}
+
+	body {
+		@apply min-h-screen bg-[#f6f2eb] text-slate-900 antialiased;
+	}
+
+	a {
+		@apply text-inherit no-underline;
+	}
+
+	* {
+		@apply box-border;
+	}
+}
+
+@layer components {
+	.surface-panel {
+		@apply rounded-[20px] border border-[#e9e2d8] bg-white shadow-[0_12px_32px_rgba(15,23,42,0.05)];
+	}
+
+	.surface-card {
+		@apply rounded-[16px] border border-[#ece5dc] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.04)];
+	}
+
+	.sidebar-shell {
+		@apply min-h-screen rounded-none border-r border-white/8 bg-[linear-gradient(180deg,#0a1018_0%,#101722_100%)] text-white shadow-[0_20px_40px_rgba(2,6,23,0.22)];
+	}
+
+	.muted-eyebrow {
+		@apply text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400;
+	}
+
+	.panel-title {
+		@apply text-[1.05rem] font-semibold tracking-tight text-slate-900;
+	}
+}

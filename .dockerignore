@@ -1,0 +1,11 @@
+node_modules
+dist
+.astro
+.git
+.env
+.env.*
+data/vault
+public/vault-assets
+data/local-state
+.cache
+coverage

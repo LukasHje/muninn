@@ -1,0 +1,50 @@
+---
+import type { TodayEntry } from "../lib/vault";
+import Icon from "./Icon.astro";
+import SectionCard from "./SectionCard.astro";
+
+interface Props {
+	entry: TodayEntry;
+}
+
+const { entry } = Astro.props;
+---
+
+<SectionCard title="Dagens anteckning">
+	<button
+		slot="actions"
+		type="button"
+		class="rounded-xl p-2 transition hover:bg-slate-100"
+		aria-label="Fler alternativ"
+	>
+		<Icon name="ellipsis" class="h-4 w-4" />
+	</button>
+
+	{
+		entry.imageUrl ? (
+			<img
+				src={entry.imageUrl}
+				alt=""
+				class="h-40 w-full rounded-[14px] object-cover"
+				loading="lazy"
+			/>
+		) : (
+			<div class="flex h-40 w-full items-end rounded-[14px] bg-[linear-gradient(135deg,#d6e6ef_0%,#efe6db_100%)] p-4">
+				<span class="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-600">
+					Journal
+				</span>
+			</div>
+		)
+	}
+	<div class="mt-4 space-y-3">
+		<p class="text-[1.05rem] font-semibold tracking-tight text-slate-900">{entry.date}</p>
+		<p class="text-sm leading-7 text-slate-600">{entry.excerpt}</p>
+		<a
+			href={entry.href}
+			class="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 transition hover:text-blue-700"
+		>
+			Öppna journal
+			<span aria-hidden="true">→</span>
+		</a>
+	</div>
+</SectionCard>

@@ -1,0 +1,34 @@
+---
+import type { Tone } from "../lib/vault";
+
+interface Props {
+	label: string;
+	count?: number;
+	tone?: Tone;
+}
+
+const { label, count, tone = "slate" } = Astro.props;
+
+const toneClasses = {
+	slate: "bg-slate-100 text-slate-700",
+	amber: "bg-amber-100 text-amber-700",
+	sky: "bg-sky-100 text-sky-700",
+	emerald: "bg-emerald-100 text-emerald-700",
+	rose: "bg-rose-100 text-rose-700",
+	violet: "bg-violet-100 text-violet-700",
+}[tone];
+---
+
+<span
+	class:list={[
+		"inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium",
+		toneClasses,
+	]}
+>
+	<span>{label}</span>
+	{
+		typeof count === "number" && (
+			<span class="rounded-full bg-white/70 px-2 py-0.5 text-xs">{count}</span>
+		)
+	}
+</span>

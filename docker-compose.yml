@@ -1,0 +1,15 @@
+services:
+  muninn:
+    build: .
+    container_name: muninn
+    ports:
+      - "4321:4321"
+    environment:
+      NODE_ENV: production
+      VAULT_PATH: /vault
+    volumes:
+      - ${VAULT_HOST_PATH}:/vault:ro
+      - ${CACHE_HOST_PATH}:/app/public/vault-assets
+      - ${LOGS_HOST_PATH}:/logs
+      - ${STATE_HOST_PATH}:/state
+    restart: unless-stopped

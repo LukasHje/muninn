@@ -1,0 +1,17 @@
+---
+import MainLayout from "./MainLayout.astro";
+
+interface Props {
+	title?: string;
+	description?: string;
+}
+
+const {
+	title = "Recipes | Ossified Orbit",
+	description = "Recipe-focused layout placeholder for future kitchen notes.",
+} = Astro.props;
+---
+
+<MainLayout title={title} description={description}>
+	<slot />
+</MainLayout>

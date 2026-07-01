@@ -1,0 +1,31 @@
+---
+import Hero from "../../components/Hero.astro";
+import NoteCard from "../../components/NoteCard.astro";
+import RecipeLayout from "../../layouts/RecipeLayout.astro";
+import SectionCard from "../../components/SectionCard.astro";
+import { getDashboardHero, getItemsByCategory } from "../../lib/vault";
+
+const [recipes, dashboardHero] = await Promise.all([
+	getItemsByCategory("recept"),
+	getDashboardHero(),
+]);
+---
+
+<RecipeLayout title="Recept | Muninn">
+	<Hero
+		eyebrow="Receptsida"
+		title="Maträtter, favoriter och köksanteckningar"
+		description="Riktiga vaultanteckningar kategoriserade som recept utifrån metadata, tags och innehåll."
+		imageUrl={dashboardHero.imageUrl}
+	/>
+
+	<SectionCard title="Receptkort">
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{
+				recipes.map((recipe) => (
+					<NoteCard item={recipe} />
+				))
+			}
+		</div>
+	</SectionCard>
+</RecipeLayout>

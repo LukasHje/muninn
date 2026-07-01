@@ -1,0 +1,16 @@
+---
+import VaultNotesBrowser from "../../components/VaultNotesBrowser.astro";
+import MainLayout from "../../layouts/MainLayout.astro";
+import { getLibraryItems } from "../../lib/vault";
+
+const libraryItems = await getLibraryItems();
+---
+
+<MainLayout title="Alla anteckningar | Muninn">
+	<VaultNotesBrowser
+		title="Alla anteckningar"
+		items={libraryItems}
+		emptyMessage="Inga anteckningar matchade filtret."
+		basePath="/notes"
+	/>
+</MainLayout>

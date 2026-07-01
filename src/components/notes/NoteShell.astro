@@ -1,0 +1,196 @@
+---
+import type { LibraryItem } from "../../lib/vault";
+import FavoriteToggleButton from "../FavoriteToggleButton.astro";
+import Icon from "../Icon.astro";
+import TagPills from "./TagPills.astro";
+
+interface Props {
+	note: LibraryItem;
+	heroStyle?: "none" | "cover" | "travel";
+	summary?: string;
+}
+
+const { note, heroStyle = "none", summary = note.excerpt } = Astro.props;
+const breadcrumb = note.relativePath.split("/").slice(0, -1).join(" / ");
+const redirectTo = Astro.url.pathname + Astro.url.search;
+const typeLabel =
+	note.normalized.type && note.normalized.type !== "note"
+		? note.normalized.type.replace(/-/g, " ")
+		: null;
+const tagLabels = note.tags.map((tag) => `#${tag}`);
+
+function formatDate(value?: string) {
+	if (!value) {
+		return null;
+	}
+
+	const timestamp = Date.parse(value);
+	if (Number.isNaN(timestamp)) {
+		return value;
+	}
+
+	return new Intl.DateTimeFormat("sv-SE", {
+		dateStyle: "medium",
+	}).format(new Date(timestamp));
+}
+
+const createdLabel = formatDate(note.normalized.created);
+const updatedLabel = formatDate(note.normalized.updated) ?? note.updatedLabel;
+---
+
+<div class="space-y-6 py-5 md:space-y-8 md:py-8">
+	<section class="surface-panel overflow-hidden border-[#e8e0d4] shadow-[0_18px_44px_rgba(15,23,42,0.06)]">
+		{
+			heroStyle === "travel" ? (
+				<div class="relative min-h-[300px] md:min-h-[360px]">
+					{
+						note.imageUrl ? (
+							<img src={note.imageUrl} alt="" class="absolute inset-0 h-full w-full object-cover" />
+						) : (
+							<div class="absolute inset-0 bg-[linear-gradient(135deg,#8fb6cb_0%,#ead9c1_100%)]"></div>
+						)
+					}
+					<div class="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.24)_0%,rgba(15,23,42,0.48)_48%,rgba(15,23,42,0.78)_100%)]"></div>
+					<div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(251,191,36,0.16),_transparent_28%)]"></div>
+					<div class="relative flex min-h-[300px] flex-col px-5 py-5 md:min-h-[360px] md:px-8 md:py-7">
+						<div class="flex items-center justify-between gap-3">
+							<a
+								href="/notes"
+								class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/16 bg-slate-950/24 text-white/92 backdrop-blur-sm transition hover:bg-slate-950/38"
+								aria-label="Tillbaka till alla anteckningar"
+							>
+								<Icon name="chevron-left" class="h-4 w-4" />
+							</a>
+							<FavoriteToggleButton
+								noteId={note.id}
+								isFavorite={Boolean(note.favorite)}
+								redirectTo={redirectTo}
+								tone="dark"
+								size="md"
+							/>
+						</div>
+						<div class="mt-auto space-y-4 md:space-y-5">
+							{breadcrumb && <p class="text-sm font-medium text-white/68">{breadcrumb}</p>}
+							<div class="flex flex-wrap items-center gap-2.5">
+								<span class="rounded-full border border-white/14 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/88 backdrop-blur-sm">
+									{note.categoryLabel}
+								</span>
+								{
+									typeLabel && (
+										<span class="rounded-full border border-white/14 bg-slate-950/18 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/78 backdrop-blur-sm">
+											{typeLabel}
+										</span>
+									)
+								}
+							</div>
+							<h1 class="max-w-4xl text-[2rem] font-semibold tracking-[-0.045em] text-white sm:text-[2.45rem] md:text-5xl md:leading-[1.02]">
+								{note.title}
+							</h1>
+							{
+								summary && (
+									<p class="max-w-3xl text-[0.98rem] leading-7 text-white/76 md:text-[1.04rem] md:leading-8">
+										{summary}
+									</p>
+								)
+							}
+							<div class="flex flex-col gap-3.5 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
+								{tagLabels.length > 0 && <TagPills values={tagLabels} tone="sky" />}
+								<div class="flex flex-wrap gap-2 text-sm text-white/72">
+									{
+										createdLabel && (
+											<span class="rounded-full border border-white/14 bg-white/8 px-3 py-1.5 backdrop-blur-sm">
+												Skapad {createdLabel}
+											</span>
+										)
+									}
+									<span class="rounded-full border border-white/14 bg-white/8 px-3 py-1.5 backdrop-blur-sm">
+										Uppdaterad {updatedLabel}
+									</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			) : (
+				<div class="space-y-6 p-5 md:space-y-7 md:p-8">
+					<div class="flex flex-col gap-4 border-b border-[#efe7dc] pb-5 md:flex-row md:items-start md:justify-between">
+						<div class="space-y-3">
+							<div class="flex items-center gap-3">
+								<a
+									href="/notes"
+									class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e8dfd3] bg-[#fbf7f1] text-slate-500 shadow-[0_8px_18px_rgba(15,23,42,0.04)] transition hover:border-[#dfd3c3] hover:text-slate-900"
+									aria-label="Tillbaka till alla anteckningar"
+								>
+									<Icon name="chevron-left" class="h-4 w-4" />
+								</a>
+								<FavoriteToggleButton
+									noteId={note.id}
+									isFavorite={Boolean(note.favorite)}
+									redirectTo={redirectTo}
+									size="md"
+								/>
+							</div>
+							{breadcrumb && <p class="text-sm font-medium text-slate-400">{breadcrumb}</p>}
+						</div>
+						<div class="flex flex-wrap gap-2 text-sm text-slate-500 md:justify-end">
+							{
+								createdLabel && (
+									<span class="rounded-full border border-[#ece3d7] bg-[#fbf8f3] px-3 py-1.5 shadow-[0_6px_16px_rgba(15,23,42,0.03)]">
+										Skapad {createdLabel}
+									</span>
+								)
+							}
+							<span class="rounded-full border border-[#ece3d7] bg-[#fbf8f3] px-3 py-1.5 shadow-[0_6px_16px_rgba(15,23,42,0.03)]">
+								Uppdaterad {updatedLabel}
+							</span>
+						</div>
+					</div>
+					<div class="space-y-4 md:space-y-5">
+						<div class="flex flex-wrap items-center gap-2.5">
+							<span class="rounded-full border border-[#ece3d7] bg-[#fbf8f3] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+								{note.categoryLabel}
+							</span>
+							{
+								typeLabel && (
+									<span class="rounded-full border border-[#e6deea] bg-[#f8f5fb] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+										{typeLabel}
+									</span>
+								)
+							}
+						</div>
+						<h1 class="max-w-4xl text-[2.05rem] font-semibold tracking-[-0.045em] text-slate-900 sm:text-[2.55rem] md:text-5xl md:leading-[1.02]">
+							{note.title}
+						</h1>
+						{
+							summary && (
+								<p class="max-w-3xl text-[1rem] leading-7 text-slate-600 md:text-[1.05rem] md:leading-8">
+									{summary}
+								</p>
+							)
+						}
+						{tagLabels.length > 0 && <TagPills values={tagLabels} tone="amber" />}
+					</div>
+
+					{
+						heroStyle !== "none" && note.imageUrl && (
+							<div class="overflow-hidden rounded-[24px] border border-[#ebe2d6] bg-[#f8f4ed] shadow-[0_18px_38px_rgba(15,23,42,0.08)]">
+								<img
+									src={note.imageUrl}
+									alt=""
+									class:list={[
+										"w-full object-cover",
+										heroStyle === "cover"
+											? "max-h-[360px] min-h-[220px] md:max-h-[400px]"
+											: "max-h-[280px] min-h-[180px] md:max-h-[320px]",
+									]}
+								/>
+							</div>
+						)
+					}
+				</div>
+			)
+		}
+	</section>
+
+	<slot />
+</div>

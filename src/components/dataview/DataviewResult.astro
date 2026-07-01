@@ -1,0 +1,223 @@
+---
+import type { DataviewLiteResult } from "../../lib/dataviewLite";
+
+interface Props {
+	result: DataviewLiteResult;
+}
+
+const { result } = Astro.props;
+
+function formatDate(timestamp: number) {
+	return new Intl.DateTimeFormat("sv-SE", {
+		dateStyle: "medium",
+		timeStyle: "short",
+	}).format(new Date(timestamp));
+}
+---
+
+{
+	result.type === "table" ? (
+		<section class="dataview-result">
+			<div class="dataview-result__card">
+				<div class="dataview-result__table-wrap">
+					<table class="dataview-result__table">
+						<thead>
+							<tr>
+								{result.columns.map((column) => (
+									<th>{column.label}</th>
+								))}
+							</tr>
+						</thead>
+						<tbody>
+							{result.rows.length > 0 ? (
+								result.rows.map((row) => (
+									<tr>
+										{row.map((cell) => (
+											<td>
+												{cell.kind === "link" ? (
+													<a href={cell.href}>{cell.label}</a>
+												) : cell.kind === "date" ? (
+													<span>{formatDate(cell.timestamp)}</span>
+												) : cell.kind === "tags" ? (
+													<div class="dataview-result__tags">
+														{cell.values.map((value) => (
+															<span class="dataview-result__tag">{value}</span>
+														))}
+													</div>
+												) : cell.kind === "text" ? (
+													<span>{cell.value}</span>
+												) : (
+													<span class="dataview-result__empty">-</span>
+												)}
+											</td>
+										))}
+									</tr>
+								))
+							) : (
+								<tr>
+									<td colspan={result.columns.length}>
+										<div class="dataview-result__empty-state">Inga anteckningar matchade frågan.</div>
+									</td>
+								</tr>
+							)}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</section>
+	) : result.type === "list" ? (
+		<section class="dataview-result">
+			<div class="dataview-result__card">
+				{result.items.length > 0 ? (
+					<ul class="dataview-result__list">
+						{result.items.map((item) => (
+							<li>
+								{item.kind === "link" ? (
+									<a href={item.href}>{item.label}</a>
+								) : item.kind === "date" ? (
+									<span>{formatDate(item.timestamp)}</span>
+								) : item.kind === "tags" ? (
+									<div class="dataview-result__tags">
+										{item.values.map((value) => (
+											<span class="dataview-result__tag">{value}</span>
+										))}
+									</div>
+								) : item.kind === "text" ? (
+									<span>{item.value}</span>
+								) : (
+									<span class="dataview-result__empty">-</span>
+								)}
+							</li>
+						))}
+					</ul>
+				) : (
+					<div class="dataview-result__empty-state">Inga anteckningar matchade frågan.</div>
+				)}
+			</div>
+		</section>
+	) : (
+		<section class="dataview-card">
+			<div class="dataview-card__header">
+				<div>
+					<p class="dataview-card__title">Dataview query</p>
+					<p class="dataview-card__subtitle">{result.reason}</p>
+				</div>
+				<button
+					type="button"
+					class="code-copy-button"
+					data-copy-code
+					data-copy-value={result.query}
+				>
+					Copy
+				</button>
+			</div>
+			<pre class="code-block__pre"><code>{result.query.replace(/\n$/, "")}</code></pre>
+		</section>
+	)
+}
+
+<style>
+	.dataview-result {
+		margin: 1.7rem 0;
+	}
+
+	.dataview-result__card {
+		overflow: hidden;
+		border: 1px solid #ebe4d8;
+		border-radius: 1.2rem;
+		background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, #fcfaf6 100%);
+		box-shadow: 0 16px 32px rgba(15, 23, 42, 0.06);
+	}
+
+	.dataview-result__table-wrap {
+		overflow-x: auto;
+	}
+
+	.dataview-result__table {
+		width: 100%;
+		border-collapse: collapse;
+	}
+
+	.dataview-result__table th,
+	.dataview-result__table td {
+		padding: 0.9rem 1rem;
+		text-align: left;
+		vertical-align: top;
+		border-bottom: 1px solid #efe7da;
+	}
+
+	.dataview-result__table th {
+		background: rgba(251, 248, 243, 0.95);
+		font-size: 0.82rem;
+		font-weight: 700;
+		letter-spacing: 0.02em;
+		color: #475569;
+	}
+
+	.dataview-result__table tbody tr:last-child td {
+		border-bottom: 0;
+	}
+
+	.dataview-result__table a,
+	.dataview-result__list a {
+		color: #0f172a;
+		font-weight: 600;
+		text-decoration: none;
+	}
+
+	.dataview-result__table a:hover,
+	.dataview-result__list a:hover {
+		color: #1d4ed8;
+		text-decoration: underline;
+	}
+
+	.dataview-result__list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	.dataview-result__list li {
+		padding: 0.95rem 1rem;
+		border-bottom: 1px solid #efe7da;
+	}
+
+	.dataview-result__list li:last-child {
+		border-bottom: 0;
+	}
+
+	.dataview-result__tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.42rem;
+	}
+
+	.dataview-result__tag {
+		display: inline-flex;
+		align-items: center;
+		border-radius: 999px;
+		background: #eef4ff;
+		color: #35507a;
+		padding: 0.22rem 0.58rem;
+		font-size: 0.75rem;
+		font-weight: 600;
+		line-height: 1.2;
+	}
+
+	.dataview-result__empty,
+	.dataview-result__empty-state {
+		color: #64748b;
+	}
+
+	.dataview-result__empty-state {
+		padding: 1rem;
+	}
+
+	@media (max-width: 768px) {
+		.dataview-result__table th,
+		.dataview-result__table td,
+		.dataview-result__list li {
+			padding: 0.8rem 0.85rem;
+		}
+	}
+</style>

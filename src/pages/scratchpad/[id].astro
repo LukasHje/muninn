@@ -1,0 +1,58 @@
+---
+export const prerender = false;
+
+import Icon from "../../components/Icon.astro";
+import SectionCard from "../../components/SectionCard.astro";
+import MainLayout from "../../layouts/MainLayout.astro";
+import { getScratchpadNoteById } from "../../lib/scratchpad";
+
+const { id } = Astro.params;
+const scratchpadNote = id ? await getScratchpadNoteById(id) : null;
+
+if (!scratchpadNote) {
+	return Astro.redirect("/scratchpad");
+}
+---
+
+<MainLayout title={`${scratchpadNote.title} | Anteckningsblock`}>
+	<div class="space-y-6">
+		<section class="surface-panel p-6 md:p-8">
+			<div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+				<div>
+					<p class="muted-eyebrow">Anteckningsblock</p>
+					<h1 class="mt-2 text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
+						{scratchpadNote.title}
+					</h1>
+					<p class="mt-3 text-sm text-slate-500">
+						Skapad {scratchpadNote.createdAt} · Andrad {scratchpadNote.updatedAt}
+					</p>
+				</div>
+				<div class="flex items-center gap-3">
+					<a
+						href="/scratchpad"
+						class="rounded-[10px] border border-[#e7dfd5] px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-[#faf6ef]"
+					>
+						Tillbaka
+					</a>
+					<form action="/scratchpad/delete" method="post">
+						<input type="hidden" name="id" value={scratchpadNote.id} />
+						<input type="hidden" name="redirectTo" value="/scratchpad" />
+						<button
+							type="submit"
+							class="inline-flex items-center gap-2 rounded-[10px] bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700"
+						>
+							<Icon name="trash-2" class="h-4 w-4" />
+							Ta bort
+						</button>
+					</form>
+				</div>
+			</div>
+		</section>
+
+		<SectionCard title="Innehall">
+			<div class="rounded-[16px] border border-[#ece5dc] bg-[#fffdfa] p-5">
+				<pre class="whitespace-pre-wrap break-words font-inherit text-sm leading-7 text-slate-800">{scratchpadNote.content}</pre>
+			</div>
+		</SectionCard>
+	</div>
+</MainLayout>

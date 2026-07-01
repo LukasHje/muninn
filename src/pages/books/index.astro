@@ -1,0 +1,31 @@
+---
+import Hero from "../../components/Hero.astro";
+import NoteCard from "../../components/NoteCard.astro";
+import BookLayout from "../../layouts/BookLayout.astro";
+import SectionCard from "../../components/SectionCard.astro";
+import { getDashboardHero, getItemsByCategory } from "../../lib/vault";
+
+const [books, dashboardHero] = await Promise.all([
+	getItemsByCategory("bocker"),
+	getDashboardHero(),
+]);
+---
+
+<BookLayout title="Böcker | Muninn">
+	<Hero
+		eyebrow="Boksamling"
+		title="Läsanteckningar och bokkort"
+		description="Riktiga vaultanteckningar kategoriserade som böcker utifrån metadata, tags och sökväg."
+		imageUrl={dashboardHero.imageUrl}
+	/>
+
+	<SectionCard title="Bokanteckningar" bodyClass="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			{
+				books.map((book) => (
+					<NoteCard item={book} />
+				))
+			}
+		</div>
+	</SectionCard>
+</BookLayout>

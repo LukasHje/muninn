@@ -1,0 +1,19 @@
+---
+export const prerender = false;
+
+import NoteRenderer from "../../components/notes/NoteRenderer.astro";
+import MainLayout from "../../layouts/MainLayout.astro";
+import { getNoteByHrefSlug } from "../../lib/vault";
+
+const slug = Astro.params.slug ?? "";
+const slugPath = Array.isArray(slug) ? slug.join("/") : slug;
+const note = slugPath ? await getNoteByHrefSlug(slugPath) : null;
+
+if (!note) {
+	return Astro.redirect("/notes");
+}
+---
+
+<MainLayout title={`${note.title} | Muninn`}>
+	<NoteRenderer note={note} />
+</MainLayout>

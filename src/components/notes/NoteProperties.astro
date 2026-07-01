@@ -1,0 +1,111 @@
+---
+import type { LibraryItem, FrontmatterValue } from "../../lib/vault";
+import TagPills from "./TagPills.astro";
+
+interface Props {
+	note: LibraryItem;
+}
+
+const { note } = Astro.props;
+
+const visibleKeys = ["type", "status", "travel-type", "country", "continent", "created", "updated"];
+const labels: Record<string, string> = {
+	type: "Typ",
+	status: "Status",
+	"travel-type": "Resetyp",
+	country: "Land",
+	continent: "Kontinent",
+	created: "Skapad",
+	updated: "Uppdaterad",
+};
+
+function formatDate(value: string) {
+	const timestamp = Date.parse(value);
+	if (Number.isNaN(timestamp)) {
+		return value;
+	}
+	return new Intl.DateTimeFormat("sv-SE", {
+		dateStyle: "medium",
+	}).format(new Date(timestamp));
+}
+
+function stringifyValue(key: string, value: FrontmatterValue) {
+	if (Array.isArray(value)) {
+		return value.join(", ");
+	}
+	if (key === "created" || key === "updated") {
+		return formatDate(value);
+	}
+	return value;
+}
+
+const metadata = visibleKeys
+	.map((key) => {
+		const value = key === "type" ? note.normalized.type : note.normalized.metadata[key];
+		if (!value || (Array.isArray(value) && value.length === 0)) {
+			return null;
+		}
+		return { key, label: labels[key], value: stringifyValue(key, value) };
+	})
+	.filter(Boolean) as Array<{ key: string; label: string; value: string }>;
+
+const aliases = note.normalized.aliases;
+
+const hasContent = metadata.length > 0 || aliases.length > 0 || note.normalized.tags.length > 0;
+---
+
+{
+	hasContent && (
+		<section class="surface-card overflow-hidden border-[#ece4d7] bg-[linear-gradient(180deg,#fffdf9_0%,#fbf8f2_100%)] p-5 shadow-[0_12px_28px_rgba(15,23,42,0.04)] md:p-6">
+			<div class="space-y-5 md:space-y-6">
+				<div class="flex items-center justify-between gap-3">
+					<h2 class="panel-title">Egenskaper</h2>
+					<span class="rounded-full border border-[#ece3d6] bg-[#fbf8f3] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+						Metadata
+					</span>
+				</div>
+
+				{
+					metadata.length > 0 && (
+						<dl class="grid gap-3 sm:grid-cols-2">
+							{
+								metadata.map((entry) => (
+									<div class="rounded-[18px] border border-[#efe6da] bg-white/72 p-4 shadow-[0_8px_18px_rgba(15,23,42,0.03)] backdrop-blur-sm">
+										<dt class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+											{entry.label}
+										</dt>
+										<dd class="mt-2 text-sm font-medium leading-6 text-slate-700">
+											{entry.value}
+										</dd>
+									</div>
+								))
+							}
+						</dl>
+					)
+				}
+
+				{
+					aliases.length > 0 && (
+						<div class="space-y-3 border-t border-[#efe7dc] pt-5">
+							<p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+								Alias
+							</p>
+							<TagPills values={aliases} tone="sky" />
+						</div>
+					)
+				}
+
+				{
+					note.normalized.tags.length > 0 && (
+						<div class="space-y-3 border-t border-[#efe7dc] pt-5">
+							<p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+								Taggar
+							</p>
+							<TagPills values={note.normalized.tags.map((tag) => `#${tag}`)} tone="amber" />
+						</div>
+					)
+				}
+			</div>
+		</section>
+	)
+}

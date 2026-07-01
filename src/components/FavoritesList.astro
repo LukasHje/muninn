@@ -1,0 +1,44 @@
+---
+import type { FavoriteLink } from "../lib/vault";
+import Icon from "./Icon.astro";
+import SectionCard from "./SectionCard.astro";
+
+interface Props {
+	items: FavoriteLink[];
+}
+
+const { items } = Astro.props;
+---
+
+<SectionCard title="Favoriter">
+	{
+		items.length === 0 ? (
+			<div class="rounded-[16px] border border-dashed border-[#ddd3c5] bg-[#fbf7f1] px-4 py-6 text-sm text-slate-600">
+				Inga favoriter ännu.
+			</div>
+		) : (
+			<ul class="space-y-3">
+				{
+					items.map((item) => (
+						<li>
+							<a
+								href={item.href}
+								class="flex items-center justify-between gap-3 rounded-xl px-1 py-1 text-sm text-slate-700 transition hover:bg-slate-50"
+							>
+								<span class="flex items-center gap-3">
+									<span class="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-100 text-slate-500">
+										<Icon name="file-text" class="h-4 w-4" />
+									</span>
+									<span>{item.title}</span>
+								</span>
+								<span class={item.starred ? "text-amber-500" : "text-slate-300"}>
+									<Icon name="star" class="h-4 w-4" />
+								</span>
+							</a>
+						</li>
+					))
+				}
+			</ul>
+		)
+	}
+</SectionCard>

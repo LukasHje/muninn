@@ -1,0 +1,30 @@
+---
+import type { DashboardMetric } from "../lib/vault";
+import Icon from "./Icon.astro";
+
+interface Props {
+	metric: DashboardMetric;
+}
+
+const { metric } = Astro.props;
+
+const toneClasses = {
+	slate: "bg-slate-100 text-slate-600",
+	amber: "bg-amber-100 text-amber-700",
+	sky: "bg-sky-100 text-sky-700",
+	emerald: "bg-emerald-100 text-emerald-700",
+}[metric.tone];
+---
+
+<article class="surface-card p-5">
+	<div class="flex items-center gap-3 text-slate-500">
+		<div class:list={["flex h-8 w-8 items-center justify-center rounded-xl", toneClasses]}>
+			<Icon name={metric.icon} class="h-4 w-4" />
+		</div>
+		<p class="text-sm font-medium">{metric.label}</p>
+	</div>
+	<p class="mt-3 text-[2.15rem] font-semibold tracking-tight text-slate-900">
+		{metric.value}
+	</p>
+	<p class="mt-1 text-sm text-slate-500">{metric.helper}</p>
+</article>

@@ -1,0 +1,45 @@
+---
+interface Props {
+	title: string;
+	eyebrow?: string;
+	breadcrumb?: string[];
+	description?: string;
+}
+
+const { title, eyebrow, breadcrumb = [], description } = Astro.props;
+---
+
+<header class="space-y-5">
+	{
+		(breadcrumb.length > 0 || eyebrow) && (
+			<div class="flex flex-wrap items-center gap-3 text-sm">
+				{
+					breadcrumb.length > 0 && (
+						<p class="rounded-full border border-[#ebe3d7] bg-white/75 px-3 py-1.5 font-medium text-slate-400 shadow-[0_6px_16px_rgba(15,23,42,0.04)]">
+							{breadcrumb.join(" / ")}
+						</p>
+					)
+				}
+				{
+					eyebrow && (
+						<p class="rounded-full border border-[#eee4d4] bg-[#fbf7f1] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+							{eyebrow}
+						</p>
+					)
+				}
+			</div>
+		)
+	}
+	<div class="space-y-4">
+		<h1 class="max-w-4xl text-4xl font-semibold tracking-[-0.04em] text-slate-900 md:text-5xl md:leading-[1.02]">
+			{title}
+		</h1>
+		{
+			description && (
+				<p class="max-w-3xl text-[1.04rem] leading-8 text-slate-600">
+					{description}
+				</p>
+			)
+		}
+	</div>
+</header>

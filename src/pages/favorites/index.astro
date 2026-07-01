@@ -1,0 +1,16 @@
+---
+import VaultNotesBrowser from "../../components/VaultNotesBrowser.astro";
+import MainLayout from "../../layouts/MainLayout.astro";
+import { getFavoriteLibraryItems } from "../../lib/vault";
+
+const favoriteItems = await getFavoriteLibraryItems();
+---
+
+<MainLayout title="Favoriter | Muninn">
+	<VaultNotesBrowser
+		title="Favoriter"
+		items={favoriteItems}
+		emptyMessage="Inga favoriter ännu."
+		basePath="/favorites"
+	/>
+</MainLayout>

@@ -1,0 +1,82 @@
+---
+import DashboardCard from "../components/DashboardCard.astro";
+import FavoritesList from "../components/FavoritesList.astro";
+import Hero from "../components/Hero.astro";
+import NoteCard from "../components/NoteCard.astro";
+import ScratchpadComposer from "../components/ScratchpadComposer.astro";
+import SectionCard from "../components/SectionCard.astro";
+import TagChip from "../components/TagChip.astro";
+import TodayNoteCard from "../components/TodayNoteCard.astro";
+import MainLayout from "../layouts/MainLayout.astro";
+import {
+	getDashboardHero,
+	getDashboardMetrics,
+	getFavoriteLinks,
+	getPopularTags,
+	getRecentItems,
+	getTodayEntry,
+} from "../lib/vault";
+
+const [dashboardHero, dashboardMetrics, favoriteLinks, popularTags, recentItems, todayEntry] =
+	await Promise.all([
+		getDashboardHero(),
+		getDashboardMetrics(),
+		getFavoriteLinks(),
+		getPopularTags(),
+		getRecentItems(),
+		getTodayEntry(),
+	]);
+---
+
+<MainLayout title="Muninn | Dashboard">
+	<div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+		<div class="space-y-6">
+			<Hero
+				title={dashboardHero.title}
+				description={dashboardHero.description}
+				imageUrl={dashboardHero.imageUrl}
+			/>
+
+			<section class="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
+				{
+					dashboardMetrics.map((metric) => (
+						<DashboardCard metric={metric} />
+					))
+				}
+			</section>
+
+			<SectionCard title="Nyligen uppdaterade">
+				<a
+					slot="actions"
+					href="/notes"
+					class="text-sm font-medium text-slate-500 transition hover:text-slate-900"
+				>
+					Visa alla →
+				</a>
+				<div class="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
+					{
+						recentItems.map((item) => (
+							<NoteCard item={item} />
+						))
+					}
+				</div>
+			</SectionCard>
+
+			<SectionCard title="Populära taggar">
+				<div class="flex flex-wrap gap-3">
+					{
+						popularTags.map((tag) => (
+							<TagChip label={tag.label} count={tag.count} tone={tag.tone} />
+						))
+					}
+				</div>
+			</SectionCard>
+		</div>
+
+		<div class="space-y-6">
+			{todayEntry && <TodayNoteCard entry={todayEntry} />}
+			<ScratchpadComposer />
+			<FavoritesList items={favoriteLinks} />
+		</div>
+	</div>
+</MainLayout>

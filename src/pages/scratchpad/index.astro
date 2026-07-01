@@ -1,0 +1,72 @@
+---
+import Icon from "../../components/Icon.astro";
+import SearchBar from "../../components/SearchBar.astro";
+import SectionCard from "../../components/SectionCard.astro";
+import MainLayout from "../../layouts/MainLayout.astro";
+import { getScratchpadNotes } from "../../lib/scratchpad";
+
+const scratchpadNotes = await getScratchpadNotes();
+---
+
+<MainLayout title="Anteckningsblock | Muninn">
+	<div class="space-y-6">
+		<section class="surface-panel p-6 md:p-8">
+			<div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+				<div>
+					<p class="muted-eyebrow">Appspecifikt</p>
+					<h1 class="mt-2 text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
+						Anteckningsblock
+					</h1>
+					<p class="mt-3 max-w-2xl text-sm leading-7 text-slate-600 md:text-base">
+						Ren text sparad i Muninns app-state. Lokalt betyder det
+						<code>data/local-state/scratchpad</code>, och i Docker <code>/state/scratchpad</code>.
+						Dessa anteckningar ar frikopplade fran vaultet och fungerar som tillfalliga stodanteckningar.
+					</p>
+				</div>
+				<div class="w-full max-w-md">
+					<SearchBar tone="light" placeholder="Sok i anteckningsblocket..." />
+				</div>
+			</div>
+		</section>
+
+		<SectionCard
+			title="Alla anteckningsblock"
+			subtitle={`${scratchpadNotes.length} sparade anteckningar`}
+		>
+			{
+				scratchpadNotes.length === 0 ? (
+					<div class="rounded-[16px] border border-dashed border-[#ddd3c5] bg-[#fbf7f1] px-5 py-8 text-sm text-slate-600">
+						Inga anteckningar sparade an.
+					</div>
+				) : (
+					<div class="space-y-3">
+						{
+							scratchpadNotes.map((note) => (
+								<a
+									href={`/scratchpad/${note.id}`}
+									class="block rounded-[16px] border border-[#ece5dc] bg-white px-5 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition hover:border-[#d8cdbd] hover:bg-[#fffdfa]"
+								>
+									<div class="flex items-start justify-between gap-4">
+										<div class="min-w-0">
+											<h2 class="truncate text-base font-semibold tracking-tight text-slate-900">
+												{note.title}
+											</h2>
+											<p class="mt-2 text-sm leading-6 text-slate-600">{note.preview}</p>
+										</div>
+										<span class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+											<Icon name="file-text" class="h-4 w-4" />
+										</span>
+									</div>
+									<div class="mt-4 flex items-center justify-between gap-3 text-xs text-slate-500">
+										<span>Skapad {note.createdAt}</span>
+										<span>Andrad {note.updatedAt}</span>
+									</div>
+								</a>
+							))
+						}
+					</div>
+				)
+			}
+		</SectionCard>
+	</div>
+</MainLayout>

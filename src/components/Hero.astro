@@ -1,0 +1,35 @@
+---
+interface Props {
+	eyebrow?: string;
+	title: string;
+	description: string;
+	imageUrl: string;
+}
+
+const { eyebrow, title, description, imageUrl } = Astro.props;
+---
+
+<section class="surface-panel relative min-h-[210px] overflow-hidden px-6 py-8 md:min-h-[230px] md:px-10 md:py-10">
+	<img
+		src={imageUrl}
+		alt=""
+		class="absolute inset-0 h-full w-full object-cover"
+	/>
+	<div class="absolute inset-0 bg-gradient-to-r from-slate-950/82 via-slate-900/42 to-slate-900/18"></div>
+	<div class="relative max-w-2xl">
+		{
+			eyebrow && (
+				<p class="text-sm font-medium tracking-wide text-white/70">{eyebrow}</p>
+			)
+		}
+		<h1 class:list={[
+			"text-[2.2rem] font-semibold tracking-tight text-white md:text-[3rem]",
+			eyebrow ? "mt-5" : "mt-1",
+		]}>
+			{title}
+		</h1>
+		<p class="mt-3 max-w-xl text-base leading-7 text-white/88 md:text-[1.15rem]">
+			{description}
+		</p>
+	</div>
+</section>

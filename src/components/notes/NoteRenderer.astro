@@ -1,0 +1,24 @@
+---
+import type { LibraryItem } from "../../lib/vault";
+import { getNoteLayout } from "../../lib/noteLayout";
+import CoverNoteLayout from "./CoverNoteLayout.astro";
+import PlainNoteLayout from "./PlainNoteLayout.astro";
+import TravelNoteLayout from "./TravelNoteLayout.astro";
+
+interface Props {
+	note: LibraryItem;
+}
+
+const { note } = Astro.props;
+const layout = getNoteLayout(note);
+---
+
+{
+	layout === "travel" ? (
+		<TravelNoteLayout note={note} />
+	) : layout === "cover" ? (
+		<CoverNoteLayout note={note} />
+	) : (
+		<PlainNoteLayout note={note} />
+	)
+}

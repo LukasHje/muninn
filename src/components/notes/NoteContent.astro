@@ -1,0 +1,740 @@
+---
+import path from "node:path";
+import { Marked, Renderer } from "marked";
+import type { Tokens } from "marked";
+import MediaSlider from "../media/MediaSlider.astro";
+import LeafletMap from "../maps/LeafletMap.astro";
+import DataviewResult from "../dataview/DataviewResult.astro";
+import { executeDataviewLite } from "../../lib/dataviewLite";
+import type { ParsedMapBlock } from "../../lib/parseMapBlock";
+import { parseMapBlock } from "../../lib/parseMapBlock";
+import type { ResolvedObsidianAsset } from "../../lib/resolveObsidianAsset";
+import { parseObsidianAssetRef, resolveObsidianAsset } from "../../lib/resolveObsidianAsset";
+import { getVaultAssetIndex } from "../../lib/vaultAssetIndex";
+import type { LibraryItem } from "../../lib/vault";
+import { getLibraryItems, getNoteLookupIndex } from "../../lib/vault";
+
+interface Props {
+	note: LibraryItem;
+	content?: string;
+}
+
+type ContentSegment =
+	| { type: "markdown"; html: string; key: string }
+	| { type: "html"; html: string; key: string }
+	| { type: "map"; map: ParsedMapBlock; key: string }
+	| { type: "slider"; items: ResolvedObsidianAsset[]; key: string }
+	| { type: "dataview"; result: ReturnType<typeof executeDataviewLite>; key: string };
+
+const { note, content = note.content } = Astro.props;
+const allNotes = await getLibraryItems();
+const noteLookup = await getNoteLookupIndex();
+const assetIndex = await getVaultAssetIndex();
+
+function escapeHtml(value: string) {
+	return value
+		.replaceAll("&", "&amp;")
+		.replaceAll("<", "&lt;")
+		.replaceAll(">", "&gt;")
+		.replaceAll('"', "&quot;")
+		.replaceAll("'", "&#39;");
+}
+
+function escapeAttribute(value: string) {
+	return escapeHtml(value);
+}
+
+function escapeMarkdownLabel(value: string) {
+	return value.replace(/]/g, "\\]");
+}
+
+function decodePseudoValue(value: string) {
+	return decodeURIComponent(value.replace(/^\w+-?\w*:/, ""));
+}
+
+function basenameWithoutExtension(value: string) {
+	return path.basename(value, path.extname(value));
+}
+
+function buildLookupKeys(value: string) {
+	const cleaned = value.replace(/^\/+/, "").replace(/\.md$/i, "").trim();
+	if (!cleaned) {
+		return [];
+	}
+
+	const relativeLower = cleaned.toLowerCase();
+	const segments = cleaned.split("/").map((segment) => segment.trim()).filter(Boolean);
+	const slugPath = segments
+		.map((segment) =>
+			segment
+				.toLowerCase()
+				.normalize("NFD")
+				.replace(/\p{Diacritic}/gu, "")
+				.replace(/[^a-z0-9]+/g, "-")
+				.replace(/^-|-$/g, "")
+		)
+		.filter(Boolean)
+		.join("/");
+	const basename = segments.at(-1) ?? cleaned;
+	const slugBase = slugPath.split("/").at(-1) ?? slugPath;
+
+	return Array.from(new Set([relativeLower, slugPath, basename.toLowerCase(), slugBase].filter(Boolean)));
+}
+
+function resolveWikiLink(target: string) {
+	for (const key of buildLookupKeys(target)) {
+		const match = noteLookup.get(key);
+		if (match) {
+			return match;
+		}
+	}
+
+	return null;
+}
+
+function resolveAsset(reference: string, altOverride?: string) {
+	const resolved = resolveObsidianAsset(reference, note.relativePath, assetIndex);
+	if (altOverride) {
+		return { ...resolved, alt: altOverride };
+	}
+	return resolved;
+}
+
+function renderMissingLink(label: string, target: string) {
+	return `<span class="note-link-missing" title="Saknad intern länk: ${escapeAttribute(target)}">${escapeHtml(label)}</span>`;
+}
+
+function renderMissingImage(reference: string, altText: string) {
+	return `<figure class="missing-asset"><div class="missing-asset__icon">Bild saknas</div><figcaption>${escapeHtml(
+		altText || reference
+	)}</figcaption><p>${escapeHtml(reference)}</p></figure>`;
+}
+
+function renderCodeBlock(language: string, code: string) {
+	const normalizedLanguage = language.trim().toLowerCase() || "text";
+	const escapedCode = escapeHtml(code.replace(/\n$/, ""));
+
+	return `
+		<div class="code-block">
+			<div class="code-block__toolbar">
+				<span class="code-block__language">${escapeHtml(normalizedLanguage)}</span>
+				<button type="button" class="code-copy-button" data-copy-code data-copy-value="${escapeAttribute(code)}">Copy</button>
+			</div>
+			<pre class="code-block__pre"><code class="language-${escapeAttribute(normalizedLanguage)}">${escapedCode}</code></pre>
+		</div>
+	`;
+}
+
+function parseImageTitle(title?: string | null) {
+	if (!title?.startsWith("muninn-width:")) {
+		return null;
+	}
+
+	const parsed = Number.parseInt(title.replace("muninn-width:", ""), 10);
+	return Number.isFinite(parsed) ? parsed : null;
+}
+
+function isFramedImage(extension?: string) {
+	return extension === ".svg" || extension === ".png";
+}
+
+function parseMediaSliderItems(raw: string) {
+	const lines = raw
+		.split("\n")
+		.map((line) => line.trim())
+		.filter(Boolean);
+	const items: ResolvedObsidianAsset[] = [];
+
+	for (const line of lines) {
+		const obsidianMatch = line.match(/!\[\[([^\]]+)\]\]/);
+		if (obsidianMatch) {
+			items.push(resolveAsset(obsidianMatch[1]));
+			continue;
+		}
+
+		const markdownMatch = line.match(/!\[([^\]]*)\]\(([^)]+)\)/);
+		if (markdownMatch) {
+			items.push(resolveAsset(markdownMatch[2], markdownMatch[1] || undefined));
+		}
+	}
+
+	return items;
+}
+
+function toMarkdownAssetImage(reference: string, alt = "", width?: number | null) {
+	const cleanedReference = reference.replace(/^<|>$/g, "").trim();
+	const escapedAlt = escapeMarkdownLabel(alt);
+	const title = width ? ` "muninn-width:${width}"` : "";
+	return `![${escapedAlt}](muninn-asset:${encodeURIComponent(cleanedReference)}${title})`;
+}
+
+function parseMarkdownImageReference(reference: string) {
+	const trimmed = reference.trim();
+	if (!trimmed) {
+		return null;
+	}
+
+	const unwrapped = trimmed.startsWith("<") && trimmed.endsWith(">")
+		? trimmed.slice(1, -1).trim()
+		: trimmed;
+	const titleMatch = unwrapped.match(/^(.*?)(?:\s+"([^"]+)")$/);
+
+	return {
+		path: (titleMatch?.[1] ?? unwrapped).trim(),
+		title: titleMatch?.[2]?.trim(),
+	};
+}
+
+function preprocessMarkdown(raw: string) {
+	return raw
+		.replace(/!\[\[([^\]]+)\]\]/g, (_, reference) => {
+			const parsed = parseObsidianAssetRef(reference);
+			return toMarkdownAssetImage(reference, parsed.alt || basenameWithoutExtension(parsed.path), parsed.width);
+		})
+		.replace(/<img[^>]*src="([^"]+)"[^>]*alt="([^"]*)"[^>]*>/gi, (_, reference, alt) => {
+			return toMarkdownAssetImage(reference, alt || "");
+		})
+		.replace(/<img[^>]*src="([^"]+)"[^>]*>/gi, (_, reference) => {
+			return toMarkdownAssetImage(reference);
+		})
+		.replace(/!\[([^\]]*)\]\((?!muninn-asset:|https?:|data:|\/vault-assets\/)([^)\n]+)\)/g, (_, alt, reference) => {
+			const parsed = parseMarkdownImageReference(reference);
+			if (!parsed?.path) {
+				return _;
+			}
+
+			const width = parsed.title?.startsWith("muninn-width:")
+				? Number.parseInt(parsed.title.replace("muninn-width:", ""), 10)
+				: null;
+			return toMarkdownAssetImage(parsed.path, alt || "", Number.isFinite(width) ? width : null);
+		})
+		.replace(/\[\[([^|\]]+)\|?([^\]]+)?\]\]/g, (_, target, label) => {
+			const text = label || target;
+			return `[${text}](muninn-note:${encodeURIComponent(target)})`;
+		});
+}
+
+const renderer = new Renderer();
+
+renderer.link = function ({ href, title, tokens }: Tokens.Link) {
+	const label = this.parser.parseInline(tokens);
+	if (href?.startsWith("muninn-note:")) {
+		const target = decodePseudoValue(href);
+		const resolved = resolveWikiLink(target);
+		if (!resolved) {
+			return renderMissingLink(label, target);
+		}
+
+		return `<a href="${escapeAttribute(resolved)}">${label}</a>`;
+	}
+
+	const safeHref = href ? escapeAttribute(href) : "#";
+	const titleAttribute = title ? ` title="${escapeAttribute(title)}"` : "";
+	return `<a href="${safeHref}"${titleAttribute}>${label}</a>`;
+};
+
+renderer.image = function ({ href, title, text }: Tokens.Image) {
+	const resolved = resolveAsset(href ?? "", text || undefined);
+	if (!resolved.found || !resolved.url) {
+		return renderMissingImage(href ?? "", text);
+	}
+
+	const width = resolved.width ?? parseImageTitle(title);
+	const style = width ? ` style="width:${width}px;max-width:100%"` : "";
+	const framedClass = isFramedImage(resolved.extension) ? " muninn-image-frame" : "";
+
+	return `<figure class="muninn-image-figure${framedClass}"><img src="${escapeAttribute(
+		resolved.url
+	)}" alt="${escapeAttribute(resolved.alt)}" class="muninn-image"${style}></figure>`;
+};
+
+const markdown = new Marked({
+	gfm: true,
+	breaks: true,
+	renderer,
+});
+
+function renderMarkdownHtml(raw: string) {
+	const prepared = preprocessMarkdown(raw);
+	const parsed = markdown.parse(prepared);
+	return typeof parsed === "string" ? parsed : "";
+}
+
+function buildSegments(raw: string): ContentSegment[] {
+	const segments: ContentSegment[] = [];
+	const blockPattern = /```([^\n`]*)\n([\s\S]*?)```/g;
+	let lastIndex = 0;
+	let blockIndex = 0;
+	let match: RegExpExecArray | null;
+
+	const pushMarkdown = (value: string) => {
+		if (!value.trim()) {
+			return;
+		}
+		segments.push({
+			type: "markdown",
+			html: renderMarkdownHtml(value),
+			key: `markdown-${segments.length}`,
+		});
+	};
+
+	while ((match = blockPattern.exec(raw)) !== null) {
+		pushMarkdown(raw.slice(lastIndex, match.index));
+
+		const language = match[1]?.trim().toLowerCase() || "text";
+		const blockBody = match[2] ?? "";
+
+		if (language === "media-slider") {
+			const items = parseMediaSliderItems(blockBody);
+			if (items.length > 0) {
+				segments.push({
+					type: "slider",
+					items,
+					key: `slider-${blockIndex}`,
+				});
+			} else {
+				segments.push({
+					type: "html",
+					html: renderCodeBlock(language, blockBody),
+					key: `code-${blockIndex}`,
+				});
+			}
+		} else if (language === "dataview") {
+			segments.push({
+				type: "dataview",
+				result: executeDataviewLite(blockBody, allNotes, note),
+				key: `dataview-${blockIndex}`,
+			});
+		} else if (language === "map" || language === "leaflet") {
+			const parsedMap = parseMapBlock(blockBody);
+			if (parsedMap) {
+				segments.push({
+					type: "map",
+					map: parsedMap,
+					key: `map-${blockIndex}`,
+				});
+			} else {
+				segments.push({
+					type: "html",
+					html: renderCodeBlock(language, blockBody),
+					key: `code-${blockIndex}`,
+				});
+			}
+		} else {
+			segments.push({
+				type: "html",
+				html: renderCodeBlock(language, blockBody),
+				key: `code-${blockIndex}`,
+			});
+		}
+
+		lastIndex = match.index + match[0].length;
+		blockIndex += 1;
+	}
+
+	pushMarkdown(raw.slice(lastIndex));
+
+	return segments;
+}
+
+const segments = buildSegments(content);
+---
+
+<article class="note-content prose-surface">
+	{
+		segments.map((segment) =>
+			segment.type === "markdown" || segment.type === "html" ? (
+				<div class="note-content__segment" set:html={segment.html}></div>
+			) : segment.type === "map" ? (
+				<div class="my-7">
+					<LeafletMap map={segment.map} />
+				</div>
+			) : segment.type === "dataview" ? (
+				<div class="my-7">
+					<DataviewResult result={segment.result} />
+				</div>
+			) : (
+				<div class="my-7">
+					<MediaSlider items={segment.items} />
+				</div>
+			)
+		)
+	}
+</article>
+
+<script is:inline>
+	if (!window.__muninnCodeCopyBound) {
+		window.__muninnCodeCopyBound = true;
+		document.addEventListener("click", async (event) => {
+			const target = event.target;
+			if (!(target instanceof HTMLElement)) return;
+			const button = target.closest("[data-copy-code]");
+			if (!(button instanceof HTMLButtonElement)) return;
+			const code = button.getAttribute("data-copy-value") ?? "";
+			try {
+				await navigator.clipboard.writeText(code);
+				const original = button.textContent;
+				button.textContent = "Copied";
+				window.setTimeout(() => {
+					button.textContent = original ?? "Copy";
+				}, 1200);
+			} catch {
+				button.textContent = "Failed";
+				window.setTimeout(() => {
+					button.textContent = "Copy";
+				}, 1200);
+			}
+		});
+	}
+</script>
+
+<style>
+	.note-content {
+		color: #334155;
+		font-size: 1rem;
+		line-height: 1.9;
+	}
+
+	.note-content :global(.note-content__segment + .note-content__segment) {
+		margin-top: 0.1rem;
+	}
+
+	.note-content :global(h1),
+	.note-content :global(h2),
+	.note-content :global(h3) {
+		color: #0f172a;
+		font-weight: 700;
+		letter-spacing: -0.03em;
+		line-height: 1.12;
+		margin-top: 2.65rem;
+		margin-bottom: 0.95rem;
+	}
+
+	.note-content :global(h1) {
+		font-size: 2rem;
+	}
+
+	.note-content :global(h2) {
+		font-size: 1.56rem;
+		padding-top: 0.4rem;
+	}
+
+	.note-content :global(h3) {
+		font-size: 1.18rem;
+		color: #1e293b;
+	}
+
+	.note-content :global(p),
+	.note-content :global(ul),
+	.note-content :global(ol) {
+		margin: 0 0 1.1rem;
+	}
+
+	.note-content :global(ul),
+	.note-content :global(ol) {
+		padding-left: 1.45rem;
+		color: #475569;
+	}
+
+	.note-content :global(li + li) {
+		margin-top: 0.45rem;
+	}
+
+	.note-content :global(strong) {
+		color: #0f172a;
+		font-weight: 650;
+	}
+
+	.note-content :global(hr) {
+		margin: 2.35rem 0;
+		border: 0;
+		border-top: 1px solid #ebe4d8;
+	}
+
+	.note-content :global(p:first-of-type) {
+		font-size: 1.08rem;
+		line-height: 1.9;
+		color: #475569;
+	}
+
+	.note-content :global(blockquote) {
+		margin: 1.7rem 0;
+		border-left: 4px solid #d6b777;
+		padding: 1rem 1.2rem 1rem 1rem;
+		color: #475569;
+		background: linear-gradient(135deg, #fcfaf6 0%, #f8f4ed 100%);
+		border-radius: 0 18px 18px 0;
+	}
+
+	.note-content :global(code) {
+		font-size: 0.92em;
+		background: #f3efe7;
+		padding: 0.18rem 0.42rem;
+		border-radius: 0.4rem;
+		color: #0f172a;
+	}
+
+	.note-content :global(pre) {
+		margin: 1.6rem 0;
+		overflow-x: auto;
+		border-radius: 1.2rem;
+		border: 1px solid rgba(148, 163, 184, 0.22);
+		background: radial-gradient(circle at top, rgba(30, 41, 59, 0.96), #0f172a 62%);
+		padding: 1.1rem 1.2rem;
+		color: #e2e8f0;
+		box-shadow: 0 18px 36px rgba(15, 23, 42, 0.16);
+	}
+
+	.note-content :global(pre code) {
+		background: transparent;
+		padding: 0;
+		color: inherit;
+	}
+
+	.note-content :global(.code-block),
+	.note-content :global(.dataview-card) {
+		margin: 1.6rem 0;
+		overflow: hidden;
+		border-radius: 1.2rem;
+		border: 1px solid rgba(148, 163, 184, 0.18);
+		background: radial-gradient(circle at top, rgba(30, 41, 59, 0.96), #0f172a 62%);
+		box-shadow: 0 18px 36px rgba(15, 23, 42, 0.16);
+	}
+
+	.note-content :global(.code-block__toolbar),
+	.note-content :global(.dataview-card__header) {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+		padding: 0.82rem 0.95rem;
+		background: rgba(15, 23, 42, 0.32);
+	}
+
+	.note-content :global(.code-block__language) {
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: #cbd5e1;
+	}
+
+	.note-content :global(.code-copy-button) {
+		border: 1px solid rgba(148, 163, 184, 0.22);
+		background: rgba(255, 255, 255, 0.08);
+		color: #e2e8f0;
+		border-radius: 999px;
+		padding: 0.35rem 0.75rem;
+		font-size: 0.76rem;
+		font-weight: 600;
+		line-height: 1;
+		cursor: pointer;
+		transition: background 0.15s ease, border-color 0.15s ease;
+	}
+
+	.note-content :global(.code-copy-button:hover) {
+		background: rgba(255, 255, 255, 0.14);
+		border-color: rgba(226, 232, 240, 0.28);
+	}
+
+	.note-content :global(.code-block__pre) {
+		margin: 0;
+		border: 0;
+		border-radius: 0;
+		box-shadow: none;
+		background: transparent;
+		padding: 0.95rem 1rem 1.05rem;
+	}
+
+	.note-content :global(.dataview-card__title) {
+		margin: 0;
+		font-size: 0.95rem;
+		font-weight: 700;
+		color: #f8fafc;
+	}
+
+	.note-content :global(.dataview-card__subtitle) {
+		margin: 0.2rem 0 0;
+		font-size: 0.82rem;
+		line-height: 1.45;
+		color: #94a3b8;
+	}
+
+	.note-content :global(table) {
+		width: 100%;
+		border-collapse: collapse;
+		margin: 1.7rem 0;
+		overflow: hidden;
+		border-radius: 1rem;
+		border: 1px solid #ebe4d8;
+		box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+	}
+
+	.note-content :global(th),
+	.note-content :global(td) {
+		border-bottom: 1px solid #ece6da;
+		padding: 0.8rem 1rem;
+		text-align: left;
+		vertical-align: top;
+	}
+
+	.note-content :global(th) {
+		background: #fbf8f3;
+		color: #0f172a;
+		font-weight: 600;
+	}
+
+	.note-content :global(.muninn-image-figure) {
+		margin: 1.7rem auto;
+	}
+
+	.note-content :global(.muninn-image-frame) {
+		border: 1px solid #ebe4d8;
+		background: linear-gradient(180deg, #fbf8f2 0%, #f8f4ec 100%);
+		border-radius: 1.3rem;
+		padding: 0.85rem;
+		box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+	}
+
+	.note-content :global(.muninn-image) {
+		display: block;
+		max-width: 100%;
+		border-radius: 1rem;
+		margin: 0 auto;
+	}
+
+	.note-content :global(a) {
+		color: #1d4ed8;
+		text-decoration: none;
+		text-underline-offset: 0.2em;
+	}
+
+	.note-content :global(a:hover) {
+		text-decoration: underline;
+	}
+
+	.note-content :global(.note-link-missing) {
+		border-bottom: 1px dashed #d1b985;
+		color: #8a6f34;
+	}
+
+	.note-content :global(.missing-asset) {
+		margin: 1.7rem 0;
+		border: 1px dashed #dbcdb6;
+		border-radius: 1.2rem;
+		background: linear-gradient(180deg, #fbf7f1 0%, #f6efe5 100%);
+		padding: 1rem 1.1rem;
+		color: #64748b;
+	}
+
+	.note-content :global(.missing-asset__icon) {
+		display: inline-flex;
+		border-radius: 999px;
+		background: #f1e7d7;
+		padding: 0.35rem 0.75rem;
+		font-size: 0.72rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: #8a6f34;
+	}
+
+	.note-content :global(.missing-asset figcaption) {
+		margin: 0.85rem 0 0.2rem;
+		font-weight: 600;
+		color: #334155;
+	}
+
+	.note-content :global(.missing-asset p) {
+		margin: 0;
+		font-size: 0.92rem;
+		color: #64748b;
+		word-break: break-word;
+	}
+
+	.note-content :global(div[style*="text-align:center"][style*="margin-top:20px"]) {
+		margin: 0 0 1.75rem;
+		border: 1px solid #22314c;
+		border-radius: 1.6rem;
+		background:
+			radial-gradient(circle at top right, rgba(251, 191, 36, 0.14), transparent 26%),
+			linear-gradient(135deg, #172033 0%, #24334e 52%, #1e293b 100%);
+		padding: 1.9rem 1.3rem 1.55rem;
+		box-shadow: 0 22px 40px rgba(15, 23, 42, 0.18);
+	}
+
+	.note-content :global(div[style*="text-align:center"][style*="margin-top:20px"] h1[style*="color:#f0f2f5"]) {
+		color: #f8fafc !important;
+		text-shadow: 0 10px 24px rgba(15, 23, 42, 0.3);
+		margin-top: 0;
+	}
+
+	.note-content :global(div[style*="text-align:center"][style*="margin-top:20px"] div[style*="justify-content:center"]) {
+		flex-wrap: wrap;
+		gap: 1.25rem !important;
+	}
+
+	.note-content :global(div[style*="text-align:center"][style*="margin-top:20px"] p[style*="color:#cdd3e1"]),
+	.note-content :global(div[style*="text-align:center"][style*="margin-top:20px"] p[style*="color:#c7d0e0"]) {
+		color: #e2e8f0 !important;
+		background: rgba(255, 255, 255, 0.06);
+		border-radius: 1rem;
+		padding: 1rem 1.1rem 1rem 1rem !important;
+		backdrop-filter: blur(8px);
+	}
+
+	.note-content :global(div[style*="text-align:center"][style*="margin-top:20px"] .muninn-image-figure) {
+		margin: 0;
+	}
+
+	.note-content :global(div[style*="text-align:center"][style*="margin-top:20px"] .muninn-image-frame) {
+		background: rgba(248, 250, 252, 0.96);
+		border-color: rgba(255, 255, 255, 0.18);
+		box-shadow: 0 14px 34px rgba(15, 23, 42, 0.2);
+	}
+
+	@media (max-width: 768px) {
+		.note-content {
+			font-size: 0.98rem;
+			line-height: 1.85;
+		}
+
+		.note-content :global(h1) {
+			font-size: 1.72rem;
+		}
+
+		.note-content :global(h2) {
+			font-size: 1.4rem;
+		}
+
+		.note-content :global(h3) {
+			font-size: 1.08rem;
+		}
+
+		.note-content :global(p:first-of-type) {
+			font-size: 1.02rem;
+			line-height: 1.82;
+		}
+
+		.note-content :global(th),
+		.note-content :global(td) {
+			padding: 0.72rem 0.8rem;
+		}
+
+		.note-content :global(.code-block__toolbar),
+		.note-content :global(.dataview-card__header) {
+			flex-wrap: wrap;
+			align-items: flex-start;
+		}
+
+		.note-content :global(.code-copy-button) {
+			padding: 0.42rem 0.78rem;
+		}
+
+		.note-content :global(div[style*="text-align:center"][style*="margin-top:20px"]) {
+			padding: 1.4rem 1rem 1.15rem;
+			border-radius: 1.3rem;
+		}
+	}
+</style>

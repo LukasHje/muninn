@@ -1,0 +1,226 @@
+---
+import Icon from "./Icon.astro";
+import NoteCard from "./NoteCard.astro";
+import NoteListRow from "./NoteListRow.astro";
+import SectionCard from "./SectionCard.astro";
+import type { LibraryItem } from "../lib/vault";
+
+interface Props {
+	title: string;
+	items: LibraryItem[];
+	emptyMessage: string;
+	basePath?: string;
+}
+
+const {
+	title,
+	items,
+	emptyMessage,
+	basePath = Astro.url.pathname,
+} = Astro.props;
+
+const searchParams = Astro.url.searchParams;
+const query = searchParams.get("q")?.trim() ?? "";
+const selectedCategory = searchParams.get("category")?.trim() ?? "all";
+const selectedTag = searchParams.get("tag")?.trim() ?? "all";
+const sortBy = searchParams.get("sort")?.trim() ?? "updated";
+const layout = searchParams.get("layout") === "grid" ? "grid" : "list";
+
+const categories = Array.from(
+	new Map(
+		items.map((item) => [
+			item.categoryKey,
+			{ value: item.categoryKey, label: item.categoryLabel },
+		])
+	).values()
+);
+
+const tags = Array.from(new Set(items.flatMap((item) => item.tags))).sort((a, b) =>
+	a.localeCompare(b, "sv")
+);
+
+const filteredItems = items
+	.filter((item) => {
+		const matchesQuery =
+			!query ||
+			[item.title, item.excerpt, ...item.tags]
+				.join(" ")
+				.toLowerCase()
+				.includes(query.toLowerCase());
+		const matchesCategory = selectedCategory === "all" || item.categoryKey === selectedCategory;
+		const matchesTag = selectedTag === "all" || item.tags.includes(selectedTag);
+		return matchesQuery && matchesCategory && matchesTag;
+	})
+	.sort((a, b) => {
+		if (sortBy === "title") {
+			return a.title.localeCompare(b.title, "sv");
+		}
+		return items.indexOf(a) - items.indexOf(b);
+	});
+
+function buildLayoutHref(nextLayout: "list" | "grid") {
+	const next = new URLSearchParams(searchParams);
+	next.set("layout", nextLayout);
+	return `${basePath}?${next.toString()}`;
+}
+---
+
+<div class="space-y-6">
+	<section class="surface-panel p-4 md:p-5">
+		<div class="flex items-center gap-3 border-b border-[#eee7de] px-1 pb-4">
+			<a
+				href="/"
+				class="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 transition hover:bg-[#f6f1ea] hover:text-slate-900"
+				aria-label="Till dashboard"
+			>
+				<Icon name="chevron-left" class="h-4 w-4" />
+			</a>
+			<h1 class="text-lg font-semibold tracking-tight text-slate-900">{title}</h1>
+		</div>
+
+		<form method="get" class="space-y-4 pt-4">
+			<label class="block">
+				<span class="sr-only">Sök anteckningar</span>
+				<span class="flex items-center gap-3 rounded-[14px] border border-[#e7dfd5] bg-white px-4 py-3 shadow-sm">
+					<svg
+						class="h-4 w-4 shrink-0 text-slate-400"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.8"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<circle cx="11" cy="11" r="7"></circle>
+						<path d="m20 20-3.5-3.5"></path>
+					</svg>
+					<input
+						class="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400"
+						type="search"
+						name="q"
+						value={query}
+						placeholder="Sök anteckningar..."
+					/>
+				</span>
+			</label>
+
+			<div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+				<div class="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
+					<label class="relative">
+						<span class="sr-only">Kategori</span>
+						<select
+							name="category"
+							class="appearance-none rounded-[12px] border border-[#e7dfd5] bg-white py-2.5 pl-4 pr-10 text-sm font-medium text-slate-700 shadow-sm outline-none transition focus:border-slate-300"
+						>
+							<option value="all" selected={selectedCategory === "all"}>Alla kategorier</option>
+							{
+								categories.map((category) => (
+									<option
+										value={category.value}
+										selected={selectedCategory === category.value}
+									>
+										{category.label}
+									</option>
+								))
+							}
+						</select>
+						<Icon name="chevron-down" class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+					</label>
+
+					<label class="relative">
+						<span class="sr-only">Tagg</span>
+						<select
+							name="tag"
+							class="appearance-none rounded-[12px] border border-[#e7dfd5] bg-white py-2.5 pl-4 pr-10 text-sm font-medium text-slate-700 shadow-sm outline-none transition focus:border-slate-300"
+						>
+							<option value="all" selected={selectedTag === "all"}>Alla taggar</option>
+							{
+								tags.map((tag) => (
+									<option value={tag} selected={selectedTag === tag}>#{tag}</option>
+								))
+							}
+						</select>
+						<Icon name="chevron-down" class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+					</label>
+
+					<label class="relative">
+						<span class="sr-only">Sortering</span>
+						<select
+							name="sort"
+							class="appearance-none rounded-[12px] border border-[#e7dfd5] bg-white py-2.5 pl-4 pr-10 text-sm font-medium text-slate-700 shadow-sm outline-none transition focus:border-slate-300"
+						>
+							<option value="updated" selected={sortBy === "updated"}>Sortera: Senast ändrad</option>
+							<option value="title" selected={sortBy === "title"}>Sortera: Titel A-Ö</option>
+						</select>
+						<Icon name="chevron-down" class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+					</label>
+
+					<button
+						type="submit"
+						class="rounded-[12px] bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+					>
+						Filtrera
+					</button>
+				</div>
+
+				<div class="flex items-center gap-2">
+					<a
+						href={buildLayoutHref("list")}
+						class:list={[
+							"inline-flex h-10 w-10 items-center justify-center rounded-[12px] border shadow-sm transition",
+							layout === "list"
+								? "border-[#ddd3c5] bg-[#f4efe7] text-slate-900"
+								: "border-[#e7dfd5] bg-white text-slate-500 hover:bg-[#faf6ef]",
+						]}
+						aria-label="Listvy"
+					>
+						<Icon name="layout-list" class="h-4 w-4" />
+					</a>
+					<a
+						href={buildLayoutHref("grid")}
+						class:list={[
+							"inline-flex h-10 w-10 items-center justify-center rounded-[12px] border shadow-sm transition",
+							layout === "grid"
+								? "border-[#ddd3c5] bg-[#f4efe7] text-slate-900"
+								: "border-[#e7dfd5] bg-white text-slate-500 hover:bg-[#faf6ef]",
+						]}
+						aria-label="Kortvy"
+					>
+						<Icon name="layout-grid" class="h-4 w-4" />
+					</a>
+				</div>
+			</div>
+		</form>
+	</section>
+
+	<SectionCard
+		title="Resultat"
+		subtitle={`${filteredItems.length} anteckningar`}
+		bodyClass={layout === "grid" ? "" : "divide-y divide-[#efe8df]"}
+	>
+		{
+			filteredItems.length === 0 ? (
+				<div class="rounded-[16px] border border-dashed border-[#ddd3c5] bg-[#fbf7f1] px-5 py-8 text-sm text-slate-600">
+					{emptyMessage}
+				</div>
+			) : layout === "grid" ? (
+				<div class="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+					{
+						filteredItems.map((item) => (
+							<NoteCard item={item} />
+						))
+					}
+				</div>
+			) : (
+				<div>
+					{
+						filteredItems.map((item) => (
+							<NoteListRow item={item} />
+						))
+					}
+				</div>
+			)
+		}
+	</SectionCard>
+</div>
