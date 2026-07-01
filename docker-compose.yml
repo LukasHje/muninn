@@ -1,8 +1,6 @@
 services:
   muninn:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: muninn:latest
     container_name: muninn
     ports:
       - "4321:4321"
