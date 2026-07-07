@@ -1,0 +1,184 @@
+---
+import { ui } from "../../i18n";
+import { formatUiDateTime } from "../../i18n/format";
+import type { LibraryItem } from "../../lib/vault";
+import type { DataviewJsExecutionResult } from "../../lib/dataviewJs";
+import NoteContent from "../notes/NoteContent.astro";
+
+interface Props {
+	note: LibraryItem;
+	result: DataviewJsExecutionResult;
+}
+
+const { note, result } = Astro.props;
+
+function formatDate(timestamp: number) {
+	return formatUiDateTime(timestamp);
+}
+---
+
+{
+	result.type === "blocks" ? (
+		<div class="space-y-6">
+			{
+				result.blocks.map((block) =>
+					block.type === "markdown" ? (
+						<NoteContent note={note} content={block.markdown} />
+					) : block.type === "table" ? (
+						<section class="dataview-result">
+							<div class="dataview-result__card">
+								<div class="dataview-result__table-wrap">
+									<table class="dataview-result__table">
+										<thead>
+											<tr>
+												{block.columns.map((column) => (
+													<th>{column}</th>
+												))}
+											</tr>
+										</thead>
+										<tbody>
+											{block.rows.map((row) => (
+												<tr>
+													{row.map((cell) => (
+														<td>
+															{cell.kind === "link" ? (
+																<a href={cell.href}>{cell.label}</a>
+															) : cell.kind === "date" ? (
+																<span>{formatDate(cell.timestamp)}</span>
+															) : cell.kind === "html" ? (
+																<span set:html={cell.html}></span>
+															) : cell.kind === "text" ? (
+																<span>{cell.value}</span>
+															) : (
+																<span class="dataview-result__empty">-</span>
+															)}
+														</td>
+													))}
+												</tr>
+											))}
+										</tbody>
+									</table>
+								</div>
+							</div>
+						</section>
+					) : (
+						<section class="dataview-result">
+							<div class="dataview-result__card">
+								<ul class="dataview-result__list">
+									{block.items.map((item) => (
+										<li>
+											{item.kind === "link" ? (
+												<a href={item.href}>{item.label}</a>
+											) : item.kind === "date" ? (
+												<span>{formatDate(item.timestamp)}</span>
+											) : item.kind === "html" ? (
+												<span set:html={item.html}></span>
+											) : item.kind === "text" ? (
+												<span>{item.value}</span>
+											) : (
+												<span class="dataview-result__empty">-</span>
+											)}
+										</li>
+									))}
+								</ul>
+							</div>
+						</section>
+					)
+				)
+			}
+		</div>
+	) : (
+		<section class="dataview-card">
+			<div class="dataview-card__header">
+				<div>
+					<p class="dataview-card__title">{ui.dataview.jsTitle}</p>
+					<p class="dataview-card__subtitle">{result.reason}</p>
+				</div>
+				<button
+					type="button"
+					class="code-copy-button"
+					data-copy-code
+					data-copy-value={result.code}
+				>
+					{ui.common.copy}
+				</button>
+			</div>
+			<pre class="code-block__pre"><code>{result.code.replace(/\n$/, "")}</code></pre>
+		</section>
+	)
+}
+
+<style>
+	.dataview-result {
+		margin: 1.7rem 0;
+	}
+
+	.dataview-result__card {
+		overflow: hidden;
+		border: 1px solid #ebe4d8;
+		border-radius: 1.2rem;
+		background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, #fcfaf6 100%);
+		box-shadow: 0 16px 32px rgba(15, 23, 42, 0.06);
+	}
+
+	.dataview-result__table-wrap {
+		overflow-x: auto;
+	}
+
+	.dataview-result__table {
+		width: 100%;
+		border-collapse: collapse;
+	}
+
+	.dataview-result__table th,
+	.dataview-result__table td {
+		padding: 0.9rem 1rem;
+		text-align: left;
+		vertical-align: top;
+		border-bottom: 1px solid #efe7da;
+	}
+
+	.dataview-result__table th {
+		background: rgba(251, 248, 243, 0.95);
+		font-size: 0.82rem;
+		font-weight: 700;
+		letter-spacing: 0.02em;
+		color: #475569;
+	}
+
+	.dataview-result__table tbody tr:last-child td {
+		border-bottom: 0;
+	}
+
+	.dataview-result__table a,
+	.dataview-result__list a {
+		color: #0f172a;
+		font-weight: 600;
+		text-decoration: none;
+	}
+
+	.dataview-result__table a:hover,
+	.dataview-result__list a:hover {
+		color: #1d4ed8;
+		text-decoration: underline;
+	}
+
+	.dataview-result__list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	.dataview-result__list li {
+		padding: 0.95rem 1rem;
+		border-bottom: 1px solid #efe7da;
+	}
+
+	.dataview-result__list li:last-child {
+		border-bottom: 0;
+	}
+
+	.dataview-result__empty {
+		color: #64748b;
+	}
+</style>

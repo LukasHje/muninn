@@ -1,0 +1,615 @@
+---
+import Icon from "./Icon.astro";
+
+interface TagOption {
+	value: string;
+	count: number;
+	countLabel: string;
+}
+
+interface Props {
+	name?: string;
+	label: string;
+	allLabel: string;
+	searchLabel: string;
+	searchPlaceholder: string;
+	emptyLabel: string;
+	selectedTags: string[];
+	options: TagOption[];
+}
+
+const {
+	name = "tag",
+	label,
+	allLabel,
+	searchLabel,
+	searchPlaceholder,
+	emptyLabel,
+	selectedTags,
+	options,
+} = Astro.props;
+
+const pickerId = `${name}-picker`;
+---
+
+<div class="relative w-[18rem] shrink-0" data-tag-picker>
+	<script
+		type="application/json"
+		data-tag-picker-data
+		set:html={JSON.stringify({
+			name,
+			allLabel,
+			searchPlaceholder,
+			emptyLabel,
+			selectedTags,
+			options,
+		})}
+	></script>
+
+	<div data-tag-picker-inputs>
+		{
+			selectedTags.map((tag) => (
+				<input type="hidden" name={name} value={tag} />
+			))
+		}
+	</div>
+
+	<button
+		type="button"
+		class="relative flex h-[46px] w-full items-center overflow-hidden rounded-[12px] border border-[#e7dfd5] bg-white px-3 pr-10 text-left text-sm font-medium text-slate-700 shadow-sm outline-none transition hover:border-[#ddd3c5] focus:border-slate-300 focus:ring-2 focus:ring-slate-300/20"
+		aria-label={label}
+		aria-expanded="false"
+		aria-haspopup="listbox"
+		aria-controls={`${pickerId}-listbox`}
+		data-tag-picker-trigger
+	>
+		<span
+			class:list={[
+				"pointer-events-none absolute left-2.5 top-1/2 inline-flex h-5 min-w-5 -translate-y-1/2 items-center justify-center rounded-full bg-slate-900 px-1.5 text-[10px] font-semibold leading-none text-white shadow-sm transition-opacity",
+				selectedTags.length === 0 && "hidden",
+			]}
+			data-tag-picker-badge
+		>
+			{selectedTags.length}
+		</span>
+
+		<span class="relative min-w-0 flex-1 overflow-hidden">
+			<span
+				class:list={[
+					"flex min-w-0 items-center gap-1.5 whitespace-nowrap pr-7 text-sm",
+					selectedTags.length > 0 ? "pl-7" : "pl-0",
+				]}
+				style="-webkit-mask-image:linear-gradient(to right, black calc(100% - 24px), transparent);mask-image:linear-gradient(to right, black calc(100% - 24px), transparent);"
+				data-tag-picker-preview
+			>
+				{
+					selectedTags.length > 0 ? (
+						selectedTags.map((tag) => (
+							<span class="inline-flex shrink-0 items-center rounded-full bg-[#f4efe7] px-2 py-0.5 text-xs font-medium text-slate-600">
+								#{tag}
+							</span>
+						))
+					) : (
+						<span class="truncate text-slate-500">{allLabel}</span>
+					)
+				}
+			</span>
+			<span class="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white via-white/90 to-transparent"></span>
+		</span>
+
+		<span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2" data-tag-picker-caret>
+			<Icon
+				name="chevron-down"
+				class="h-4 w-4 text-slate-400 transition-transform"
+			/>
+		</span>
+	</button>
+
+	<div
+		class="absolute left-0 top-[calc(100%+0.5rem)] z-30 hidden w-[24rem] max-w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-[16px] border border-[#e7dfd5] bg-white p-3 shadow-[0_18px_40px_rgba(15,23,42,0.14)]"
+		role="dialog"
+		aria-label={label}
+		data-tag-picker-popover
+	>
+		<label class="sr-only" for={`${pickerId}-search`}>{searchLabel}</label>
+		<div class="flex items-center gap-3 rounded-[12px] border border-[#e7dfd5] bg-[#fcfaf7] px-3 py-2.5">
+			<svg
+				class="h-4 w-4 shrink-0 text-slate-400"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="1.8"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				aria-hidden="true"
+			>
+				<circle cx="11" cy="11" r="7"></circle>
+				<path d="m20 20-3.5-3.5"></path>
+			</svg>
+			<input
+				id={`${pickerId}-search`}
+				type="search"
+				class="min-w-0 flex-1 bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400"
+				placeholder={searchPlaceholder}
+				autocomplete="off"
+				spellcheck="false"
+				data-tag-picker-search
+			/>
+		</div>
+
+		<div class="mt-3 overflow-hidden rounded-[12px] border border-[#eee7de] bg-[#fcfaf7]">
+			<ul
+				id={`${pickerId}-listbox`}
+				class="max-h-72 overflow-y-auto p-1"
+				role="listbox"
+				aria-multiselectable="true"
+				data-tag-picker-options
+			>
+				{
+					options.map((option, index) => {
+						const isSelected = selectedTags.includes(option.value);
+						return (
+							<li data-tag-picker-item data-tag-picker-index={index}>
+								<button
+									type="button"
+									role="option"
+									aria-selected={isSelected ? "true" : "false"}
+									data-tag-picker-option={option.value}
+									data-tag-picker-index={index}
+									class:list={[
+										"flex w-full items-center justify-between gap-3 rounded-[10px] px-3 py-2.5 text-left text-sm text-slate-700 transition",
+										isSelected ? "bg-[#eef4ff] text-slate-900" : "hover:bg-[#f5efe6]",
+									]}
+								>
+									<span class="flex min-w-0 items-center gap-3">
+										<span
+											class:list={[
+												"flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-[11px] font-bold leading-none transition",
+												isSelected
+													? "border-sky-500 bg-sky-500 text-white"
+													: "border-[#ddd3c5] bg-white text-transparent",
+											]}
+											data-tag-picker-check
+										>
+											✓
+										</span>
+										<span class="truncate font-medium">#{option.value}</span>
+									</span>
+									<span class="shrink-0 text-xs text-slate-400">{option.countLabel}</span>
+								</button>
+							</li>
+						);
+					})
+				}
+			</ul>
+			<p class="hidden px-3 py-3 text-sm text-slate-500" data-tag-picker-empty>{emptyLabel}</p>
+		</div>
+	</div>
+</div>
+
+<script is:inline>
+	const normalizeTagPickerValue = (value) => value.replace(/^#+/, "").trim().toLocaleLowerCase();
+
+	const compareTagPickerLabels = (left, right) => left.localeCompare(right, "sv");
+
+	const previewChipClass =
+		"inline-flex shrink-0 items-center rounded-full bg-[#f4efe7] px-2 py-0.5 text-xs font-medium text-slate-600";
+	const optionBaseClass =
+		"flex w-full items-center justify-between gap-3 rounded-[10px] px-3 py-2.5 text-left text-sm text-slate-700 transition";
+	const optionIdleClass = "hover:bg-[#f5efe6]";
+	const optionSelectedClass = "bg-[#eef4ff] text-slate-900";
+	const optionActiveClass = "bg-[#f7f1e8]";
+	const checkBaseClass =
+		"flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-[11px] font-bold leading-none transition";
+	const checkIdleClass = "border-[#ddd3c5] bg-white text-transparent";
+	const checkSelectedClass = "border-sky-500 bg-sky-500 text-white";
+
+	const initializeTagPicker = (root) => {
+		if (!(root instanceof HTMLElement) || root.dataset.tagPickerInitialized === "true") {
+			return;
+		}
+
+		root.dataset.tagPickerInitialized = "true";
+
+		const dataElement = root.querySelector("[data-tag-picker-data]");
+		const trigger = root.querySelector("[data-tag-picker-trigger]");
+		const badge = root.querySelector("[data-tag-picker-badge]");
+		const preview = root.querySelector("[data-tag-picker-preview]");
+		const popover = root.querySelector("[data-tag-picker-popover]");
+		const caret = root.querySelector("[data-tag-picker-caret]");
+		const searchInput = root.querySelector("[data-tag-picker-search]");
+		const optionsList = root.querySelector("[data-tag-picker-options]");
+		const emptyState = root.querySelector("[data-tag-picker-empty]");
+		const hiddenInputs = root.querySelector("[data-tag-picker-inputs]");
+
+		if (
+			!(dataElement instanceof HTMLScriptElement) ||
+			!(trigger instanceof HTMLButtonElement) ||
+			!(badge instanceof HTMLElement) ||
+			!(preview instanceof HTMLElement) ||
+			!(popover instanceof HTMLElement) ||
+			!(caret instanceof HTMLElement) ||
+			!(searchInput instanceof HTMLInputElement) ||
+			!(optionsList instanceof HTMLUListElement) ||
+			!(emptyState instanceof HTMLElement) ||
+			!(hiddenInputs instanceof HTMLElement)
+		) {
+			return;
+		}
+
+		const data = JSON.parse(dataElement.textContent || "{}");
+		const allOptions = Array.isArray(data.options) ? data.options : [];
+		const name = typeof data.name === "string" ? data.name : "tag";
+		const allLabel = typeof data.allLabel === "string" ? data.allLabel : "All tags";
+		const emptyLabel = typeof data.emptyLabel === "string" ? data.emptyLabel : "No matching tags found.";
+
+		const optionRecords = allOptions
+			.map((option, index) => {
+				const item = optionsList.querySelector(`[data-tag-picker-item][data-tag-picker-index="${index}"]`);
+				const button = optionsList.querySelector(`[data-tag-picker-option][data-tag-picker-index="${index}"]`);
+				const check = item?.querySelector("[data-tag-picker-check]");
+
+				if (!(item instanceof HTMLElement) || !(button instanceof HTMLButtonElement) || !(check instanceof HTMLElement)) {
+					return null;
+				}
+
+				return { ...option, item, button, check };
+			})
+			.filter(Boolean);
+
+		let selected = Array.isArray(data.selectedTags)
+			? Array.from(new Set(data.selectedTags.filter((value) => typeof value === "string" && value.trim())))
+			: [];
+		let query = "";
+		let open = false;
+		let visibleOptions = [];
+		let activeIndex = -1;
+
+		const buildHiddenInput = (value) => {
+			const input = document.createElement("input");
+			input.type = "hidden";
+			input.name = name;
+			input.value = value;
+			return input;
+		};
+
+		const buildPreviewChip = (label) => {
+			const chip = document.createElement("span");
+			chip.className = previewChipClass;
+			chip.textContent = label;
+			return chip;
+		};
+
+		const renderPreview = () => {
+			preview.innerHTML = "";
+			preview.classList.toggle("pl-7", selected.length > 0);
+			preview.classList.toggle("pl-0", selected.length === 0);
+
+			if (selected.length === 0) {
+				const placeholder = document.createElement("span");
+				placeholder.className = "truncate text-slate-500";
+				placeholder.textContent = allLabel;
+				preview.append(placeholder);
+				return;
+			}
+
+			selected.forEach((tag) => {
+				preview.append(buildPreviewChip(`#${tag}`));
+			});
+		};
+
+		const renderHiddenInputs = () => {
+			hiddenInputs.innerHTML = "";
+			selected.forEach((tag) => hiddenInputs.append(buildHiddenInput(tag)));
+		};
+
+		const updateBadge = () => {
+			badge.textContent = String(selected.length);
+			badge.classList.toggle("hidden", selected.length === 0);
+		};
+
+		const getSortedVisibleOptions = () => {
+			const normalizedQuery = normalizeTagPickerValue(query);
+			const selectedLookup = new Set(selected);
+			const selectedOrder = new Map(selected.map((tag, index) => [tag, index]));
+
+			const filtered = optionRecords.filter((option) => {
+				if (!normalizedQuery) {
+					return true;
+				}
+
+				if (selectedLookup.has(option.value)) {
+					return true;
+				}
+
+				return normalizeTagPickerValue(option.value).includes(normalizedQuery);
+			});
+
+			return filtered.sort((left, right) => {
+				const leftSelected = selectedLookup.has(left.value);
+				const rightSelected = selectedLookup.has(right.value);
+
+				if (leftSelected && rightSelected) {
+					return (selectedOrder.get(left.value) ?? 0) - (selectedOrder.get(right.value) ?? 0);
+				}
+
+				if (leftSelected !== rightSelected) {
+					return leftSelected ? -1 : 1;
+				}
+
+				if (normalizedQuery) {
+					const leftMatches = normalizeTagPickerValue(left.value).includes(normalizedQuery);
+					const rightMatches = normalizeTagPickerValue(right.value).includes(normalizedQuery);
+
+					if (leftMatches !== rightMatches) {
+						return leftMatches ? -1 : 1;
+					}
+				}
+
+				if (left.count !== right.count) {
+					return right.count - left.count;
+				}
+
+				return compareTagPickerLabels(left.value, right.value);
+			});
+		};
+
+		const applyOptionState = (option, isSelected, isActive) => {
+			option.button.className = [
+				optionBaseClass,
+				isSelected ? optionSelectedClass : optionIdleClass,
+				isActive ? optionActiveClass : "",
+			]
+				.filter(Boolean)
+				.join(" ");
+			option.button.setAttribute("aria-selected", isSelected ? "true" : "false");
+			option.button.tabIndex = isActive ? 0 : -1;
+			option.check.className = [
+				checkBaseClass,
+				isSelected ? checkSelectedClass : checkIdleClass,
+			].join(" ");
+		};
+
+		const renderOptions = () => {
+			visibleOptions = getSortedVisibleOptions();
+			const visibleLookup = new Set(visibleOptions.map((option) => option.value));
+
+			emptyState.textContent = emptyLabel;
+			emptyState.classList.toggle("hidden", visibleOptions.length > 0);
+			optionsList.classList.toggle("hidden", visibleOptions.length === 0);
+
+			if (visibleOptions.length === 0) {
+				activeIndex = -1;
+			} else if (activeIndex < 0 || activeIndex >= visibleOptions.length) {
+				activeIndex = 0;
+			}
+
+			visibleOptions.forEach((option, index) => {
+				applyOptionState(option, selected.includes(option.value), index === activeIndex);
+				option.item.classList.remove("hidden");
+				optionsList.append(option.item);
+			});
+
+			optionRecords.forEach((option) => {
+				if (!visibleLookup.has(option.value)) {
+					option.item.classList.add("hidden");
+					applyOptionState(option, selected.includes(option.value), false);
+				}
+			});
+		};
+
+		const renderAll = () => {
+			renderPreview();
+			renderHiddenInputs();
+			updateBadge();
+			renderOptions();
+		};
+
+		const openPopover = () => {
+			if (open) {
+				return;
+			}
+
+			open = true;
+			popover.classList.remove("hidden");
+			trigger.setAttribute("aria-expanded", "true");
+			caret.classList.add("rotate-180");
+			renderOptions();
+			requestAnimationFrame(() => {
+				searchInput.focus();
+				searchInput.select();
+			});
+		};
+
+		const closePopover = () => {
+			if (!open) {
+				return;
+			}
+
+			open = false;
+			query = "";
+			searchInput.value = "";
+			popover.classList.add("hidden");
+			trigger.setAttribute("aria-expanded", "false");
+			caret.classList.remove("rotate-180");
+			activeIndex = -1;
+			renderOptions();
+		};
+
+		const toggleTag = (value) => {
+			if (selected.includes(value)) {
+				selected = selected.filter((entry) => entry !== value);
+			} else {
+				selected = [...selected, value];
+			}
+
+			renderAll();
+		};
+
+		const focusActiveOption = () => {
+			if (activeIndex < 0 || activeIndex >= visibleOptions.length) {
+				return;
+			}
+
+			const activeOption = visibleOptions[activeIndex];
+			activeOption.button.focus();
+			activeOption.button.scrollIntoView({ block: "nearest" });
+		};
+
+		trigger.addEventListener("click", () => {
+			if (open) {
+				closePopover();
+				return;
+			}
+
+			openPopover();
+		});
+
+		trigger.addEventListener("keydown", (event) => {
+			if (!(event instanceof KeyboardEvent)) {
+				return;
+			}
+
+			if (event.key === "Enter" || event.key === " " || event.key === "ArrowDown" || event.key === "ArrowUp") {
+				event.preventDefault();
+				openPopover();
+				if (event.key === "ArrowUp" && visibleOptions.length > 0) {
+					activeIndex = visibleOptions.length - 1;
+					renderOptions();
+				}
+			}
+		});
+
+		searchInput.addEventListener("input", () => {
+			query = searchInput.value;
+			activeIndex = 0;
+			renderOptions();
+		});
+
+		searchInput.addEventListener("keydown", (event) => {
+			if (!(event instanceof KeyboardEvent)) {
+				return;
+			}
+
+			if (event.key === "ArrowDown") {
+				event.preventDefault();
+				if (visibleOptions.length === 0) {
+					return;
+				}
+				activeIndex = (activeIndex + 1 + visibleOptions.length) % visibleOptions.length;
+				renderOptions();
+				focusActiveOption();
+			}
+
+			if (event.key === "ArrowUp") {
+				event.preventDefault();
+				if (visibleOptions.length === 0) {
+					return;
+				}
+				activeIndex = (activeIndex - 1 + visibleOptions.length) % visibleOptions.length;
+				renderOptions();
+				focusActiveOption();
+			}
+
+			if (event.key === "Enter") {
+				if (activeIndex < 0 || activeIndex >= visibleOptions.length) {
+					return;
+				}
+				event.preventDefault();
+				toggleTag(visibleOptions[activeIndex].value);
+			}
+
+			if (event.key === "Escape") {
+				event.preventDefault();
+				closePopover();
+				trigger.focus();
+			}
+
+			if (event.key === "Backspace" && searchInput.value === "" && selected.length > 0) {
+				event.preventDefault();
+				selected = selected.slice(0, -1);
+				renderAll();
+			}
+		});
+
+		optionsList.addEventListener("click", (event) => {
+			const target = event.target;
+			if (!(target instanceof Element)) {
+				return;
+			}
+
+			const button = target.closest("[data-tag-picker-option]");
+			if (!(button instanceof HTMLButtonElement)) {
+				return;
+			}
+
+			const value = button.dataset.tagPickerOption;
+			if (value) {
+				toggleTag(value);
+			}
+		});
+
+		optionsList.addEventListener("keydown", (event) => {
+			if (!(event instanceof KeyboardEvent)) {
+				return;
+			}
+
+			const target = event.target;
+			if (!(target instanceof HTMLButtonElement)) {
+				return;
+			}
+
+			const value = target.dataset.tagPickerOption;
+			const index = visibleOptions.findIndex((option) => option.value === value);
+			if (index >= 0) {
+				activeIndex = index;
+			}
+
+			if (event.key === "ArrowDown") {
+				event.preventDefault();
+				if (visibleOptions.length === 0) {
+					return;
+				}
+				activeIndex = (activeIndex + 1 + visibleOptions.length) % visibleOptions.length;
+				renderOptions();
+				focusActiveOption();
+			}
+
+			if (event.key === "ArrowUp") {
+				event.preventDefault();
+				if (visibleOptions.length === 0) {
+					return;
+				}
+				activeIndex = (activeIndex - 1 + visibleOptions.length) % visibleOptions.length;
+				renderOptions();
+				focusActiveOption();
+			}
+
+			if (event.key === "Enter" || event.key === " ") {
+				event.preventDefault();
+				if (value) {
+					toggleTag(value);
+				}
+			}
+
+			if (event.key === "Escape") {
+				event.preventDefault();
+				closePopover();
+				trigger.focus();
+			}
+		});
+
+		document.addEventListener("click", (event) => {
+			const target = event.target;
+			if (!(target instanceof Node) || root.contains(target)) {
+				return;
+			}
+
+			closePopover();
+		});
+
+		renderAll();
+	};
+
+	document.querySelectorAll("[data-tag-picker]").forEach((root) => initializeTagPicker(root));
+</script>

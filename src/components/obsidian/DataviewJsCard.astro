@@ -1,0 +1,27 @@
+---
+import { ui } from "../../i18n";
+
+interface Props {
+	code: string;
+}
+
+const { code } = Astro.props;
+---
+
+<section class="dataview-card">
+	<div class="dataview-card__header">
+		<div>
+			<p class="dataview-card__title">{ui.dataview.jsTitle}</p>
+			<p class="dataview-card__subtitle">{ui.dataview.jsSubtitle}</p>
+		</div>
+		<button
+			type="button"
+			class="code-copy-button"
+			data-copy-code
+			data-copy-value={code}
+		>
+			{ui.common.copy}
+		</button>
+	</div>
+	<pre class="code-block__pre"><code>{code.replace(/\n$/, "")}</code></pre>
+</section>

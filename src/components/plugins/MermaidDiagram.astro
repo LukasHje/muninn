@@ -1,0 +1,55 @@
+---
+import { ui } from "../../i18n";
+
+interface Props {
+	code: string;
+}
+
+const { code } = Astro.props;
+---
+
+<section class="surface-card overflow-hidden border-[#e5ddd1] bg-white p-3 shadow-[0_12px_28px_rgba(15,23,42,0.05)] md:p-4">
+	<div
+		data-mermaid-diagram
+		data-mermaid-code={code}
+		class="mermaid-diagram rounded-[20px] border border-[#e8dfd3] bg-[#fbf8f2] p-4"
+	>
+		<div class="mermaid-diagram__placeholder">
+			<p class="text-sm font-semibold text-slate-700">{ui.mermaid.title}</p>
+			<p class="mt-2 text-sm leading-6 text-slate-500">{ui.mermaid.placeholder}</p>
+		</div>
+	</div>
+</section>
+
+<script type="module">
+	import initMermaidDiagrams from "./MermaidDiagramClient.ts";
+
+	initMermaidDiagrams();
+</script>
+
+<style>
+	.mermaid-diagram :global(svg) {
+		display: block;
+		max-width: 100%;
+		height: auto;
+		margin: 0 auto;
+	}
+
+	.mermaid-diagram__placeholder {
+		display: grid;
+		min-height: 220px;
+		place-items: center;
+		text-align: center;
+	}
+	.mermaid-diagram__error {
+		display: grid;
+		min-height: 220px;
+		place-items: center;
+		text-align: center;
+		border: 1px dashed #dbcdb6;
+		border-radius: 1rem;
+		background: linear-gradient(180deg, #fbf7f1 0%, #f6efe5 100%);
+		color: #475569;
+		padding: 1.5rem;
+	}
+</style>
