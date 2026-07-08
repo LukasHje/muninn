@@ -1,16 +1,35 @@
 ---
+import { highlightSearchText } from "lib/searchHighlight";
+import type { NoteSearchMatchField } from "lib/noteSearch";
 import type { LibraryItem } from "lib/vault";
 import FavoriteToggleButton from "components/FavoriteToggleButton.astro";
 
 interface Props {
 	item: LibraryItem;
 	selectedTags?: string[];
+	searchQuery?: string;
+	searchSnippet?: string;
+	searchField?: NoteSearchMatchField;
+	hrefOverride?: string;
 }
 
-const { item, selectedTags = [] } = Astro.props;
+const { item, selectedTags = [], searchQuery, searchSnippet, searchField, hrefOverride } = Astro.props;
 const redirectTo = Astro.url.pathname + Astro.url.search;
-const noteHref = `${item.href}?returnTo=${encodeURIComponent(redirectTo)}`;
+
+function buildNoteHref(href: string) {
+	const [pathAndQuery, hash = ""] = href.split("#");
+	const separator = pathAndQuery.includes("?") ? "&" : "?";
+	return `${pathAndQuery}${separator}returnTo=${encodeURIComponent(redirectTo)}${hash ? `#${hash}` : ""}`;
+}
+
+const noteHref = buildNoteHref(hrefOverride ?? item.href);
 const selectedTagSet = new Set(selectedTags);
+const titleHtml = searchQuery
+	? highlightSearchText(item.title, searchQuery, { field: "title" })
+	: null;
+const snippetHtml = searchQuery && searchSnippet && searchField
+	? highlightSearchText(searchSnippet, searchQuery, { field: searchField })
+	: null;
 ---
 
 <article class="group">
@@ -33,12 +52,23 @@ const selectedTagSet = new Set(selectedTags);
 			<div class="min-w-0 flex-1">
 				<div class="flex items-start justify-between gap-4">
 					<div class="min-w-0">
-						<h2 class="truncate text-[1.05rem] font-semibold tracking-tight text-slate-900">
-							{item.title}
-						</h2>
-						<div class="mt-2 flex flex-wrap gap-2">
+						{
+							titleHtml ? (
+								<h2 class="truncate text-[1.05rem] font-semibold tracking-tight text-slate-900" set:html={titleHtml}></h2>
+							) : (
+								<h2 class="truncate text-[1.05rem] font-semibold tracking-tight text-slate-900">
+									{item.title}
+								</h2>
+							)
+						}
 							{
-								item.tags.map((tag) => (
+								snippetHtml && (
+									<p class="mt-1 text-sm leading-6 text-slate-600" set:html={snippetHtml}></p>
+								)
+							}
+							<div class="mt-2 flex flex-wrap gap-2">
+								{
+									item.tags.map((tag) => (
 									<span
 										class:list={[
 											"rounded-full px-2.5 py-0.5 text-xs font-medium",
@@ -47,10 +77,16 @@ const selectedTagSet = new Set(selectedTags);
 												: "bg-[#f4efe7] text-slate-500",
 										]}
 									>
-										#{tag}
-									</span>
-								))
-							}
+											{
+												searchQuery ? (
+													<span set:html={`#${highlightSearchText(tag, searchQuery, { field: "tag" })}`}></span>
+												) : (
+													`#${tag}`
+												)
+											}
+										</span>
+									))
+								}
 						</div>
 					</div>
 					<div class="flex shrink-0 items-center gap-4">

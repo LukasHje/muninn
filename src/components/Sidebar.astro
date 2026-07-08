@@ -2,7 +2,7 @@
 import { ui } from "i18n";
 import type { SidebarCategory, SidebarNavigationItem } from "lib/vault";
 import Icon from "components/Icon.astro";
-import SearchBar from "components/SearchBar.astro";
+import QuickSearch from "components/QuickSearch.astro";
 
 interface Props {
 	navigation: SidebarNavigationItem[];
@@ -26,7 +26,7 @@ const currentPath = Astro.url.pathname;
 	</div>
 
 	<div class="mt-6">
-		<SearchBar tone="dark" shortcut="⌘K" />
+		<QuickSearch />
 	</div>
 
 	<nav class="mt-5 space-y-1" aria-label={ui.navigation.primaryLabel}>

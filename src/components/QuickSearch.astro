@@ -1,0 +1,60 @@
+---
+import Icon from "components/Icon.astro";
+import { ui } from "i18n";
+---
+
+<div
+	data-quick-search
+	data-quick-search-endpoint="/api/search-index.json"
+	data-quick-search-results-path="/notes"
+	data-loading-label={ui.quickSearch.loading}
+	data-empty-label={ui.quickSearch.empty}
+	data-show-all-label={ui.quickSearch.showAllResults}
+	data-favorite-label={ui.quickSearch.favorite}
+	data-result-label={ui.quickSearch.result}
+	data-results-label-template={ui.quickSearch.results("__COUNT__")}
+	class="relative"
+>
+	<label class="block">
+		<span class="sr-only">{ui.quickSearch.label}</span>
+		<span class="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white shadow-sm transition focus-within:ring-2 focus-within:ring-sky-400/25">
+			<Icon name="search" class="h-4 w-4 shrink-0 text-white/65" />
+			<input
+				data-quick-search-input
+				class="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/45"
+				type="search"
+				autocomplete="off"
+				spellcheck="false"
+				placeholder={ui.quickSearch.placeholder}
+				aria-autocomplete="list"
+				aria-expanded="false"
+				aria-haspopup="listbox"
+			/>
+			<span class="rounded-lg border border-white/10 px-2 py-1 text-xs font-medium text-white/55">
+				⌘K
+			</span>
+		</span>
+	</label>
+
+	<div
+		data-quick-search-popover
+		class="hidden overflow-hidden rounded-[22px] border border-white/10 bg-[rgba(15,23,42,0.94)] shadow-[0_28px_60px_rgba(2,6,23,0.42)] backdrop-blur-xl"
+	>
+		<div data-quick-search-status class="border-b border-white/8 px-4 py-3 text-sm text-white/55"></div>
+		<div data-quick-search-results role="listbox" class="max-h-[520px] overflow-y-auto p-2"></div>
+		<a
+			data-quick-search-show-all
+			href="/notes"
+			class="flex items-center justify-between border-t border-white/8 px-4 py-3 text-sm font-medium text-white/72 transition hover:bg-white/6 hover:text-white"
+		>
+			<span>{ui.quickSearch.showAllResults}</span>
+			<span aria-hidden="true">→</span>
+		</a>
+	</div>
+</div>
+
+<script type="module">
+	import initQuickSearch from "components/QuickSearchClient.ts";
+
+	initQuickSearch();
+</script>

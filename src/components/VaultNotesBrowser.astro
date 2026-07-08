@@ -7,6 +7,7 @@ import NoteListRow from "components/NoteListRow.astro";
 import SectionCard from "components/SectionCard.astro";
 import TagMultiSelect from "components/TagMultiSelect.astro";
 import { getNoteBrowserState } from "lib/noteBrowserState";
+import { buildNoteSearchDocuments, searchNoteDocuments } from "lib/noteSearch";
 import type { LibraryItem } from "lib/vault";
 
 interface Props {
@@ -60,20 +61,23 @@ const tagOptions = Array.from(tagCounts.entries())
 
 const selectedTagSet = new Set(selectedTags);
 
-const filteredItems = items
+const scopedItems = items
 	.filter((item) => {
-		const matchesQuery =
-			!query ||
-			[item.title, item.excerpt, ...item.tags]
-				.join(" ")
-				.toLowerCase()
-				.includes(query.toLowerCase());
 		const matchesCategory = selectedCategory === "all" || item.categoryKey === selectedCategory;
 		const matchesTag =
 			selectedTags.length === 0 || item.tags.some((tag) => selectedTagSet.has(tag));
-		return matchesQuery && matchesCategory && matchesTag;
-	})
-	.sort((a, b) => {
+		return matchesCategory && matchesTag;
+	});
+
+const scopedItemsById = new Map(scopedItems.map((item) => [item.id, item]));
+const queryResults = query ? searchNoteDocuments(buildNoteSearchDocuments(scopedItems), query) : [];
+const queryResultMap = new Map(queryResults.map((result) => [result.id, result]));
+
+const filteredItems = query
+	? queryResults
+		.map((result) => scopedItemsById.get(result.id))
+		.filter((item): item is LibraryItem => Boolean(item))
+	: scopedItems.sort((a, b) => {
 		if (sortBy === "title") {
 			return a.title.localeCompare(b.title, "sv");
 		}
@@ -228,7 +232,14 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 				<div class="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
 					{
 						filteredItems.map((item) => (
-							<NoteCard item={item} selectedTags={selectedTags} />
+							<NoteCard
+								item={item}
+								selectedTags={selectedTags}
+								searchQuery={query || undefined}
+								searchSnippet={queryResultMap.get(item.id)?.snippet}
+								searchField={queryResultMap.get(item.id)?.field}
+								hrefOverride={queryResultMap.get(item.id)?.href}
+							/>
 						))
 					}
 				</div>
@@ -236,7 +247,14 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 				<div>
 					{
 						filteredItems.map((item) => (
-							<NoteListRow item={item} selectedTags={selectedTags} />
+							<NoteListRow
+								item={item}
+								selectedTags={selectedTags}
+								searchQuery={query || undefined}
+								searchSnippet={queryResultMap.get(item.id)?.snippet}
+								searchField={queryResultMap.get(item.id)?.field}
+								hrefOverride={queryResultMap.get(item.id)?.href}
+							/>
 						))
 					}
 				</div>

@@ -14,6 +14,16 @@ export const en = {
 		categories: "Categories",
 		poweredByAstro: "Powered by Astro",
 	},
+	quickSearch: {
+		label: "Quick search",
+		placeholder: "Quick search notes...",
+		loading: "Loading search index...",
+		empty: "No matching notes.",
+		showAllResults: "Show all results",
+		favorite: "Favorite",
+		results: (countLabel: string) => `${countLabel} results`,
+		result: "1 result",
+	},
 	categories: {
 		project: "Projects",
 		recipe: "Recipes",
