@@ -1,5 +1,5 @@
 ---
-import type { ParsedMapBlock } from "../../lib/parseMapBlock";
+import type { ParsedMapBlock } from "lib/parseMapBlock";
 
 interface Props {
 	map: ParsedMapBlock;
@@ -21,7 +21,7 @@ const { map } = Astro.props;
 </div>
 
 <script type="module">
-	import initLeafletMaps from "./LeafletMapClient.ts";
+	import initLeafletMaps from "components/maps/LeafletMapClient.ts";
 
 	initLeafletMaps();
 </script>

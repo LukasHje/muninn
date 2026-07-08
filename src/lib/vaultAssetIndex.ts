@@ -1,6 +1,6 @@
 import { readdir } from "node:fs/promises";
 import path from "node:path";
-import { RESOLVED_VAULT_PATH } from "./config";
+import { RESOLVED_VAULT_PATH } from "lib/config";
 
 export interface VaultAssetEntry {
 	absolutePath: string;

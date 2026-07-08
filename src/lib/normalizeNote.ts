@@ -1,5 +1,5 @@
 import path from "node:path";
-import { slugifySegment } from "./parser";
+import { slugifySegment } from "lib/parser";
 
 export type NormalizedCategory =
 	| "projekt"

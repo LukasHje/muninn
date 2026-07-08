@@ -1,13 +1,14 @@
 ---
-import DashboardCard from "../components/DashboardCard.astro";
-import FavoritesList from "../components/FavoritesList.astro";
-import Hero from "../components/Hero.astro";
-import NoteCard from "../components/NoteCard.astro";
-import ScratchpadComposer from "../components/ScratchpadComposer.astro";
-import SectionCard from "../components/SectionCard.astro";
-import TagChip from "../components/TagChip.astro";
-import TodayNoteCard from "../components/TodayNoteCard.astro";
-import MainLayout from "../layouts/MainLayout.astro";
+import DashboardCard from "components/DashboardCard.astro";
+import FavoritesList from "components/FavoritesList.astro";
+import Hero from "components/Hero.astro";
+import NoteCard from "components/NoteCard.astro";
+import ScratchpadComposer from "components/ScratchpadComposer.astro";
+import SectionCard from "components/SectionCard.astro";
+import TagChip from "components/TagChip.astro";
+import TodayNoteCard from "components/TodayNoteCard.astro";
+import { ui, withSiteName } from "i18n";
+import MainLayout from "layouts/MainLayout.astro";
 import {
 	getDashboardHero,
 	getDashboardMetrics,
@@ -15,7 +16,7 @@ import {
 	getPopularTags,
 	getRecentItems,
 	getTodayEntry,
-} from "../lib/vault";
+} from "lib/vault";
 
 const [dashboardHero, dashboardMetrics, favoriteLinks, popularTags, recentItems, todayEntry] =
 	await Promise.all([
@@ -28,7 +29,7 @@ const [dashboardHero, dashboardMetrics, favoriteLinks, popularTags, recentItems,
 	]);
 ---
 
-<MainLayout title="Muninn | Dashboard">
+<MainLayout title={withSiteName(ui.pages.dashboardTitle)}>
 	<div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
 		<div class="space-y-6">
 			<Hero
@@ -45,13 +46,13 @@ const [dashboardHero, dashboardMetrics, favoriteLinks, popularTags, recentItems,
 				}
 			</section>
 
-			<SectionCard title="Nyligen uppdaterade">
+			<SectionCard title={ui.dashboard.recentlyUpdated}>
 				<a
 					slot="actions"
 					href="/notes"
 					class="text-sm font-medium text-slate-500 transition hover:text-slate-900"
 				>
-					Visa alla →
+					{ui.dashboard.viewAll} →
 				</a>
 				<div class="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
 					{
@@ -62,7 +63,7 @@ const [dashboardHero, dashboardMetrics, favoriteLinks, popularTags, recentItems,
 				</div>
 			</SectionCard>
 
-			<SectionCard title="Populära taggar">
+			<SectionCard title={ui.dashboard.popularTags}>
 				<div class="flex flex-wrap gap-3">
 					{
 						popularTags.map((tag) => (

@@ -1,19 +1,15 @@
 ---
 import { Marked } from "marked";
-import type { LibraryItem } from "../../lib/vault";
-import Icon from "../Icon.astro";
-import NoteContent from "../notes/NoteContent.astro";
+import Icon from "components/Icon.astro";
 
 interface Props {
-	note: LibraryItem;
 	calloutType: string;
 	title: string;
 	collapsible: boolean;
 	collapsed: boolean;
-	content: string;
 }
 
-const { note, calloutType, title, collapsible, collapsed, content } = Astro.props;
+const { calloutType, title, collapsible, collapsed } = Astro.props;
 const inlineMarkdown = new Marked({ gfm: true, breaks: true });
 
 function renderInlineMarkdown(value: string) {
@@ -93,7 +89,7 @@ const titleHtml = renderInlineMarkdown(title);
 				<Icon name="chevron-right" class="obsidian-callout__chevron" />
 			</summary>
 			<div class="obsidian-callout__content">
-				<NoteContent note={note} content={content} />
+				<slot />
 			</div>
 		</details>
 	) : (
@@ -105,7 +101,7 @@ const titleHtml = renderInlineMarkdown(title);
 				</span>
 			</div>
 			<div class="obsidian-callout__content">
-				<NoteContent note={note} content={content} />
+				<slot />
 			</div>
 		</section>
 	)

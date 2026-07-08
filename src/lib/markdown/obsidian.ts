@@ -1,8 +1,10 @@
 import path from "node:path";
-import { executeDataviewLite } from "../dataviewLite";
-import { executeDataviewJs } from "../dataviewJs";
-import { parseObsidianAssetRef, resolveObsidianAsset } from "../resolveObsidianAsset";
-import type { MarkdownDocumentSegment, MarkdownParseContext } from "./types";
+import { executeDataviewLite } from "lib/dataviewLite";
+import { executeDataviewJs } from "lib/dataviewJs";
+import { parseObsidianAssetRef, resolveObsidianAsset } from "lib/resolveObsidianAsset";
+import type { MarkdownDocumentSegment, MarkdownParseContext } from "lib/markdown/types";
+
+type ParseNestedSegments = (raw: string, keyPrefix: string) => Promise<MarkdownDocumentSegment[]>;
 
 function escapeMarkdownLabel(value: string) {
 	return value.replace(/]/g, "\\]");
@@ -22,23 +24,62 @@ function buildLookupKeys(value: string) {
 		return [];
 	}
 
-	const relativeLower = cleaned.toLowerCase();
 	const segments = cleaned.split("/").map((segment) => segment.trim()).filter(Boolean);
-	const slugPath = segments
-		.map((segment) =>
-			segment
-				.toLowerCase()
-				.normalize("NFD")
-				.replace(/\p{Diacritic}/gu, "")
-				.replace(/[^a-z0-9]+/g, "-")
-				.replace(/^-|-$/g, "")
-		)
-		.filter(Boolean)
-		.join("/");
 	const basename = segments.at(-1) ?? cleaned;
-	const slugBase = slugPath.split("/").at(-1) ?? slugPath;
+	const strippedBasename = basename.replace(/^(?:on\s*\/\s*)?for\s+/i, "").trim();
+	const candidates = new Set<string>([cleaned, basename]);
 
-	return Array.from(new Set([relativeLower, slugPath, basename.toLowerCase(), slugBase].filter(Boolean)));
+	if (strippedBasename && strippedBasename !== basename) {
+		candidates.add(strippedBasename);
+		if (segments.length > 1) {
+			candidates.add([...segments.slice(0, -1), strippedBasename].join("/"));
+		}
+	}
+
+	return Array.from(
+		new Set(
+			Array.from(candidates).flatMap((candidate) => {
+				const normalizedCandidate = candidate.replace(/^\/+/, "").replace(/\.md$/i, "").trim();
+				if (!normalizedCandidate) {
+					return [];
+				}
+
+				const normalizedSegments = normalizedCandidate
+					.split("/")
+					.map((segment) => segment.trim())
+					.filter(Boolean);
+				const relativeLower = normalizedCandidate.toLowerCase();
+				const slugPath = normalizedSegments
+					.map((segment) =>
+						segment
+							.toLowerCase()
+							.normalize("NFD")
+							.replace(/\p{Diacritic}/gu, "")
+							.replace(/[^a-z0-9]+/g, "-")
+							.replace(/^-|-$/g, "")
+					)
+					.filter(Boolean)
+					.join("/");
+				const candidateBasename = normalizedSegments.at(-1) ?? normalizedCandidate;
+				const slugBase = slugPath.split("/").at(-1) ?? slugPath;
+
+				return [relativeLower, slugPath, candidateBasename.toLowerCase(), slugBase].filter(Boolean);
+			})
+		)
+	);
+}
+
+function splitWikiLinkTarget(target: string) {
+	const trimmed = target.trim();
+	const headingSeparatorIndex = trimmed.indexOf("#");
+	if (headingSeparatorIndex === -1) {
+		return { noteTarget: trimmed, headingTarget: "" };
+	}
+
+	return {
+		noteTarget: trimmed.slice(0, headingSeparatorIndex).trim(),
+		headingTarget: trimmed.slice(headingSeparatorIndex + 1).trim(),
+	};
 }
 
 function toMarkdownAssetImage(reference: string, alt = "", width?: number | null) {
@@ -150,11 +191,12 @@ function isCalloutHeader(line: string) {
 	return /^\s*>\s*\[!([A-Za-z-]+)\]([+-])?\s*(.*)$/.test(line);
 }
 
-function splitObsidianMarkdownSegments(
+async function splitObsidianMarkdownSegments(
 	raw: string,
 	context: MarkdownParseContext,
-	keyPrefix: string
-): MarkdownDocumentSegment[] {
+	keyPrefix: string,
+	parseNested: ParseNestedSegments
+): Promise<MarkdownDocumentSegment[]> {
 	const lines = raw.split("\n");
 	const segments: MarkdownDocumentSegment[] = [];
 	const textBuffer: string[] = [];
@@ -218,15 +260,16 @@ function splitObsidianMarkdownSegments(
 		const collapseMarker = headerMatch[2] ?? "";
 		const title = headerMatch[3]?.trim() || prettifyCalloutLabel(calloutType);
 
+		const calloutKey = `${keyPrefix}-callout-${calloutIndex}`;
 		segments.push({
 			type: "callout",
 			calloutType,
 			title,
 			collapsible: collapseMarker === "+" || collapseMarker === "-",
 			collapsed: collapseMarker === "-",
-			content: contentLines.join("\n").trim(),
+			children: await parseNested(contentLines.join("\n").trim(), `${calloutKey}-content`),
 			source: calloutSourceLines.join("\n"),
-			key: `${keyPrefix}-callout-${calloutIndex}`,
+			key: calloutKey,
 		});
 
 		calloutIndex += 1;
@@ -268,10 +311,16 @@ export function preprocessObsidianMarkdown(raw: string) {
 }
 
 export function resolveObsidianWikiLink(target: string, noteLookup: Map<string, string>) {
-	for (const key of buildLookupKeys(target)) {
+	const { noteTarget, headingTarget } = splitWikiLinkTarget(target);
+	const lookupTarget = noteTarget || target;
+
+	for (const key of buildLookupKeys(lookupTarget)) {
 		const match = noteLookup.get(key);
 		if (match) {
-			return match;
+			return {
+				href: match,
+				heading: headingTarget,
+			};
 		}
 	}
 
@@ -305,32 +354,34 @@ export function isFramedObsidianImage(extension?: string) {
 
 export function applyObsidianSyntax(
 	segments: MarkdownDocumentSegment[],
-	context: MarkdownParseContext
+	context: MarkdownParseContext,
+	parseNested: ParseNestedSegments
 ): Promise<MarkdownDocumentSegment[]> {
 	return Promise.all(
 		segments.flatMap(async (segment) => {
-		if (segment.type === "markdown") {
-			return splitObsidianMarkdownSegments(segment.text, context, segment.key);
-		}
+			if (segment.type === "markdown") {
+				return splitObsidianMarkdownSegments(segment.text, context, segment.key, parseNested);
+			}
 
-		if (segment.type === "code" && segment.language === "dataview") {
-			return {
-				type: "dataview",
-				result: executeDataviewLite(segment.code, context.allNotes, context.note),
-				query: segment.code,
-				key: segment.key.replace(/^code-/, "dataview-"),
-			};
-		}
+			if (segment.type === "code" && segment.language === "dataview") {
+				return {
+					type: "dataview",
+					result: executeDataviewLite(segment.code, context.allNotes, context.note),
+					query: segment.code,
+					key: segment.key.replace(/-code-/, "-dataview-"),
+				};
+			}
 
-		if (segment.type === "code" && segment.language === "dataviewjs") {
-			return {
-				type: "dataviewjs",
-				result: await executeDataviewJs(segment.code, context.allNotes, context.note),
-				key: segment.key.replace(/^code-/, "dataviewjs-"),
-			};
-		}
+			if (segment.type === "code" && segment.language === "dataviewjs") {
+				return {
+					type: "dataviewjs",
+					result: await executeDataviewJs(segment.code, context.allNotes, context.note),
+					code: segment.code,
+					key: segment.key.replace(/-code-/, "-dataviewjs-"),
+				};
+			}
 
-		return segment;
+			return segment;
 		})
 	).then((segmentsOrLists) => segmentsOrLists.flat());
 }

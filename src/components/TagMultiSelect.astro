@@ -1,5 +1,5 @@
 ---
-import Icon from "./Icon.astro";
+import Icon from "components/Icon.astro";
 
 interface TagOption {
 	value: string;
@@ -54,6 +54,16 @@ const pickerId = `${name}-picker`;
 		}
 	</div>
 
+	<span
+		class:list={[
+			"pointer-events-none absolute -left-2 -top-2 z-10 inline-flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-[#f6f2eb] bg-slate-900 px-1.5 text-[10px] font-semibold leading-none text-white shadow-[0_8px_20px_rgba(15,23,42,0.16)] transition-opacity",
+			selectedTags.length === 0 && "hidden",
+		]}
+		data-tag-picker-badge
+	>
+		{selectedTags.length}
+	</span>
+
 	<button
 		type="button"
 		class="relative flex h-[46px] w-full items-center overflow-hidden rounded-[12px] border border-[#e7dfd5] bg-white px-3 pr-10 text-left text-sm font-medium text-slate-700 shadow-sm outline-none transition hover:border-[#ddd3c5] focus:border-slate-300 focus:ring-2 focus:ring-slate-300/20"
@@ -63,21 +73,11 @@ const pickerId = `${name}-picker`;
 		aria-controls={`${pickerId}-listbox`}
 		data-tag-picker-trigger
 	>
-		<span
-			class:list={[
-				"pointer-events-none absolute left-2.5 top-1/2 inline-flex h-5 min-w-5 -translate-y-1/2 items-center justify-center rounded-full bg-slate-900 px-1.5 text-[10px] font-semibold leading-none text-white shadow-sm transition-opacity",
-				selectedTags.length === 0 && "hidden",
-			]}
-			data-tag-picker-badge
-		>
-			{selectedTags.length}
-		</span>
-
 		<span class="relative min-w-0 flex-1 overflow-hidden">
 			<span
 				class:list={[
 					"flex min-w-0 items-center gap-1.5 whitespace-nowrap pr-7 text-sm",
-					selectedTags.length > 0 ? "pl-7" : "pl-0",
+					selectedTags.length > 0 ? "pl-3" : "pl-0",
 				]}
 				style="-webkit-mask-image:linear-gradient(to right, black calc(100% - 24px), transparent);mask-image:linear-gradient(to right, black calc(100% - 24px), transparent);"
 				data-tag-picker-preview
@@ -199,6 +199,7 @@ const pickerId = `${name}-picker`;
 	const optionIdleClass = "hover:bg-[#f5efe6]";
 	const optionSelectedClass = "bg-[#eef4ff] text-slate-900";
 	const optionActiveClass = "bg-[#f7f1e8]";
+	const optionSelectedActiveClass = "bg-[#dbeafe] text-slate-900";
 	const checkBaseClass =
 		"flex h-5 w-5 shrink-0 items-center justify-center rounded-md border text-[11px] font-bold leading-none transition";
 	const checkIdleClass = "border-[#ddd3c5] bg-white text-transparent";
@@ -282,7 +283,7 @@ const pickerId = `${name}-picker`;
 
 		const renderPreview = () => {
 			preview.innerHTML = "";
-			preview.classList.toggle("pl-7", selected.length > 0);
+			preview.classList.toggle("pl-3", selected.length > 0);
 			preview.classList.toggle("pl-0", selected.length === 0);
 
 			if (selected.length === 0) {
@@ -357,8 +358,13 @@ const pickerId = `${name}-picker`;
 		const applyOptionState = (option, isSelected, isActive) => {
 			option.button.className = [
 				optionBaseClass,
-				isSelected ? optionSelectedClass : optionIdleClass,
-				isActive ? optionActiveClass : "",
+				isSelected
+					? isActive
+						? optionSelectedActiveClass
+						: optionSelectedClass
+					: isActive
+						? optionActiveClass
+						: optionIdleClass,
 			]
 				.filter(Boolean)
 				.join(" ");

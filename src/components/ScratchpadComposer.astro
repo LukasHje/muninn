@@ -1,17 +1,18 @@
 ---
-import SectionCard from "./SectionCard.astro";
+import { ui } from "i18n";
+import SectionCard from "components/SectionCard.astro";
 ---
 
 <SectionCard
-	title="Anteckningsblock"
-	subtitle="Ren text som sparas appspecifikt i lokal state och inte i ditt vault."
+	title={ui.pages.scratchpad.composerTitle}
+	subtitle={ui.pages.scratchpad.composerSubtitle}
 >
 	<form action="/scratchpad/create" method="post" class="space-y-4">
 		<textarea
 			class="h-28 w-full resize-none rounded-[14px] border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-amber-700/55 focus:border-amber-300 focus:ring-2 focus:ring-amber-200/60"
 			name="content"
 			required
-			placeholder="Skriv i anteckningsblocket..."
+			placeholder={ui.pages.scratchpad.composerPlaceholder}
 		></textarea>
 		<input type="hidden" name="redirectTo" value="/" />
 		<div class="flex items-center justify-end gap-3">
@@ -19,7 +20,7 @@ import SectionCard from "./SectionCard.astro";
 				type="submit"
 				class="rounded-[10px] bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600"
 			>
-				spara
+				{ui.common.save}
 			</button>
 		</div>
 	</form>

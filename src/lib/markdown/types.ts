@@ -1,9 +1,9 @@
-import type { DataviewLiteResult } from "../dataviewLite";
-import type { DataviewJsExecutionResult } from "../dataviewJs";
-import type { ParsedMapBlock } from "../parseMapBlock";
-import type { ResolvedObsidianAsset } from "../resolveObsidianAsset";
-import type { VaultAssetIndex } from "../vaultAssetIndex";
-import type { LibraryItem } from "../vault";
+import type { DataviewLiteResult } from "lib/dataviewLite";
+import type { DataviewJsExecutionResult } from "lib/dataviewJs";
+import type { ParsedMapBlock } from "lib/parseMapBlock";
+import type { ResolvedObsidianAsset } from "lib/resolveObsidianAsset";
+import type { VaultAssetIndex } from "lib/vaultAssetIndex";
+import type { LibraryItem } from "lib/vault";
 
 export interface MarkdownParseContext {
 	note: LibraryItem;
@@ -37,6 +37,7 @@ export interface DataviewSegment {
 export interface DataviewJsSegment {
 	type: "dataviewjs";
 	result: DataviewJsExecutionResult;
+	code: string;
 	key: string;
 }
 
@@ -46,7 +47,7 @@ export interface CalloutSegment {
 	title: string;
 	collapsible: boolean;
 	collapsed: boolean;
-	content: string;
+	children: MarkdownDocumentSegment[];
 	source: string;
 	key: string;
 }
@@ -60,7 +61,7 @@ export interface MermaidSegment {
 export interface MultiColumnSegment {
 	type: "multi-column";
 	columnCount: number;
-	columns: string[];
+	columns: MarkdownDocumentSegment[][];
 	key: string;
 }
 

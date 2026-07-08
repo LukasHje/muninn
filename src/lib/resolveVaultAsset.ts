@@ -1,7 +1,7 @@
 import { readdir } from "node:fs/promises";
 import path from "node:path";
-import { cleanImageReference } from "./parser";
-import { RESOLVED_VAULT_PATH } from "./config";
+import { cleanImageReference } from "lib/parser";
+import { RESOLVED_VAULT_PATH } from "lib/config";
 
 export interface VaultAssetIndex {
 	assetFiles: string[];

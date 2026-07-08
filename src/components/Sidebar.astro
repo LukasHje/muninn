@@ -1,7 +1,8 @@
 ---
-import type { SidebarCategory, SidebarNavigationItem } from "../lib/vault";
-import Icon from "./Icon.astro";
-import SearchBar from "./SearchBar.astro";
+import { ui } from "i18n";
+import type { SidebarCategory, SidebarNavigationItem } from "lib/vault";
+import Icon from "components/Icon.astro";
+import SearchBar from "components/SearchBar.astro";
 
 interface Props {
 	navigation: SidebarNavigationItem[];
@@ -28,7 +29,7 @@ const currentPath = Astro.url.pathname;
 		<SearchBar tone="dark" shortcut="⌘K" />
 	</div>
 
-	<nav class="mt-5 space-y-1" aria-label="Primary">
+	<nav class="mt-5 space-y-1" aria-label={ui.navigation.primaryLabel}>
 		{
 			navigation.map((item) => (
 				(() => {
@@ -64,7 +65,7 @@ const currentPath = Astro.url.pathname;
 
 	<div class="mt-8 border-t border-white/10 pt-6">
 		<p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/30">
-			Kategorier
+			{ui.navigation.categories}
 		</p>
 		<ul class="mt-4 space-y-1">
 			{
@@ -89,7 +90,7 @@ const currentPath = Astro.url.pathname;
 	<div class="mt-10 flex items-center justify-between border-t border-white/10 pt-5 text-sm text-white/45">
 		<div class="flex items-center gap-2">
 			<Icon name="sparkles" class="h-4 w-4" />
-			<span>Drivs av Astro</span>
+			<span>{ui.navigation.poweredByAstro}</span>
 		</div>
 		<Icon name="moon" class="h-4 w-4" />
 	</div>

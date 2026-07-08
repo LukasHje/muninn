@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { toggleFavoriteNote } from "../../lib/favorites";
+import { toggleFavoriteNote } from "lib/favorites";
 
 export const prerender = false;
 

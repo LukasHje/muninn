@@ -1,7 +1,9 @@
-import { parseMapBlock } from "../parseMapBlock";
-import type { ResolvedObsidianAsset } from "../resolveObsidianAsset";
-import type { MarkdownDocumentSegment, MarkdownParseContext } from "./types";
-import { resolveObsidianAssetForNote } from "./obsidian";
+import { parseMapBlock } from "lib/parseMapBlock";
+import type { ResolvedObsidianAsset } from "lib/resolveObsidianAsset";
+import type { MarkdownDocumentSegment, MarkdownParseContext } from "lib/markdown/types";
+import { resolveObsidianAssetForNote } from "lib/markdown/obsidian";
+
+type ParseNestedSegments = (raw: string, keyPrefix: string) => Promise<MarkdownDocumentSegment[]>;
 
 function parseMediaSliderItems(raw: string, context: MarkdownParseContext) {
 	const lines = raw
@@ -137,10 +139,11 @@ function consumeMultiColumnBlock(
 	return null;
 }
 
-export function applyPluginSyntax(
+export async function applyPluginSyntax(
 	segments: MarkdownDocumentSegment[],
-	context: MarkdownParseContext
-): MarkdownDocumentSegment[] {
+	context: MarkdownParseContext,
+	parseNested: ParseNestedSegments
+): Promise<MarkdownDocumentSegment[]> {
 	const result: MarkdownDocumentSegment[] = [];
 
 	for (let index = 0; index < segments.length; index += 1) {
@@ -160,18 +163,28 @@ export function applyPluginSyntax(
 				result.push({
 					type: "multi-column",
 					columnCount: multiColumn.columnCount,
-					columns: multiColumn.columns,
+					columns: await Promise.all(
+						multiColumn.columns.map((column, columnIndex) =>
+							parseNested(column, `${segment.key}-multi-column-column-${columnIndex}`)
+						)
+					),
 					key: `${segment.key}-multi-column`,
 				});
 
 				if (multiColumn.afterText) {
-					result.push(...applyPluginSyntax([
-						{
-							type: "markdown",
-							text: multiColumn.afterText,
-							key: `${segment.key}-after`,
-						},
-					], context));
+					result.push(
+						...(await applyPluginSyntax(
+							[
+								{
+									type: "markdown",
+									text: multiColumn.afterText,
+									key: `${segment.key}-after`,
+								},
+							],
+							context,
+							parseNested
+						))
+					);
 				}
 
 				index += multiColumn.consumed - 1;
@@ -190,7 +203,7 @@ export function applyPluginSyntax(
 				result.push({
 					type: "slider",
 					items,
-					key: segment.key.replace(/^code-/, "slider-"),
+					key: segment.key.replace(/-code-/, "-slider-"),
 				});
 				continue;
 			}
@@ -205,7 +218,7 @@ export function applyPluginSyntax(
 				result.push({
 					type: "map",
 					map: parsedMap,
-					key: segment.key.replace(/^code-/, "map-"),
+					key: segment.key.replace(/-code-/, "-map-"),
 				});
 				continue;
 			}
@@ -215,7 +228,7 @@ export function applyPluginSyntax(
 			result.push({
 				type: "mermaid",
 				code: segment.code,
-				key: segment.key.replace(/^code-/, "mermaid-"),
+				key: segment.key.replace(/-code-/, "-mermaid-"),
 			});
 			continue;
 		}

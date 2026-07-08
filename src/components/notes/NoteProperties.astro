@@ -1,6 +1,8 @@
 ---
-import type { LibraryItem, FrontmatterValue } from "../../lib/vault";
-import TagPills from "./TagPills.astro";
+import { ui } from "i18n";
+import { formatUiDate } from "i18n/format";
+import type { LibraryItem, FrontmatterValue } from "lib/vault";
+import TagPills from "components/notes/TagPills.astro";
 
 interface Props {
 	note: LibraryItem;
@@ -10,13 +12,13 @@ const { note } = Astro.props;
 
 const visibleKeys = ["type", "status", "travel-type", "country", "continent", "created", "updated"];
 const labels: Record<string, string> = {
-	type: "Typ",
-	status: "Status",
-	"travel-type": "Resetyp",
-	country: "Land",
-	continent: "Kontinent",
-	created: "Skapad",
-	updated: "Uppdaterad",
+	type: ui.noteDetail.metadataLabels.type,
+	status: ui.noteDetail.metadataLabels.status,
+	"travel-type": ui.noteDetail.metadataLabels.travelType,
+	country: ui.noteDetail.metadataLabels.country,
+	continent: ui.noteDetail.metadataLabels.continent,
+	created: ui.noteDetail.metadataLabels.created,
+	updated: ui.noteDetail.metadataLabels.updated,
 };
 
 function formatDate(value: string) {
@@ -24,9 +26,7 @@ function formatDate(value: string) {
 	if (Number.isNaN(timestamp)) {
 		return value;
 	}
-	return new Intl.DateTimeFormat("sv-SE", {
-		dateStyle: "medium",
-	}).format(new Date(timestamp));
+	return formatUiDate(new Date(timestamp));
 }
 
 function stringifyValue(key: string, value: FrontmatterValue) {
@@ -59,9 +59,9 @@ const hasContent = metadata.length > 0 || aliases.length > 0 || note.normalized.
 		<section class="surface-card overflow-hidden border-[#ece4d7] bg-[linear-gradient(180deg,#fffdf9_0%,#fbf8f2_100%)] p-5 shadow-[0_12px_28px_rgba(15,23,42,0.04)] md:p-6">
 			<div class="space-y-5 md:space-y-6">
 				<div class="flex items-center justify-between gap-3">
-					<h2 class="panel-title">Egenskaper</h2>
+					<h2 class="panel-title">{ui.noteDetail.properties}</h2>
 					<span class="rounded-full border border-[#ece3d6] bg-[#fbf8f3] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-						Metadata
+						{ui.noteDetail.metadata}
 					</span>
 				</div>
 
@@ -88,7 +88,7 @@ const hasContent = metadata.length > 0 || aliases.length > 0 || note.normalized.
 					aliases.length > 0 && (
 						<div class="space-y-3 border-t border-[#efe7dc] pt-5">
 							<p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-								Alias
+								{ui.noteDetail.aliases}
 							</p>
 							<TagPills values={aliases} tone="sky" />
 						</div>
@@ -99,7 +99,7 @@ const hasContent = metadata.length > 0 || aliases.length > 0 || note.normalized.
 					note.normalized.tags.length > 0 && (
 						<div class="space-y-3 border-t border-[#efe7dc] pt-5">
 							<p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-								Taggar
+								{ui.noteDetail.tags}
 							</p>
 							<TagPills values={note.normalized.tags.map((tag) => `#${tag}`)} tone="amber" />
 						</div>

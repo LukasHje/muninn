@@ -1,11 +1,14 @@
-import type { CoreDocumentSegment } from "./types";
+import type { CoreDocumentSegment } from "lib/markdown/types";
 
-export function parseCoreMarkdown(raw: string): CoreDocumentSegment[] {
+export function parseCoreMarkdown(raw: string, keyPrefix = "root"): CoreDocumentSegment[] {
 	const segments: CoreDocumentSegment[] = [];
-	const blockPattern = /```([^\n`]*)\n([\s\S]*?)```/g;
-	let lastIndex = 0;
+	const lines = raw.split("\n");
+	const markdownBuffer: string[] = [];
+	const codeBuffer: string[] = [];
 	let blockIndex = 0;
-	let match: RegExpExecArray | null;
+	let activeLanguage = "text";
+	let inCodeBlock = false;
+	let openingFence = "";
 
 	const pushMarkdown = (value: string) => {
 		if (!value.trim()) {
@@ -15,25 +18,54 @@ export function parseCoreMarkdown(raw: string): CoreDocumentSegment[] {
 		segments.push({
 			type: "markdown",
 			text: value,
-			key: `markdown-${segments.length}`,
+			key: `${keyPrefix}-markdown-${segments.length}`,
 		});
 	};
 
-	while ((match = blockPattern.exec(raw)) !== null) {
-		pushMarkdown(raw.slice(lastIndex, match.index));
-
+	const pushCode = () => {
 		segments.push({
 			type: "code",
-			language: match[1]?.trim().toLowerCase() || "text",
-			code: match[2] ?? "",
-			key: `code-${blockIndex}`,
+			language: activeLanguage,
+			code: codeBuffer.join("\n"),
+			key: `${keyPrefix}-code-${blockIndex}`,
 		});
 
-		lastIndex = match.index + match[0].length;
 		blockIndex += 1;
+		codeBuffer.length = 0;
+		activeLanguage = "text";
+	};
+
+	for (const line of lines) {
+		if (!inCodeBlock) {
+			const fenceMatch = line.match(/^\s{0,3}```([^\n`]*)\s*$/);
+			if (fenceMatch) {
+				pushMarkdown(markdownBuffer.join("\n"));
+				markdownBuffer.length = 0;
+				inCodeBlock = true;
+				openingFence = line;
+				activeLanguage = fenceMatch[1]?.trim().toLowerCase() || "text";
+				continue;
+			}
+
+			markdownBuffer.push(line);
+			continue;
+		}
+
+		if (/^\s{0,3}```\s*$/.test(line)) {
+			pushCode();
+			inCodeBlock = false;
+			openingFence = "";
+			continue;
+		}
+
+		codeBuffer.push(line);
 	}
 
-	pushMarkdown(raw.slice(lastIndex));
+	if (inCodeBlock) {
+		markdownBuffer.push(openingFence, ...codeBuffer);
+	}
+
+	pushMarkdown(markdownBuffer.join("\n"));
 
 	return segments;
 }

@@ -1,5 +1,5 @@
-import { getLocaleConfig } from "./config";
-import { getMessages, getLocale } from "./index";
+import { getLocaleConfig } from "i18n/config";
+import { getMessages, getLocale } from "i18n/index";
 
 function toDate(value: Date | number | string) {
 	return value instanceof Date ? value : new Date(value);

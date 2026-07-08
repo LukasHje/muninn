@@ -1,13 +1,15 @@
 ---
-import type { Tone } from "../lib/vault";
+import Icon from "components/Icon.astro";
+import type { Tone } from "lib/vault";
 
 interface Props {
 	label: string;
 	count?: number;
 	tone?: Tone;
+	icon?: string;
 }
 
-const { label, count, tone = "slate" } = Astro.props;
+const { label, count, tone = "slate", icon } = Astro.props;
 
 const toneClasses = {
 	slate: "bg-slate-100 text-slate-700",
@@ -25,6 +27,11 @@ const toneClasses = {
 		toneClasses,
 	]}
 >
+	{
+		icon && (
+			<Icon name={icon} class="h-3.5 w-3.5" />
+		)
+	}
 	<span>{label}</span>
 	{
 		typeof count === "number" && (

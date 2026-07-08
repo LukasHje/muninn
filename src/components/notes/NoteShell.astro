@@ -1,8 +1,11 @@
 ---
-import type { LibraryItem } from "../../lib/vault";
-import FavoriteToggleButton from "../FavoriteToggleButton.astro";
-import Icon from "../Icon.astro";
-import TagPills from "./TagPills.astro";
+import { ui } from "i18n";
+import { formatUiDate } from "i18n/format";
+import type { LibraryItem } from "lib/vault";
+import { parseAppUrl, toRelativeAppUrl } from "lib/noteBrowserState";
+import FavoriteToggleButton from "components/FavoriteToggleButton.astro";
+import Icon from "components/Icon.astro";
+import TagPills from "components/notes/TagPills.astro";
 
 interface Props {
 	note: LibraryItem;
@@ -13,6 +16,8 @@ interface Props {
 const { note, heroStyle = "none", summary = note.excerpt } = Astro.props;
 const breadcrumb = note.relativePath.split("/").slice(0, -1).join(" / ");
 const redirectTo = Astro.url.pathname + Astro.url.search;
+const returnToUrl = parseAppUrl(Astro.url.searchParams.get("returnTo"));
+const backHref = returnToUrl ? toRelativeAppUrl(returnToUrl) : "/notes";
 const typeLabel =
 	note.normalized.type && note.normalized.type !== "note"
 		? note.normalized.type.replace(/-/g, " ")
@@ -29,9 +34,7 @@ function formatDate(value?: string) {
 		return value;
 	}
 
-	return new Intl.DateTimeFormat("sv-SE", {
-		dateStyle: "medium",
-	}).format(new Date(timestamp));
+	return formatUiDate(timestamp);
 }
 
 const createdLabel = formatDate(note.normalized.created);
@@ -55,9 +58,9 @@ const updatedLabel = formatDate(note.normalized.updated) ?? note.updatedLabel;
 					<div class="relative flex min-h-[300px] flex-col px-5 py-5 md:min-h-[360px] md:px-8 md:py-7">
 						<div class="flex items-center justify-between gap-3">
 							<a
-								href="/notes"
+								href={backHref}
 								class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/16 bg-slate-950/24 text-white/92 backdrop-blur-sm transition hover:bg-slate-950/38"
-								aria-label="Tillbaka till alla anteckningar"
+								aria-label={ui.noteDetail.backToAllNotes}
 							>
 								<Icon name="chevron-left" class="h-4 w-4" />
 							</a>
@@ -99,12 +102,12 @@ const updatedLabel = formatDate(note.normalized.updated) ?? note.updatedLabel;
 									{
 										createdLabel && (
 											<span class="rounded-full border border-white/14 bg-white/8 px-3 py-1.5 backdrop-blur-sm">
-												Skapad {createdLabel}
+												{ui.noteDetail.created} {createdLabel}
 											</span>
 										)
 									}
 									<span class="rounded-full border border-white/14 bg-white/8 px-3 py-1.5 backdrop-blur-sm">
-										Uppdaterad {updatedLabel}
+										{ui.noteDetail.updated} {updatedLabel}
 									</span>
 								</div>
 							</div>
@@ -117,9 +120,9 @@ const updatedLabel = formatDate(note.normalized.updated) ?? note.updatedLabel;
 						<div class="space-y-3">
 							<div class="flex items-center gap-3">
 								<a
-									href="/notes"
+									href={backHref}
 									class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e8dfd3] bg-[#fbf7f1] text-slate-500 shadow-[0_8px_18px_rgba(15,23,42,0.04)] transition hover:border-[#dfd3c3] hover:text-slate-900"
-									aria-label="Tillbaka till alla anteckningar"
+									aria-label={ui.noteDetail.backToAllNotes}
 								>
 									<Icon name="chevron-left" class="h-4 w-4" />
 								</a>
@@ -136,12 +139,12 @@ const updatedLabel = formatDate(note.normalized.updated) ?? note.updatedLabel;
 							{
 								createdLabel && (
 									<span class="rounded-full border border-[#ece3d7] bg-[#fbf8f3] px-3 py-1.5 shadow-[0_6px_16px_rgba(15,23,42,0.03)]">
-										Skapad {createdLabel}
+										{ui.noteDetail.created} {createdLabel}
 									</span>
 								)
 							}
 							<span class="rounded-full border border-[#ece3d7] bg-[#fbf8f3] px-3 py-1.5 shadow-[0_6px_16px_rgba(15,23,42,0.03)]">
-								Uppdaterad {updatedLabel}
+								{ui.noteDetail.updated} {updatedLabel}
 							</span>
 						</div>
 					</div>

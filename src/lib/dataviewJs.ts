@@ -2,9 +2,9 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import vm from "node:vm";
 import { parse } from "yaml";
-import { ui } from "../i18n";
-import { RESOLVED_VAULT_PATH } from "./config";
-import type { LibraryItem } from "./vault";
+import { ui } from "i18n";
+import { RESOLVED_VAULT_PATH } from "lib/config";
+import type { LibraryItem } from "lib/vault";
 
 export type DataviewJsCell =
 	| { kind: "link"; href: string; label: string; text?: string }

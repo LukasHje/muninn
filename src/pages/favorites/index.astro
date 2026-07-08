@@ -1,16 +1,17 @@
 ---
-import VaultNotesBrowser from "../../components/VaultNotesBrowser.astro";
-import MainLayout from "../../layouts/MainLayout.astro";
-import { getFavoriteLibraryItems } from "../../lib/vault";
+import { ui, withSiteName } from "i18n";
+import VaultNotesBrowser from "components/VaultNotesBrowser.astro";
+import MainLayout from "layouts/MainLayout.astro";
+import { getFavoriteLibraryItems } from "lib/vault";
 
 const favoriteItems = await getFavoriteLibraryItems();
 ---
 
-<MainLayout title="Favoriter | Muninn">
+<MainLayout title={withSiteName(ui.pages.favorites.title)}>
 	<VaultNotesBrowser
-		title="Favoriter"
+		title={ui.pages.favorites.title}
 		items={favoriteItems}
-		emptyMessage="Inga favoriter ännu."
+		emptyMessage={ui.pages.favorites.empty}
 		basePath="/favorites"
 	/>
 </MainLayout>

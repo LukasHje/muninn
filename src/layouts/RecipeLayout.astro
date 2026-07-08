@@ -1,5 +1,6 @@
 ---
-import MainLayout from "./MainLayout.astro";
+import { ui, withSiteName } from "i18n";
+import MainLayout from "layouts/MainLayout.astro";
 
 interface Props {
 	title?: string;
@@ -7,8 +8,8 @@ interface Props {
 }
 
 const {
-	title = "Recipes | Ossified Orbit",
-	description = "Recipe-focused layout placeholder for future kitchen notes.",
+	title = withSiteName(ui.pages.recipes.title),
+	description = ui.pages.recipes.heroDescription,
 } = Astro.props;
 ---
 

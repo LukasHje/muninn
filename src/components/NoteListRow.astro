@@ -1,18 +1,21 @@
 ---
-import type { LibraryItem } from "../lib/vault";
-import FavoriteToggleButton from "./FavoriteToggleButton.astro";
+import type { LibraryItem } from "lib/vault";
+import FavoriteToggleButton from "components/FavoriteToggleButton.astro";
 
 interface Props {
 	item: LibraryItem;
+	selectedTags?: string[];
 }
 
-const { item } = Astro.props;
+const { item, selectedTags = [] } = Astro.props;
 const redirectTo = Astro.url.pathname + Astro.url.search;
+const noteHref = `${item.href}?returnTo=${encodeURIComponent(redirectTo)}`;
+const selectedTagSet = new Set(selectedTags);
 ---
 
 <article class="group">
 	<div class="flex items-start gap-4 rounded-[14px] px-3 py-3 transition hover:bg-[#fcfaf6]">
-		<a href={item.href} class="flex min-w-0 flex-1 items-start gap-4">
+		<a href={noteHref} class="flex min-w-0 flex-1 items-start gap-4">
 			{
 				item.imageUrl ? (
 					<img
@@ -36,7 +39,14 @@ const redirectTo = Astro.url.pathname + Astro.url.search;
 						<div class="mt-2 flex flex-wrap gap-2">
 							{
 								item.tags.map((tag) => (
-									<span class="rounded-full bg-[#f4efe7] px-2.5 py-0.5 text-xs font-medium text-slate-500">
+									<span
+										class:list={[
+											"rounded-full px-2.5 py-0.5 text-xs font-medium",
+											selectedTagSet.has(tag)
+												? "bg-sky-100 text-sky-700 ring-1 ring-sky-200"
+												: "bg-[#f4efe7] text-slate-500",
+										]}
+									>
 										#{tag}
 									</span>
 								))

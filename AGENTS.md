@@ -12,6 +12,13 @@ Manage the background server with `astro dev stop`, `astro dev status`, and `ast
 
 Full documentation: https://docs.astro.build
 
+Repo documentation lives in `docs/`.
+
+Read the relevant internal docs before making architectural changes:
+
+- `docs/rendering-pipeline.md`
+- `docs/ui-boundaries.md`
+
 Consult these guides before working on related tasks:
 
 - [Adding pages, dynamic routes, or middleware](https://docs.astro.build/en/guides/routing/)

@@ -1,5 +1,6 @@
 ---
-import Icon from "./Icon.astro";
+import { ui } from "i18n";
+import Icon from "components/Icon.astro";
 
 interface Props {
 	noteId: string;
@@ -42,8 +43,8 @@ const sizeClasses =
 			sizeClasses,
 			buttonClasses,
 		]}
-		aria-label={isFavorite ? "Ta bort favorit" : "Markera som favorit"}
-		title={isFavorite ? "Ta bort favorit" : "Markera som favorit"}
+		aria-label={isFavorite ? ui.favorites.remove : ui.favorites.add}
+		title={isFavorite ? ui.favorites.remove : ui.favorites.add}
 	>
 		<Icon name="star" class="h-4 w-4" />
 	</button>

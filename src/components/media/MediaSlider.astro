@@ -1,6 +1,7 @@
 ---
-import type { ResolvedObsidianAsset } from "../../lib/resolveObsidianAsset";
-import Icon from "../Icon.astro";
+import { ui } from "i18n";
+import type { ResolvedObsidianAsset } from "lib/resolveObsidianAsset";
+import Icon from "components/Icon.astro";
 
 interface Props {
 	items: ResolvedObsidianAsset[];
@@ -9,24 +10,24 @@ interface Props {
 const { items } = Astro.props;
 ---
 
-<section class="surface-card overflow-hidden border-[#e5ddd1] bg-white p-3 shadow-[0_12px_28px_rgba(15,23,42,0.05)] md:p-4">
-	<div data-media-slider class="space-y-3">
-		<div class="relative overflow-hidden rounded-[20px] border border-[#e8dfd3] bg-[#fbf8f2]">
+<section data-media-slider class="space-y-3 overflow-hidden rounded-[20px] border border-[#e8dfd3] bg-[#fbf8f2] p-3 md:p-4">
+	<div class="relative overflow-hidden rounded-[16px]">
 			{
 				items.map((item, index) => (
-					<div data-slide hidden={index !== 0} class="min-h-[340px] bg-[#fbf8f2] p-4 md:min-h-[420px]">
+					<div data-slide data-slide-index={index} hidden={index !== 0} class="min-h-[340px] md:min-h-[420px]">
 						{
 							item.found && item.url ? (
-								<div class="muninn-image-frame flex h-full items-center justify-center">
+								<div class="flex h-full items-center justify-center">
 									<img
 										src={item.url}
 										alt={item.alt}
-										class="mx-auto max-h-[560px] w-auto max-w-full rounded-[14px] object-contain"
+										class="mx-auto max-h-[560px] w-auto max-w-full cursor-pointer rounded-[14px] object-contain"
+										data-slider-lightbox-image
 									/>
 								</div>
 							) : (
 								<div class="flex h-full min-h-[260px] flex-col items-center justify-center rounded-[16px] border border-dashed border-[#dbcdb6] bg-[linear-gradient(180deg,#fbf7f1_0%,#f6efe5_100%)] px-6 text-center">
-									<p class="text-sm font-semibold text-slate-700">Bild saknas</p>
+									<p class="text-sm font-semibold text-slate-700">{ui.mediaSlider.missingImage}</p>
 									<p class="mt-2 text-sm leading-6 text-slate-500">{item.alt}</p>
 								</div>
 							)
@@ -41,7 +42,7 @@ const { items } = Astro.props;
 						type="button"
 						data-slider-prev
 						class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e6ddd1] bg-white/88 text-slate-700 shadow-[0_8px_18px_rgba(15,23,42,0.08)] backdrop-blur-sm transition hover:bg-white"
-						aria-label="Föregående bild"
+						aria-label={ui.mediaSlider.previousImage}
 					>
 						<Icon name="chevron-left" class="h-4 w-4" />
 					</button>
@@ -49,7 +50,7 @@ const { items } = Astro.props;
 						type="button"
 						data-slider-next
 						class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e6ddd1] bg-white/88 text-slate-700 shadow-[0_8px_18px_rgba(15,23,42,0.08)] backdrop-blur-sm transition hover:bg-white"
-						aria-label="Nästa bild"
+						aria-label={ui.mediaSlider.nextImage}
 					>
 						<Icon name="chevron-down" class="h-4 w-4 rotate-[-90deg]" />
 					</button>
@@ -61,43 +62,42 @@ const { items } = Astro.props;
 					1 / {items.length}
 				</div>
 			</div>
-		</div>
-
-		{
-			items.length > 1 && (
-				<div class="grid grid-cols-4 gap-2 md:grid-cols-6">
-					{
-						items.map((item, index) => (
-							<button
-								type="button"
-								data-slider-thumb
-								class="overflow-hidden rounded-[14px] border border-[#e8dfd3] bg-[#fbf8f2] p-1.5 transition data-[active=true]:border-slate-900 data-[active=true]:shadow-[0_8px_18px_rgba(15,23,42,0.12)]"
-								aria-label={`Visa bild ${index + 1}`}
-							>
-								{
-									item.found && item.url ? (
-										<img
-											src={item.url}
-											alt={item.alt}
-											class="h-14 w-full rounded-[10px] object-cover md:h-16"
-										/>
-									) : (
-										<div class="flex h-14 w-full items-center justify-center rounded-[10px] bg-[#f3ede3] text-[11px] font-medium text-slate-500 md:h-16">
-											Saknas
-										</div>
-									)
-								}
-							</button>
-						))
-					}
-				</div>
-			)
-		}
 	</div>
+
+	{
+		items.length > 1 && (
+			<div class="grid grid-cols-4 gap-2 md:grid-cols-6">
+				{
+					items.map((item, index) => (
+						<button
+							type="button"
+							data-slider-thumb
+							class="overflow-hidden rounded-[14px] border border-[#e8dfd3] bg-white/55 p-1.5 transition data-[active=true]:border-slate-900 data-[active=true]:shadow-[0_8px_18px_rgba(15,23,42,0.12)]"
+							aria-label={ui.mediaSlider.showImage(index + 1)}
+						>
+							{
+								item.found && item.url ? (
+									<img
+										src={item.url}
+										alt={item.alt}
+										class="h-14 w-full rounded-[10px] object-cover md:h-16"
+									/>
+								) : (
+									<div class="flex h-14 w-full items-center justify-center rounded-[10px] bg-[#f3ede3] text-[11px] font-medium text-slate-500 md:h-16">
+										{ui.mediaSlider.missing}
+									</div>
+								)
+							}
+						</button>
+					))
+				}
+			</div>
+		)
+	}
 </section>
 
 <script type="module">
-	import initMediaSliders from "./MediaSliderClient.ts";
+	import initMediaSliders from "components/media/MediaSliderClient.ts";
 
 	initMediaSliders();
 </script>
