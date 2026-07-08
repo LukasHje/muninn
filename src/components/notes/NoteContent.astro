@@ -76,6 +76,39 @@ function stripHtmlTags(value: string) {
 	return value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 }
 
+function isRecipeNote(currentNote: LibraryItem) {
+	return (
+		currentNote.normalized.type === "recept" ||
+		currentNote.normalized.type === "recipe" ||
+		currentNote.normalized.category === "recept"
+	);
+}
+
+const recipeIngredientHeadings = new Set(["ingredients", "ingredienser"]);
+
+function decorateRecipeIngredientsSection(html: string) {
+	return html.replace(
+		/(?:<hr>\s*)?<h([2-6]) id="([^"]+)">([\s\S]*?)<\/h\1>\s*(<(ul|ol)[\s\S]*?<\/\5>)(?:\s*<hr>)?/giu,
+		(match, _depth, headingId, headingHtml, listHtml) => {
+			const headingText = stripHtmlTags(headingHtml).toLocaleLowerCase("sv-SE");
+			if (!recipeIngredientHeadings.has(headingText)) {
+				return match;
+			}
+
+			return `
+				<section class="recipe-ingredients-note" aria-labelledby="${escapeAttribute(headingId)}">
+					<div class="recipe-ingredients-note__tape" aria-hidden="true"></div>
+					<div class="recipe-ingredients-note__paper">
+						<h2 id="${escapeAttribute(headingId)}" class="recipe-ingredients-note__title">${headingHtml}</h2>
+						<div class="recipe-ingredients-note__divider" aria-hidden="true"></div>
+						<div class="recipe-ingredients-note__list">${listHtml}</div>
+					</div>
+				</section>
+			`;
+		}
+	);
+}
+
 function toHeadingId(value: string) {
 	const baseId = slugifySegment(stripHtmlTags(value)) || "section";
 	const currentCount = headingIdCounts.get(baseId) ?? 0;
@@ -207,7 +240,11 @@ const markdown = new Marked({
 function renderMarkdownHtml(raw: string) {
 	const prepared = preprocessObsidianMarkdown(raw);
 	const parsed = markdown.parse(prepared);
-	return typeof parsed === "string" ? parsed : "";
+	if (typeof parsed !== "string") {
+		return "";
+	}
+
+	return isRecipeNote(note) ? decorateRecipeIngredientsSection(parsed) : parsed;
 }
 ---
 
@@ -710,6 +747,164 @@ function renderMarkdownHtml(raw: string) {
 		max-width: 100%;
 		border-radius: 1rem;
 		margin: 0 auto;
+	}
+
+	.note-content :global(.recipe-ingredients-note) {
+		position: relative;
+		margin: 2.75rem auto;
+		width: min(100%, 34rem);
+		padding: 1.05rem 0 0;
+	}
+
+	.note-content :global(.recipe-ingredients-note__tape) {
+		position: absolute;
+		left: 50%;
+		top: 0;
+		z-index: 2;
+		width: 7.25rem;
+		height: 2rem;
+		transform: translateX(-50%) rotate(-1.6deg);
+		border-radius: 0.35rem;
+		border: 1px solid rgba(209, 196, 167, 0.42);
+		background:
+			linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(255, 255, 255, 0.16)),
+			linear-gradient(90deg, rgba(214, 198, 168, 0.16), rgba(255, 255, 255, 0.06), rgba(214, 198, 168, 0.16));
+		box-shadow: 0 8px 16px rgba(96, 77, 50, 0.08);
+		backdrop-filter: blur(1px);
+		opacity: 0.88;
+	}
+
+	.note-content :global(.recipe-ingredients-note__paper) {
+		position: relative;
+		overflow: hidden;
+		border: 1px solid rgba(204, 187, 158, 0.72);
+		border-radius: 1.55rem;
+		padding: 2.8rem 2.3rem 2.1rem;
+		background:
+			radial-gradient(circle at 18% 20%, rgba(255, 255, 255, 0.92) 0, rgba(255, 255, 255, 0) 28%),
+			radial-gradient(circle at 82% 16%, rgba(230, 208, 168, 0.12) 0, rgba(230, 208, 168, 0) 30%),
+			linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.08)),
+			repeating-linear-gradient(135deg, rgba(134, 109, 71, 0.02) 0 2px, rgba(255, 255, 255, 0) 2px 9px),
+			linear-gradient(180deg, #fcf8f1 0%, #f7f0e4 100%);
+		box-shadow:
+			0 22px 42px rgba(73, 55, 28, 0.1),
+			0 2px 6px rgba(73, 55, 28, 0.04);
+	}
+
+	.note-content :global(.recipe-ingredients-note__paper::before) {
+		content: "";
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		background:
+			radial-gradient(circle at 20% 18%, rgba(255, 255, 255, 0.34), transparent 18%),
+			radial-gradient(circle at 74% 28%, rgba(201, 168, 112, 0.05), transparent 22%),
+			radial-gradient(circle at 48% 82%, rgba(148, 117, 70, 0.035), transparent 20%);
+		mix-blend-mode: multiply;
+	}
+
+	.note-content :global(.recipe-ingredients-note__paper::after) {
+		content: "";
+		position: absolute;
+		left: 1.2rem;
+		right: 1.2rem;
+		bottom: -0.95rem;
+		height: 1.7rem;
+		pointer-events: none;
+		background:
+			radial-gradient(circle at 0.9rem 0.2rem, rgba(247, 240, 228, 1) 0.72rem, transparent 0.76rem) repeat-x;
+		background-size: 1.65rem 1.4rem;
+		opacity: 0.95;
+		filter: drop-shadow(0 8px 10px rgba(73, 55, 28, 0.06));
+	}
+
+	.note-content :global(.recipe-ingredients-note__title) {
+		margin: 0;
+		padding: 0;
+		font-family: Georgia, "Times New Roman", serif;
+		font-size: 1.5rem;
+		font-weight: 600;
+		letter-spacing: 0.02em;
+		line-height: 1.2;
+		text-align: center;
+		color: #473824;
+	}
+
+	.note-content :global(.recipe-ingredients-note__divider) {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin: 0.95rem auto 1.45rem;
+		width: min(100%, 15rem);
+		color: rgba(106, 79, 45, 0.56);
+	}
+
+	.note-content :global(.recipe-ingredients-note__divider::before),
+	.note-content :global(.recipe-ingredients-note__divider::after) {
+		content: "";
+		flex: 1;
+		border-top: 1px solid rgba(153, 123, 78, 0.34);
+	}
+
+	.note-content :global(.recipe-ingredients-note__divider::before) {
+		margin-right: 0.9rem;
+	}
+
+	.note-content :global(.recipe-ingredients-note__divider::after) {
+		margin-left: 0.9rem;
+	}
+
+	.note-content :global(.recipe-ingredients-note__divider) {
+		font-size: 0.78rem;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+	}
+
+	.note-content :global(.recipe-ingredients-note__list ul),
+	.note-content :global(.recipe-ingredients-note__list ol) {
+		margin: 0;
+		padding: 0;
+		color: #4f4232;
+	}
+
+	.note-content :global(.recipe-ingredients-note__list ul) {
+		list-style: none;
+	}
+
+	.note-content :global(.recipe-ingredients-note__list ol) {
+		padding-left: 1.55rem;
+	}
+
+	.note-content :global(.recipe-ingredients-note__list li) {
+		position: relative;
+		margin: 0;
+		padding-left: 1.6rem;
+		line-height: 1.85;
+	}
+
+	.note-content :global(.recipe-ingredients-note__list li + li) {
+		margin-top: 0.72rem;
+	}
+
+	.note-content :global(.recipe-ingredients-note__list ul > li::before) {
+		content: "•";
+		position: absolute;
+		left: 0.2rem;
+		top: 0;
+		color: #52412c;
+		font-size: 1.05rem;
+		line-height: inherit;
+	}
+
+	.note-content :global(.recipe-ingredients-note__list a) {
+		color: inherit;
+		text-decoration-color: rgba(97, 77, 46, 0.26);
+		text-underline-offset: 0.16em;
+	}
+
+	.note-content :global(.recipe-ingredients-note__list a:hover) {
+		color: #3b2d1e;
+		text-decoration-color: rgba(97, 77, 46, 0.52);
 	}
 
 	:global(.muninn-image-lightbox) {
@@ -1231,6 +1426,82 @@ function renderMarkdownHtml(raw: string) {
 		.note-content :global(div[style*="text-align:center"][style*="margin-top:20px"]) {
 			padding: 1.4rem 1rem 1.15rem;
 			border-radius: 1.3rem;
+		}
+
+		.note-content :global(.recipe-ingredients-note) {
+			width: calc(100% - 0.25rem);
+			margin: 2.4rem auto;
+		}
+
+		.note-content :global(.recipe-ingredients-note__paper) {
+			padding: 2.55rem 1.4rem 1.8rem;
+			border-radius: 1.3rem;
+		}
+
+		.note-content :global(.recipe-ingredients-note__title) {
+			font-size: 1.34rem;
+		}
+
+		.note-content :global(.recipe-ingredients-note__tape) {
+			width: 6.2rem;
+			height: 1.8rem;
+		}
+	}
+
+	@media (prefers-color-scheme: dark) {
+		.note-content :global(.recipe-ingredients-note__tape) {
+			border-color: rgba(178, 152, 109, 0.28);
+			background:
+				linear-gradient(180deg, rgba(255, 248, 230, 0.14), rgba(255, 248, 230, 0.04)),
+				linear-gradient(90deg, rgba(186, 154, 102, 0.08), rgba(255, 255, 255, 0.04), rgba(186, 154, 102, 0.08));
+			box-shadow: 0 10px 18px rgba(0, 0, 0, 0.2);
+		}
+
+		.note-content :global(.recipe-ingredients-note__paper) {
+			border-color: rgba(154, 131, 94, 0.5);
+			background:
+				radial-gradient(circle at 18% 20%, rgba(255, 250, 237, 0.08) 0, rgba(255, 250, 237, 0) 28%),
+				radial-gradient(circle at 82% 16%, rgba(212, 176, 120, 0.08) 0, rgba(212, 176, 120, 0) 30%),
+				linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
+				repeating-linear-gradient(135deg, rgba(255, 247, 230, 0.012) 0 2px, rgba(255, 255, 255, 0) 2px 9px),
+				linear-gradient(180deg, #3c3126 0%, #2d241c 100%);
+			box-shadow:
+				0 26px 50px rgba(0, 0, 0, 0.34),
+				0 2px 8px rgba(0, 0, 0, 0.18);
+		}
+
+		.note-content :global(.recipe-ingredients-note__paper::after) {
+			background:
+				radial-gradient(circle at 0.9rem 0.2rem, rgba(45, 36, 28, 1) 0.72rem, transparent 0.76rem) repeat-x;
+		}
+
+		.note-content :global(.recipe-ingredients-note__title) {
+			color: #f2e8d7;
+		}
+
+		.note-content :global(.recipe-ingredients-note__divider) {
+			color: rgba(224, 204, 171, 0.48);
+		}
+
+		.note-content :global(.recipe-ingredients-note__divider::before),
+		.note-content :global(.recipe-ingredients-note__divider::after) {
+			border-top-color: rgba(201, 171, 127, 0.28);
+		}
+
+		.note-content :global(.recipe-ingredients-note__list ul),
+		.note-content :global(.recipe-ingredients-note__list ol),
+		.note-content :global(.recipe-ingredients-note__list li),
+		.note-content :global(.recipe-ingredients-note__list a) {
+			color: #eadfce;
+		}
+
+		.note-content :global(.recipe-ingredients-note__list ul > li::before) {
+			color: #f0dbc0;
+		}
+
+		.note-content :global(.recipe-ingredients-note__list a:hover) {
+			color: #fff3df;
+			text-decoration-color: rgba(240, 219, 192, 0.62);
 		}
 	}
 </style>
