@@ -1,10 +1,10 @@
 ---
 import { Marked, Renderer } from "marked";
 import type { Tokens } from "marked";
-import type { MarkdownDocumentSegment, MarkdownParseContext } from "lib/markdown/types";
-import { parseMarkdownDocument } from "lib/markdown/pipeline";
-import { ui } from "i18n";
-import { slugifySegment } from "lib/parser";
+import type { MarkdownDocumentSegment, MarkdownParseContext } from "src/lib/markdown/types";
+import { parseMarkdownDocument } from "src/lib/markdown/pipeline";
+import { ui } from "src/i18n";
+import { slugifySegment } from "src/lib/parser";
 import {
 	decodePseudoValue,
 	isFramedObsidianImage,
@@ -12,17 +12,17 @@ import {
 	preprocessObsidianMarkdown,
 	resolveObsidianAssetForNote,
 	resolveObsidianWikiLink,
-} from "lib/markdown/obsidian";
-import { getVaultAssetIndex } from "lib/vaultAssetIndex";
-import type { LibraryItem } from "lib/vault";
-import { getLibraryItems, getNoteLookupIndex } from "lib/vault";
-import Callout from "components/obsidian/Callout.astro";
-import DataviewJsResult from "components/dataview/DataviewJsResult.astro";
-import DataviewResult from "components/dataview/DataviewResult.astro";
-import MediaSlider from "components/media/MediaSlider.astro";
-import LeafletMap from "components/maps/LeafletMap.astro";
-import MermaidDiagram from "components/plugins/MermaidDiagram.astro";
-import MultiColumnBlock from "components/plugins/MultiColumnBlock.astro";
+} from "src/lib/markdown/obsidian";
+import { getVaultAssetIndex } from "src/lib/vaultAssetIndex";
+import type { LibraryItem } from "src/lib/vault";
+import { getLibraryItems, getNoteLookupIndex } from "src/lib/vault";
+import Callout from "src/components/obsidian/Callout.astro";
+import DataviewJsResult from "src/components/dataview/DataviewJsResult.astro";
+import DataviewResult from "src/components/dataview/DataviewResult.astro";
+import MediaSlider from "src/components/media/MediaSlider.astro";
+import LeafletMap from "src/components/maps/LeafletMap.astro";
+import MermaidDiagram from "src/components/plugins/MermaidDiagram.astro";
+import MultiColumnBlock from "src/components/plugins/MultiColumnBlock.astro";
 
 interface Props {
 	note: LibraryItem;
@@ -267,8 +267,8 @@ function renderMarkdownHtml(raw: string) {
 </article>
 
 	<script type="module">
-		import initImageLightbox from "components/media/ImageLightboxClient.ts";
-		import initPdfViewers from "components/media/PdfViewerClient.ts";
+		import initImageLightbox from "src/components/media/ImageLightboxClient.ts";
+		import initPdfViewers from "src/components/media/PdfViewerClient.ts";
 
 		initImageLightbox();
 		initPdfViewers();

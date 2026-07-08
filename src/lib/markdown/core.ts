@@ -1,4 +1,4 @@
-import type { CoreDocumentSegment } from "lib/markdown/types";
+import type { CoreDocumentSegment } from "src/lib/markdown/types";
 
 export function parseCoreMarkdown(raw: string, keyPrefix = "root"): CoreDocumentSegment[] {
 	const segments: CoreDocumentSegment[] = [];

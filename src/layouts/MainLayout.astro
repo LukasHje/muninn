@@ -1,10 +1,10 @@
 ---
-import Sidebar from "components/Sidebar.astro";
-import { getLanguage, ui } from "i18n";
-import { getFavoritesCount } from "lib/favorites";
-import { getScratchpadNotesCount } from "lib/scratchpad";
-import { getSidebarCategories, getSidebarNavigation } from "lib/vault";
-import "styles/global.css";
+import Sidebar from "src/components/Sidebar.astro";
+import { getLanguage, ui } from "src/i18n";
+import { getFavoritesCount } from "src/lib/favorites";
+import { getScratchpadNotesCount } from "src/lib/scratchpad";
+import { getSidebarCategories, getSidebarNavigation } from "src/lib/vault";
+import "src/styles/global.css";
 
 interface Props {
 	title: string;

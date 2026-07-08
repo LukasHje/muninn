@@ -1,8 +1,8 @@
-import { parseCoreMarkdown } from "lib/markdown/core";
-import { groupMarkdownImageGalleries } from "lib/markdown/galleries";
-import { applyObsidianSyntax } from "lib/markdown/obsidian";
-import { applyPluginSyntax } from "lib/markdown/plugins";
-import type { MarkdownDocumentSegment, MarkdownParseContext } from "lib/markdown/types";
+import { parseCoreMarkdown } from "src/lib/markdown/core";
+import { groupMarkdownImageGalleries } from "src/lib/markdown/galleries";
+import { applyObsidianSyntax } from "src/lib/markdown/obsidian";
+import { applyPluginSyntax } from "src/lib/markdown/plugins";
+import type { MarkdownDocumentSegment, MarkdownParseContext } from "src/lib/markdown/types";
 
 export async function parseMarkdownDocument(
 	raw: string,

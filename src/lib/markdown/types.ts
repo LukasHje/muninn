@@ -1,9 +1,9 @@
-import type { DataviewLiteResult } from "lib/dataviewLite";
-import type { DataviewJsExecutionResult } from "lib/dataviewJs";
-import type { ParsedMapBlock } from "lib/parseMapBlock";
-import type { ResolvedObsidianAsset } from "lib/resolveObsidianAsset";
-import type { VaultAssetIndex } from "lib/vaultAssetIndex";
-import type { LibraryItem } from "lib/vault";
+import type { DataviewLiteResult } from "src/lib/dataviewLite";
+import type { DataviewJsExecutionResult } from "src/lib/dataviewJs";
+import type { ParsedMapBlock } from "src/lib/parseMapBlock";
+import type { ResolvedObsidianAsset } from "src/lib/resolveObsidianAsset";
+import type { VaultAssetIndex } from "src/lib/vaultAssetIndex";
+import type { LibraryItem } from "src/lib/vault";
 
 export interface MarkdownParseContext {
 	note: LibraryItem;

@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { ui } from "i18n";
-import { APP_STATE_DIR, ensureAppStateDir } from "lib/state";
+import { ui } from "src/i18n";
+import { APP_STATE_DIR, ensureAppStateDir } from "src/lib/state";
 
 const favoritesFilePath = path.join(APP_STATE_DIR, "favorites.json");
 

@@ -1,8 +1,8 @@
 ---
-import { ui, withSiteName } from "i18n";
-import VaultNotesBrowser from "components/VaultNotesBrowser.astro";
-import MainLayout from "layouts/MainLayout.astro";
-import { getFavoriteLibraryItems } from "lib/vault";
+import { ui, withSiteName } from "src/i18n";
+import VaultNotesBrowser from "src/components/VaultNotesBrowser.astro";
+import MainLayout from "src/layouts/MainLayout.astro";
+import { getFavoriteLibraryItems } from "src/lib/vault";
 
 const favoriteItems = await getFavoriteLibraryItems();
 ---

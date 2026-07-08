@@ -1,14 +1,14 @@
 ---
-import DashboardCard from "components/DashboardCard.astro";
-import FavoritesList from "components/FavoritesList.astro";
-import Hero from "components/Hero.astro";
-import NoteCard from "components/NoteCard.astro";
-import ScratchpadComposer from "components/ScratchpadComposer.astro";
-import SectionCard from "components/SectionCard.astro";
-import TagChip from "components/TagChip.astro";
-import TodayNoteCard from "components/TodayNoteCard.astro";
-import { ui, withSiteName } from "i18n";
-import MainLayout from "layouts/MainLayout.astro";
+import DashboardCard from "src/components/DashboardCard.astro";
+import FavoritesList from "src/components/FavoritesList.astro";
+import Hero from "src/components/Hero.astro";
+import NoteCard from "src/components/NoteCard.astro";
+import ScratchpadComposer from "src/components/ScratchpadComposer.astro";
+import SectionCard from "src/components/SectionCard.astro";
+import TagChip from "src/components/TagChip.astro";
+import TodayNoteCard from "src/components/TodayNoteCard.astro";
+import { ui, withSiteName } from "src/i18n";
+import MainLayout from "src/layouts/MainLayout.astro";
 import {
 	getDashboardHero,
 	getDashboardMetrics,
@@ -16,7 +16,7 @@ import {
 	getPopularTags,
 	getRecentItems,
 	getTodayEntry,
-} from "lib/vault";
+} from "src/lib/vault";
 
 const [dashboardHero, dashboardMetrics, favoriteLinks, popularTags, recentItems, todayEntry] =
 	await Promise.all([

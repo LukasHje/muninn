@@ -1,4 +1,4 @@
-import { ui } from "i18n";
+import { ui } from "src/i18n";
 
 const LIGHTBOX_ID = "muninn-mermaid-lightbox";
 const ZOOM_STEP = 1.2;

@@ -1,4 +1,4 @@
-import type { LocaleMessages } from "i18n/locales/en";
+import type { LocaleMessages } from "src/i18n/locales/en";
 
 type DeepPartial<T> = {
 	[K in keyof T]?: T[K] extends (...args: any[]) => any

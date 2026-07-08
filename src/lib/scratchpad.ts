@@ -1,9 +1,9 @@
 import { readdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { ui } from "i18n";
-import { formatUiDateTime } from "i18n/format";
-import { ensureScratchpadStateDir, SCRATCHPAD_STATE_DIR } from "lib/state";
+import { ui } from "src/i18n";
+import { formatUiDateTime } from "src/i18n/format";
+import { ensureScratchpadStateDir, SCRATCHPAD_STATE_DIR } from "src/lib/state";
 
 export interface ScratchpadNote {
 	id: string;

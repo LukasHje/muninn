@@ -1,8 +1,8 @@
 import type { APIRoute } from "astro";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { ui } from "i18n";
-import { RESOLVED_VAULT_PATH } from "lib/config";
+import { ui } from "src/i18n";
+import { RESOLVED_VAULT_PATH } from "src/lib/config";
 
 export const prerender = false;
 

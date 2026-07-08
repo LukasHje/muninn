@@ -1,6 +1,6 @@
-import type { NoteSearchDocument, NoteSearchResult } from "lib/noteSearch";
-import { searchNoteDocuments } from "lib/noteSearch";
-import { highlightSearchText } from "lib/searchHighlight";
+import type { NoteSearchDocument, NoteSearchResult } from "src/lib/noteSearch";
+import { searchNoteDocuments } from "src/lib/noteSearch";
+import { highlightSearchText } from "src/lib/searchHighlight";
 
 type SearchIndexResponse = {
 	documents: NoteSearchDocument[];
@@ -352,7 +352,7 @@ export default function initQuickSearch() {
 		if ("requestIdleCallback" in window) {
 			window.requestIdleCallback(() => prefetch());
 		} else {
-			window.setTimeout(prefetch, 200);
+			globalThis.setTimeout(prefetch, 200);
 		}
 	}
 }

@@ -1,11 +1,11 @@
 ---
-import Icon from "components/Icon.astro";
-import SearchBar from "components/SearchBar.astro";
-import SectionCard from "components/SectionCard.astro";
-import { formatUiNumber } from "i18n/format";
-import { ui, withSiteName } from "i18n";
-import MainLayout from "layouts/MainLayout.astro";
-import { getScratchpadNotes } from "lib/scratchpad";
+import Icon from "src/components/Icon.astro";
+import SearchBar from "src/components/SearchBar.astro";
+import SectionCard from "src/components/SectionCard.astro";
+import { formatUiNumber } from "src/i18n/format";
+import { ui, withSiteName } from "src/i18n";
+import MainLayout from "src/layouts/MainLayout.astro";
+import { getScratchpadNotes } from "src/lib/scratchpad";
 
 const scratchpadNotes = await getScratchpadNotes();
 const scratchpadCountLabel = formatUiNumber(scratchpadNotes.length);

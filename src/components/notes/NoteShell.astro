@@ -1,11 +1,11 @@
 ---
-import { ui } from "i18n";
-import { formatUiDate } from "i18n/format";
-import type { LibraryItem } from "lib/vault";
-import { parseAppUrl, toRelativeAppUrl } from "lib/noteBrowserState";
-import FavoriteToggleButton from "components/FavoriteToggleButton.astro";
-import Icon from "components/Icon.astro";
-import TagPills from "components/notes/TagPills.astro";
+import { ui } from "src/i18n";
+import { formatUiDate } from "src/i18n/format";
+import type { LibraryItem } from "src/lib/vault";
+import { parseAppUrl, toRelativeAppUrl } from "src/lib/noteBrowserState";
+import FavoriteToggleButton from "src/components/FavoriteToggleButton.astro";
+import Icon from "src/components/Icon.astro";
+import TagPills from "src/components/notes/TagPills.astro";
 
 interface Props {
 	note: LibraryItem;

@@ -1,19 +1,19 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
-import { ui } from "i18n";
-import { formatRelativeDateLabel, formatUiDate, formatUiNumber } from "i18n/format";
+import { ui } from "src/i18n";
+import { formatRelativeDateLabel, formatUiDate, formatUiNumber } from "src/i18n/format";
 import {
 	extractImageReferences,
 	parseFrontmatter,
 	slugifySegment,
 	stripMarkdown,
-} from "lib/parser";
-import type { NormalizedNote } from "lib/normalizeNote";
-import { normalizeNote } from "lib/normalizeNote";
-import { parseObsidianAssetRef, resolveObsidianAsset } from "lib/resolveObsidianAsset";
-import { getVaultAssetIndex } from "lib/vaultAssetIndex";
-import { RESOLVED_VAULT_PATH } from "lib/config";
-import { getFavoriteNoteIdSet } from "lib/favorites";
+} from "src/lib/parser";
+import type { NormalizedNote } from "src/lib/normalizeNote";
+import { normalizeNote } from "src/lib/normalizeNote";
+import { parseObsidianAssetRef, resolveObsidianAsset } from "src/lib/resolveObsidianAsset";
+import { getVaultAssetIndex } from "src/lib/vaultAssetIndex";
+import { RESOLVED_VAULT_PATH } from "src/lib/config";
+import { getFavoriteNoteIdSet } from "src/lib/favorites";
 
 export type CategoryKey =
 	| "projekt"

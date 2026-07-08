@@ -3,7 +3,7 @@ import {
 	normalizeSearchText,
 	tokenizeSearchQuery,
 	type NoteSearchMatchField,
-} from "lib/noteSearch";
+} from "src/lib/noteSearch";
 
 interface HighlightOptions {
 	field?: NoteSearchMatchField;

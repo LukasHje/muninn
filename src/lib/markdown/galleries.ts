@@ -1,6 +1,6 @@
-import { resolveObsidianAssetForNote } from "lib/markdown/obsidian";
-import type { MarkdownDocumentSegment, MarkdownParseContext } from "lib/markdown/types";
-import type { ResolvedObsidianAsset } from "lib/resolveObsidianAsset";
+import { resolveObsidianAssetForNote } from "src/lib/markdown/obsidian";
+import type { MarkdownDocumentSegment, MarkdownParseContext } from "src/lib/markdown/types";
+import type { ResolvedObsidianAsset } from "src/lib/resolveObsidianAsset";
 
 const markdownImagePattern = /!\[([^\]]*)\]\(([^)\n]+)\)/g;
 

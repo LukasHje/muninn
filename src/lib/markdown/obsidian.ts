@@ -1,8 +1,8 @@
 import path from "node:path";
-import { executeDataviewLite } from "lib/dataviewLite";
-import { executeDataviewJs } from "lib/dataviewJs";
-import { parseObsidianAssetRef, resolveObsidianAsset } from "lib/resolveObsidianAsset";
-import type { MarkdownDocumentSegment, MarkdownParseContext } from "lib/markdown/types";
+import { executeDataviewLite } from "src/lib/dataviewLite";
+import { executeDataviewJs } from "src/lib/dataviewJs";
+import { parseObsidianAssetRef, resolveObsidianAsset } from "src/lib/resolveObsidianAsset";
+import type { MarkdownDocumentSegment, MarkdownParseContext } from "src/lib/markdown/types";
 
 type ParseNestedSegments = (raw: string, keyPrefix: string) => Promise<MarkdownDocumentSegment[]>;
 

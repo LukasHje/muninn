@@ -1,14 +1,14 @@
 ---
-import { formatUiNumber } from "i18n/format";
-import { ui } from "i18n";
-import Icon from "components/Icon.astro";
-import NoteCard from "components/NoteCard.astro";
-import NoteListRow from "components/NoteListRow.astro";
-import SectionCard from "components/SectionCard.astro";
-import TagMultiSelect from "components/TagMultiSelect.astro";
-import { getNoteBrowserState } from "lib/noteBrowserState";
-import { buildNoteSearchDocuments, searchNoteDocuments } from "lib/noteSearch";
-import type { LibraryItem } from "lib/vault";
+import { formatUiNumber } from "src/i18n/format";
+import { ui } from "src/i18n";
+import Icon from "src/components/Icon.astro";
+import NoteCard from "src/components/NoteCard.astro";
+import NoteListRow from "src/components/NoteListRow.astro";
+import SectionCard from "src/components/SectionCard.astro";
+import TagMultiSelect from "src/components/TagMultiSelect.astro";
+import { getNoteBrowserState } from "src/lib/noteBrowserState";
+import { buildNoteSearchDocuments, searchNoteDocuments } from "src/lib/noteSearch";
+import type { LibraryItem } from "src/lib/vault";
 
 interface Props {
 	title: string;

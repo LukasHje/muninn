@@ -1,11 +1,11 @@
 ---
 export const prerender = false;
 
-import Icon from "components/Icon.astro";
-import SectionCard from "components/SectionCard.astro";
-import { ui, withSiteName } from "i18n";
-import MainLayout from "layouts/MainLayout.astro";
-import { getScratchpadNoteById } from "lib/scratchpad";
+import Icon from "src/components/Icon.astro";
+import SectionCard from "src/components/SectionCard.astro";
+import { ui, withSiteName } from "src/i18n";
+import MainLayout from "src/layouts/MainLayout.astro";
+import { getScratchpadNoteById } from "src/lib/scratchpad";
 
 const { id } = Astro.params;
 const scratchpadNote = id ? await getScratchpadNoteById(id) : null;

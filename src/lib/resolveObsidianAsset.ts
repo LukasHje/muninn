@@ -1,7 +1,7 @@
 import path from "node:path";
-import { cleanImageReference } from "lib/parser";
-import type { VaultAssetEntry, VaultAssetIndex } from "lib/vaultAssetIndex";
-import { normalizeAssetName } from "lib/vaultAssetIndex";
+import { cleanImageReference } from "src/lib/parser";
+import type { VaultAssetEntry, VaultAssetIndex } from "src/lib/vaultAssetIndex";
+import { normalizeAssetName } from "src/lib/vaultAssetIndex";
 
 export interface ParsedObsidianAssetRef {
 	path: string;

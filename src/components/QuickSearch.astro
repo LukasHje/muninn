@@ -1,6 +1,6 @@
 ---
-import Icon from "components/Icon.astro";
-import { ui } from "i18n";
+import Icon from "src/components/Icon.astro";
+import { ui } from "src/i18n";
 ---
 
 <div
@@ -54,7 +54,7 @@ import { ui } from "i18n";
 </div>
 
 <script type="module">
-	import initQuickSearch from "components/QuickSearchClient.ts";
+	import initQuickSearch from "src/components/QuickSearchClient.ts";
 
 	initQuickSearch();
 </script>

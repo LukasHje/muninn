@@ -1,7 +1,7 @@
-import { parseMapBlock } from "lib/parseMapBlock";
-import type { ResolvedObsidianAsset } from "lib/resolveObsidianAsset";
-import type { MarkdownDocumentSegment, MarkdownParseContext } from "lib/markdown/types";
-import { resolveObsidianAssetForNote } from "lib/markdown/obsidian";
+import { parseMapBlock } from "src/lib/parseMapBlock";
+import type { ResolvedObsidianAsset } from "src/lib/resolveObsidianAsset";
+import type { MarkdownDocumentSegment, MarkdownParseContext } from "src/lib/markdown/types";
+import { resolveObsidianAssetForNote } from "src/lib/markdown/obsidian";
 
 type ParseNestedSegments = (raw: string, keyPrefix: string) => Promise<MarkdownDocumentSegment[]>;
 

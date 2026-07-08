@@ -1,6 +1,6 @@
 import path from "node:path";
-import { ui } from "i18n";
-import type { LibraryItem } from "lib/vault";
+import { ui } from "src/i18n";
+import type { LibraryItem } from "src/lib/vault";
 
 export type DataviewLiteCell =
 	| { kind: "link"; href: string; label: string }

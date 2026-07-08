@@ -1,4 +1,4 @@
-import { ui } from "i18n";
+import { ui } from "src/i18n";
 import pdfWorkerUrl from "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
 
 const LIGHTBOX_ID = "muninn-pdf-lightbox";

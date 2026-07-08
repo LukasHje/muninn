@@ -1,5 +1,5 @@
-import { slugifySegment, stripMarkdown } from "lib/parser";
-import type { LibraryItem } from "lib/vault";
+import { slugifySegment, stripMarkdown } from "src/lib/parser";
+import type { LibraryItem } from "src/lib/vault";
 
 export interface NoteSearchHeading {
 	id: string;

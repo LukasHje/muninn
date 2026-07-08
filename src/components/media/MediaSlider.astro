@@ -1,7 +1,7 @@
 ---
-import { ui } from "i18n";
-import type { ResolvedObsidianAsset } from "lib/resolveObsidianAsset";
-import Icon from "components/Icon.astro";
+import { ui } from "src/i18n";
+import type { ResolvedObsidianAsset } from "src/lib/resolveObsidianAsset";
+import Icon from "src/components/Icon.astro";
 
 interface Props {
 	items: ResolvedObsidianAsset[];
@@ -97,7 +97,7 @@ const { items } = Astro.props;
 </section>
 
 <script type="module">
-	import initMediaSliders from "components/media/MediaSliderClient.ts";
+	import initMediaSliders from "src/components/media/MediaSliderClient.ts";
 
 	initMediaSliders();
 </script>

@@ -1,8 +1,8 @@
-import { DEFAULT_LOCALE, type Locale, getLocaleConfig, LOCALE_CODES } from "i18n/config";
-import { en, type LocaleMessages } from "i18n/locales/en";
-import { sv } from "i18n/locales/sv";
+import { DEFAULT_LOCALE, type Locale, getLocaleConfig, LOCALE_CODES } from "src/i18n/config";
+import { en, type LocaleMessages } from "src/i18n/locales/en";
+import { sv } from "src/i18n/locales/sv";
 
-export { DEFAULT_LANGUAGE, DEFAULT_LOCALE, DEFAULT_REGION, type Locale } from "i18n/config";
+export { DEFAULT_LANGUAGE, DEFAULT_LOCALE, DEFAULT_REGION, type Locale } from "src/i18n/config";
 
 type DeepPartial<T> = {
 	[K in keyof T]?: T[K] extends (...args: any[]) => any

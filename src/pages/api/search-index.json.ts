@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
-import { buildNoteSearchDocuments } from "lib/noteSearch";
-import { getLibraryItems } from "lib/vault";
+import { buildNoteSearchDocuments } from "src/lib/noteSearch";
+import { getLibraryItems } from "src/lib/vault";
 
 export const GET: APIRoute = async () => {
 	const items = await getLibraryItems();

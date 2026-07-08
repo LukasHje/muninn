@@ -1,5 +1,5 @@
 ---
-import { ui } from "i18n";
+import { ui } from "src/i18n";
 
 interface Props {
 	code: string;
@@ -22,7 +22,7 @@ const { code } = Astro.props;
 </div>
 
 <script type="module">
-	import initMermaidDiagrams from "components/plugins/MermaidDiagramClient.ts";
+	import initMermaidDiagrams from "src/components/plugins/MermaidDiagramClient.ts";
 
 	initMermaidDiagrams();
 </script>
