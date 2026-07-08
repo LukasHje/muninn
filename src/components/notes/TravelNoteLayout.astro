@@ -1,10 +1,10 @@
 ---
-import type { LibraryItem } from "../../lib/vault";
-import LeafletMap from "../maps/LeafletMap.astro";
-import { extractMapBlock } from "../../lib/parseMapBlock";
-import NoteContent from "./NoteContent.astro";
-import NoteShell from "./NoteShell.astro";
-import NoteProperties from "./NoteProperties.astro";
+import type { LibraryItem } from "src/lib/vault";
+import LeafletMap from "src/components/maps/LeafletMap.astro";
+import { extractMapBlock } from "src/lib/parseMapBlock";
+import NoteContent from "src/components/notes/NoteContent.astro";
+import NoteShell from "src/components/notes/NoteShell.astro";
+import NoteProperties from "src/components/notes/NoteProperties.astro";
 
 interface Props {
 	note: LibraryItem;

@@ -1,0 +1,202 @@
+---
+import { ui } from "src/i18n";
+
+interface Props {
+	code: string;
+}
+
+const { code } = Astro.props;
+---
+
+<div
+	data-mermaid-diagram
+	data-mermaid-code={code}
+	data-mermaid-expand-label={ui.mermaid.expand}
+	data-mermaid-close-label={ui.mermaid.close}
+	class="mermaid-diagram"
+>
+	<div class="mermaid-diagram__placeholder">
+		<p class="text-sm font-semibold text-slate-700">{ui.mermaid.title}</p>
+		<p class="mt-2 text-sm leading-6 text-slate-500">{ui.mermaid.placeholder}</p>
+	</div>
+</div>
+
+<script type="module">
+	import initMermaidDiagrams from "src/components/plugins/MermaidDiagramClient.ts";
+
+	initMermaidDiagrams();
+</script>
+
+<style>
+	.mermaid-diagram {
+		position: relative;
+		overflow-x: auto;
+		overflow-y: hidden;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	.mermaid-diagram:global(.mermaid-diagram--interactive) {
+		cursor: pointer;
+	}
+
+	.mermaid-diagram:global(.mermaid-diagram--interactive:focus-visible) {
+		outline: 2px solid #7dc4e5;
+		outline-offset: 4px;
+	}
+
+	.mermaid-diagram :global(svg) {
+		display: block;
+		width: max-content;
+		min-width: 100%;
+		max-width: none;
+		height: auto;
+		margin: 0 auto;
+		overflow: visible;
+	}
+
+	.mermaid-diagram :global(foreignObject),
+	.mermaid-diagram :global(.label),
+	.mermaid-diagram :global(.nodeLabel),
+	.mermaid-diagram :global(.edgeLabel),
+	.mermaid-diagram :global(.cluster-label) {
+		overflow: visible;
+	}
+
+	.mermaid-diagram :global(.label),
+	.mermaid-diagram :global(.nodeLabel),
+	.mermaid-diagram :global(.edgeLabel),
+	.mermaid-diagram :global(.cluster-label),
+	.mermaid-diagram :global(.label p),
+	.mermaid-diagram :global(.edgeLabel p) {
+		margin: 0;
+		padding: 0;
+		font-size: 16px;
+		line-height: 1.3;
+		letter-spacing: 0;
+		text-transform: none;
+		text-align: center;
+	}
+
+	.mermaid-diagram :global(.nodeLabel),
+	.mermaid-diagram :global(.label p),
+	.mermaid-diagram :global(.edgeLabel p) {
+		color: #475569;
+		white-space: nowrap;
+	}
+
+	.mermaid-diagram :global(.cluster-label) {
+		color: #475569;
+		font-weight: 600;
+	}
+
+	.mermaid-diagram__placeholder {
+		display: grid;
+		min-height: 220px;
+		place-items: center;
+		text-align: center;
+		padding: 1rem 0;
+	}
+	.mermaid-diagram__error {
+		display: grid;
+		min-height: 220px;
+		place-items: center;
+		text-align: center;
+		color: #475569;
+		padding: 1rem 0;
+	}
+
+	:global(.muninn-mermaid-lightbox) {
+		width: 100vw;
+		max-width: 100vw;
+		height: 100vh;
+		max-height: 100vh;
+		border: 0;
+		border-radius: 0;
+		margin: 0;
+		padding: 0;
+		background: transparent;
+		box-shadow: none;
+		overflow: hidden;
+	}
+
+	:global(.muninn-mermaid-lightbox::backdrop) {
+		background: rgba(15, 23, 42, 0.64);
+		backdrop-filter: blur(8px);
+	}
+
+	:global(.muninn-mermaid-lightbox__surface) {
+		position: relative;
+		height: 100vh;
+		width: 100vw;
+	}
+
+	:global(.muninn-mermaid-lightbox__controls) {
+		position: absolute;
+		top: 1.2rem;
+		right: 1.2rem;
+		z-index: 2;
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+	}
+
+	:global(.muninn-mermaid-lightbox__icon-button) {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.8rem;
+		height: 2.8rem;
+		border: 1px solid rgba(255, 255, 255, 0.18);
+		border-radius: 999px;
+		background: rgba(51, 65, 85, 0.72);
+		color: #e5e7eb;
+		cursor: pointer;
+		backdrop-filter: blur(10px);
+		transition: background 120ms ease, color 120ms ease, opacity 120ms ease;
+	}
+
+	:global(.muninn-mermaid-lightbox__icon-button:hover) {
+		background: rgba(71, 85, 105, 0.9);
+		color: white;
+	}
+
+	:global(.muninn-mermaid-lightbox__icon-button:disabled) {
+		opacity: 0.45;
+		cursor: default;
+	}
+
+	:global(.muninn-mermaid-lightbox__icon-button svg) {
+		width: 1.15rem;
+		height: 1.15rem;
+	}
+
+	:global(.muninn-mermaid-lightbox__viewport) {
+		display: grid;
+		place-items: center;
+		height: 100%;
+		width: 100%;
+		overflow: auto;
+		padding: 4.75rem 2rem 2rem;
+	}
+
+	:global(.muninn-mermaid-lightbox__stage) {
+		display: grid;
+		place-items: center;
+		min-width: 100%;
+		min-height: 100%;
+	}
+
+	:global(.muninn-mermaid-lightbox__content) {
+		display: inline-block;
+		max-width: none;
+	}
+
+	:global(.muninn-mermaid-lightbox__content svg) {
+		display: block;
+		max-width: none;
+		height: auto;
+		background: #f8f4ed;
+		box-shadow: 0 24px 70px rgba(15, 23, 42, 0.24);
+		border-radius: 0.4rem;
+	}
+</style>

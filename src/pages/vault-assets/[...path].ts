@@ -1,7 +1,8 @@
 import type { APIRoute } from "astro";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { RESOLVED_VAULT_PATH } from "../../lib/config";
+import { ui } from "src/i18n";
+import { RESOLVED_VAULT_PATH } from "src/lib/config";
 
 export const prerender = false;
 
@@ -12,6 +13,7 @@ const contentTypes: Record<string, string> = {
 	".svg": "image/svg+xml",
 	".webp": "image/webp",
 	".gif": "image/gif",
+	".pdf": "application/pdf",
 };
 
 export const GET: APIRoute = async ({ params }) => {
@@ -20,7 +22,7 @@ export const GET: APIRoute = async ({ params }) => {
 	const fullPath = path.resolve(RESOLVED_VAULT_PATH, decodedPath);
 
 	if (!fullPath.startsWith(RESOLVED_VAULT_PATH)) {
-		return new Response("Forbidden", { status: 403 });
+		return new Response(ui.errors.forbidden, { status: 403 });
 	}
 
 	try {
@@ -29,10 +31,11 @@ export const GET: APIRoute = async ({ params }) => {
 		return new Response(bytes, {
 			headers: {
 				"Content-Type": contentTypes[extension] ?? "application/octet-stream",
+				...(extension === ".pdf" ? { "Content-Disposition": "inline" } : {}),
 				"Cache-Control": "public, max-age=3600",
 			},
 		});
 	} catch {
-		return new Response("Not found", { status: 404 });
+		return new Response(ui.errors.notFound, { status: 404 });
 	}
 };

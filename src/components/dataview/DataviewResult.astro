@@ -1,5 +1,7 @@
 ---
-import type { DataviewLiteResult } from "../../lib/dataviewLite";
+import { ui } from "src/i18n";
+import { formatUiDateTime } from "src/i18n/format";
+import type { DataviewLiteResult } from "src/lib/dataviewLite";
 
 interface Props {
 	result: DataviewLiteResult;
@@ -8,10 +10,7 @@ interface Props {
 const { result } = Astro.props;
 
 function formatDate(timestamp: number) {
-	return new Intl.DateTimeFormat("sv-SE", {
-		dateStyle: "medium",
-		timeStyle: "short",
-	}).format(new Date(timestamp));
+	return formatUiDateTime(new Date(timestamp));
 }
 ---
 
@@ -56,7 +55,7 @@ function formatDate(timestamp: number) {
 							) : (
 								<tr>
 									<td colspan={result.columns.length}>
-										<div class="dataview-result__empty-state">Inga anteckningar matchade frågan.</div>
+										<div class="dataview-result__empty-state">{ui.dataview.emptyState}</div>
 									</td>
 								</tr>
 							)}
@@ -91,7 +90,7 @@ function formatDate(timestamp: number) {
 						))}
 					</ul>
 				) : (
-					<div class="dataview-result__empty-state">Inga anteckningar matchade frågan.</div>
+					<div class="dataview-result__empty-state">{ui.dataview.emptyState}</div>
 				)}
 			</div>
 		</section>
@@ -99,7 +98,7 @@ function formatDate(timestamp: number) {
 		<section class="dataview-card">
 			<div class="dataview-card__header">
 				<div>
-					<p class="dataview-card__title">Dataview query</p>
+					<p class="dataview-card__title">{ui.dataview.queryTitle}</p>
 					<p class="dataview-card__subtitle">{result.reason}</p>
 				</div>
 				<button
@@ -108,7 +107,7 @@ function formatDate(timestamp: number) {
 					data-copy-code
 					data-copy-value={result.query}
 				>
-					Copy
+					{ui.common.copy}
 				</button>
 			</div>
 			<pre class="code-block__pre"><code>{result.query.replace(/\n$/, "")}</code></pre>

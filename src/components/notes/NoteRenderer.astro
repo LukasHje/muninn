@@ -1,9 +1,9 @@
 ---
-import type { LibraryItem } from "../../lib/vault";
-import { getNoteLayout } from "../../lib/noteLayout";
-import CoverNoteLayout from "./CoverNoteLayout.astro";
-import PlainNoteLayout from "./PlainNoteLayout.astro";
-import TravelNoteLayout from "./TravelNoteLayout.astro";
+import type { LibraryItem } from "src/lib/vault";
+import { getNoteLayout } from "src/lib/noteLayout";
+import CoverNoteLayout from "src/components/notes/CoverNoteLayout.astro";
+import PlainNoteLayout from "src/components/notes/PlainNoteLayout.astro";
+import TravelNoteLayout from "src/components/notes/TravelNoteLayout.astro";
 
 interface Props {
 	note: LibraryItem;

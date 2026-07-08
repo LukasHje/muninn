@@ -1,9 +1,10 @@
 ---
-import Hero from "../../components/Hero.astro";
-import NoteCard from "../../components/NoteCard.astro";
-import RecipeLayout from "../../layouts/RecipeLayout.astro";
-import SectionCard from "../../components/SectionCard.astro";
-import { getDashboardHero, getItemsByCategory } from "../../lib/vault";
+import Hero from "src/components/Hero.astro";
+import NoteCard from "src/components/NoteCard.astro";
+import RecipeLayout from "src/layouts/RecipeLayout.astro";
+import SectionCard from "src/components/SectionCard.astro";
+import { ui, withSiteName } from "src/i18n";
+import { getDashboardHero, getItemsByCategory } from "src/lib/vault";
 
 const [recipes, dashboardHero] = await Promise.all([
 	getItemsByCategory("recept"),
@@ -11,15 +12,15 @@ const [recipes, dashboardHero] = await Promise.all([
 ]);
 ---
 
-<RecipeLayout title="Recept | Muninn">
+<RecipeLayout title={withSiteName(ui.pages.recipes.title)}>
 	<Hero
-		eyebrow="Receptsida"
-		title="Maträtter, favoriter och köksanteckningar"
-		description="Riktiga vaultanteckningar kategoriserade som recept utifrån metadata, tags och innehåll."
+		eyebrow={ui.pages.recipes.eyebrow}
+		title={ui.pages.recipes.heroTitle}
+		description={ui.pages.recipes.heroDescription}
 		imageUrl={dashboardHero.imageUrl}
 	/>
 
-	<SectionCard title="Receptkort">
+	<SectionCard title={ui.pages.recipes.sectionTitle}>
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 			{
 				recipes.map((recipe) => (

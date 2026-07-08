@@ -1,9 +1,9 @@
 ---
 export const prerender = false;
 
-import NoteRenderer from "../../components/notes/NoteRenderer.astro";
-import MainLayout from "../../layouts/MainLayout.astro";
-import { getNoteByHrefSlug } from "../../lib/vault";
+import NoteRenderer from "src/components/notes/NoteRenderer.astro";
+import MainLayout from "src/layouts/MainLayout.astro";
+import { getNoteByHrefSlug } from "src/lib/vault";
 
 const slug = Astro.params.slug ?? "";
 const slugPath = Array.isArray(slug) ? slug.join("/") : slug;

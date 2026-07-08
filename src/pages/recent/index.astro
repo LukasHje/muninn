@@ -1,16 +1,17 @@
 ---
-import VaultNotesBrowser from "../../components/VaultNotesBrowser.astro";
-import MainLayout from "../../layouts/MainLayout.astro";
-import { getRecentVaultItemsWithinDay } from "../../lib/vault";
+import { ui, withSiteName } from "src/i18n";
+import VaultNotesBrowser from "src/components/VaultNotesBrowser.astro";
+import MainLayout from "src/layouts/MainLayout.astro";
+import { getRecentVaultItemsWithinDay } from "src/lib/vault";
 
 const recentItems = await getRecentVaultItemsWithinDay();
 ---
 
-<MainLayout title="Nyligen uppdaterade | Muninn">
+<MainLayout title={withSiteName(ui.pages.recent.title)}>
 	<VaultNotesBrowser
-		title="Nyligen uppdaterade"
+		title={ui.pages.recent.title}
 		items={recentItems}
-		emptyMessage="Inga anteckningar har skapats eller uppdaterats de senaste 24 timmarna."
+		emptyMessage={ui.pages.recent.empty}
 		basePath="/recent"
 	/>
 </MainLayout>

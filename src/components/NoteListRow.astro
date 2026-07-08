@@ -1,18 +1,40 @@
 ---
-import type { LibraryItem } from "../lib/vault";
-import FavoriteToggleButton from "./FavoriteToggleButton.astro";
+import { highlightSearchText } from "src/lib/searchHighlight";
+import type { NoteSearchMatchField } from "src/lib/noteSearch";
+import type { LibraryItem } from "src/lib/vault";
+import FavoriteToggleButton from "src/components/FavoriteToggleButton.astro";
 
 interface Props {
 	item: LibraryItem;
+	selectedTags?: string[];
+	searchQuery?: string;
+	searchSnippet?: string;
+	searchField?: NoteSearchMatchField;
+	hrefOverride?: string;
 }
 
-const { item } = Astro.props;
+const { item, selectedTags = [], searchQuery, searchSnippet, searchField, hrefOverride } = Astro.props;
 const redirectTo = Astro.url.pathname + Astro.url.search;
+
+function buildNoteHref(href: string) {
+	const [pathAndQuery, hash = ""] = href.split("#");
+	const separator = pathAndQuery.includes("?") ? "&" : "?";
+	return `${pathAndQuery}${separator}returnTo=${encodeURIComponent(redirectTo)}${hash ? `#${hash}` : ""}`;
+}
+
+const noteHref = buildNoteHref(hrefOverride ?? item.href);
+const selectedTagSet = new Set(selectedTags);
+const titleHtml = searchQuery
+	? highlightSearchText(item.title, searchQuery, { field: "title" })
+	: null;
+const snippetHtml = searchQuery && searchSnippet && searchField
+	? highlightSearchText(searchSnippet, searchQuery, { field: searchField })
+	: null;
 ---
 
 <article class="group">
 	<div class="flex items-start gap-4 rounded-[14px] px-3 py-3 transition hover:bg-[#fcfaf6]">
-		<a href={item.href} class="flex min-w-0 flex-1 items-start gap-4">
+		<a href={noteHref} class="flex min-w-0 flex-1 items-start gap-4">
 			{
 				item.imageUrl ? (
 					<img
@@ -30,17 +52,41 @@ const redirectTo = Astro.url.pathname + Astro.url.search;
 			<div class="min-w-0 flex-1">
 				<div class="flex items-start justify-between gap-4">
 					<div class="min-w-0">
-						<h2 class="truncate text-[1.05rem] font-semibold tracking-tight text-slate-900">
-							{item.title}
-						</h2>
-						<div class="mt-2 flex flex-wrap gap-2">
+						{
+							titleHtml ? (
+								<h2 class="truncate text-[1.05rem] font-semibold tracking-tight text-slate-900" set:html={titleHtml}></h2>
+							) : (
+								<h2 class="truncate text-[1.05rem] font-semibold tracking-tight text-slate-900">
+									{item.title}
+								</h2>
+							)
+						}
 							{
-								item.tags.map((tag) => (
-									<span class="rounded-full bg-[#f4efe7] px-2.5 py-0.5 text-xs font-medium text-slate-500">
-										#{tag}
-									</span>
-								))
+								snippetHtml && (
+									<p class="mt-1 text-sm leading-6 text-slate-600" set:html={snippetHtml}></p>
+								)
 							}
+							<div class="mt-2 flex flex-wrap gap-2">
+								{
+									item.tags.map((tag) => (
+									<span
+										class:list={[
+											"rounded-full px-2.5 py-0.5 text-xs font-medium",
+											selectedTagSet.has(tag)
+												? "bg-sky-100 text-sky-700 ring-1 ring-sky-200"
+												: "bg-[#f4efe7] text-slate-500",
+										]}
+									>
+											{
+												searchQuery ? (
+													<span set:html={`#${highlightSearchText(tag, searchQuery, { field: "tag" })}`}></span>
+												) : (
+													`#${tag}`
+												)
+											}
+										</span>
+									))
+								}
 						</div>
 					</div>
 					<div class="flex shrink-0 items-center gap-4">

@@ -7,7 +7,8 @@ dist/
 !.env.example
 
 public/vault-assets/
-data/local-state/
+data/
+!data/example-vault/
 
 .cache/
 coverage/

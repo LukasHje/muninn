@@ -1,9 +1,14 @@
 ---
-import Icon from "./Icon.astro";
-import NoteCard from "./NoteCard.astro";
-import NoteListRow from "./NoteListRow.astro";
-import SectionCard from "./SectionCard.astro";
-import type { LibraryItem } from "../lib/vault";
+import { formatUiNumber } from "src/i18n/format";
+import { ui } from "src/i18n";
+import Icon from "src/components/Icon.astro";
+import NoteCard from "src/components/NoteCard.astro";
+import NoteListRow from "src/components/NoteListRow.astro";
+import SectionCard from "src/components/SectionCard.astro";
+import TagMultiSelect from "src/components/TagMultiSelect.astro";
+import { getNoteBrowserState } from "src/lib/noteBrowserState";
+import { buildNoteSearchDocuments, searchNoteDocuments } from "src/lib/noteSearch";
+import type { LibraryItem } from "src/lib/vault";
 
 interface Props {
 	title: string;
@@ -20,11 +25,8 @@ const {
 } = Astro.props;
 
 const searchParams = Astro.url.searchParams;
-const query = searchParams.get("q")?.trim() ?? "";
-const selectedCategory = searchParams.get("category")?.trim() ?? "all";
-const selectedTag = searchParams.get("tag")?.trim() ?? "all";
-const sortBy = searchParams.get("sort")?.trim() ?? "updated";
-const layout = searchParams.get("layout") === "grid" ? "grid" : "list";
+const searchState = getNoteBrowserState(searchParams);
+const { query, category: selectedCategory, tags: selectedTags, sort: sortBy, layout } = searchState;
 
 const categories = Array.from(
 	new Map(
@@ -35,28 +37,54 @@ const categories = Array.from(
 	).values()
 );
 
-const tags = Array.from(new Set(items.flatMap((item) => item.tags))).sort((a, b) =>
-	a.localeCompare(b, "sv")
-);
+const tagCounts = items.reduce((counts, item) => {
+	for (const tag of item.tags) {
+		counts.set(tag, (counts.get(tag) ?? 0) + 1);
+	}
 
-const filteredItems = items
+	return counts;
+}, new Map<string, number>());
+
+const tagOptions = Array.from(tagCounts.entries())
+	.map(([value, count]) => ({
+		value,
+		count,
+		countLabel: String(count),
+	}))
+	.sort((left, right) => {
+		if (left.count !== right.count) {
+			return right.count - left.count;
+		}
+
+		return left.value.localeCompare(right.value, "sv");
+	});
+
+const selectedTagSet = new Set(selectedTags);
+
+const scopedItems = items
 	.filter((item) => {
-		const matchesQuery =
-			!query ||
-			[item.title, item.excerpt, ...item.tags]
-				.join(" ")
-				.toLowerCase()
-				.includes(query.toLowerCase());
 		const matchesCategory = selectedCategory === "all" || item.categoryKey === selectedCategory;
-		const matchesTag = selectedTag === "all" || item.tags.includes(selectedTag);
-		return matchesQuery && matchesCategory && matchesTag;
-	})
-	.sort((a, b) => {
+		const matchesTag =
+			selectedTags.length === 0 || item.tags.some((tag) => selectedTagSet.has(tag));
+		return matchesCategory && matchesTag;
+	});
+
+const scopedItemsById = new Map(scopedItems.map((item) => [item.id, item]));
+const queryResults = query ? searchNoteDocuments(buildNoteSearchDocuments(scopedItems), query) : [];
+const queryResultMap = new Map(queryResults.map((result) => [result.id, result]));
+
+const filteredItems = query
+	? queryResults
+		.map((result) => scopedItemsById.get(result.id))
+		.filter((item): item is LibraryItem => Boolean(item))
+	: scopedItems.sort((a, b) => {
 		if (sortBy === "title") {
 			return a.title.localeCompare(b.title, "sv");
 		}
 		return items.indexOf(a) - items.indexOf(b);
 	});
+
+const resultsCountLabel = formatUiNumber(filteredItems.length);
 
 function buildLayoutHref(nextLayout: "list" | "grid") {
 	const next = new URLSearchParams(searchParams);
@@ -71,7 +99,7 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 			<a
 				href="/"
 				class="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 transition hover:bg-[#f6f1ea] hover:text-slate-900"
-				aria-label="Till dashboard"
+				aria-label={ui.notesBrowser.backToDashboard}
 			>
 				<Icon name="chevron-left" class="h-4 w-4" />
 			</a>
@@ -79,8 +107,9 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 		</div>
 
 		<form method="get" class="space-y-4 pt-4">
+			<input type="hidden" name="layout" value={layout} />
 			<label class="block">
-				<span class="sr-only">Sök anteckningar</span>
+				<span class="sr-only">{ui.notesBrowser.searchNotes}</span>
 				<span class="flex items-center gap-3 rounded-[14px] border border-[#e7dfd5] bg-white px-4 py-3 shadow-sm">
 					<svg
 						class="h-4 w-4 shrink-0 text-slate-400"
@@ -100,20 +129,20 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 						type="search"
 						name="q"
 						value={query}
-						placeholder="Sök anteckningar..."
+						placeholder={ui.notesBrowser.searchPlaceholder}
 					/>
 				</span>
 			</label>
 
-			<div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+			<div class="pt-2 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
 				<div class="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
 					<label class="relative">
-						<span class="sr-only">Kategori</span>
+						<span class="sr-only">{ui.notesBrowser.category}</span>
 						<select
 							name="category"
-							class="appearance-none rounded-[12px] border border-[#e7dfd5] bg-white py-2.5 pl-4 pr-10 text-sm font-medium text-slate-700 shadow-sm outline-none transition focus:border-slate-300"
+							class="h-[46px] appearance-none rounded-[12px] border border-[#e7dfd5] bg-white py-2.5 pl-4 pr-10 text-sm font-medium text-slate-700 shadow-sm outline-none transition focus:border-slate-300"
 						>
-							<option value="all" selected={selectedCategory === "all"}>Alla kategorier</option>
+							<option value="all" selected={selectedCategory === "all"}>{ui.notesBrowser.allCategories}</option>
 							{
 								categories.map((category) => (
 									<option
@@ -128,30 +157,25 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 						<Icon name="chevron-down" class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
 					</label>
 
-					<label class="relative">
-						<span class="sr-only">Tagg</span>
-						<select
-							name="tag"
-							class="appearance-none rounded-[12px] border border-[#e7dfd5] bg-white py-2.5 pl-4 pr-10 text-sm font-medium text-slate-700 shadow-sm outline-none transition focus:border-slate-300"
-						>
-							<option value="all" selected={selectedTag === "all"}>Alla taggar</option>
-							{
-								tags.map((tag) => (
-									<option value={tag} selected={selectedTag === tag}>#{tag}</option>
-								))
-							}
-						</select>
-						<Icon name="chevron-down" class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-					</label>
+					<TagMultiSelect
+						name="tag"
+						label={ui.notesBrowser.tag}
+						allLabel={ui.notesBrowser.allTags}
+						searchLabel={ui.notesBrowser.searchTags}
+						searchPlaceholder={ui.notesBrowser.searchTagsPlaceholder}
+						emptyLabel={ui.notesBrowser.noMatchingTags}
+						selectedTags={selectedTags}
+						options={tagOptions}
+					/>
 
 					<label class="relative">
-						<span class="sr-only">Sortering</span>
+						<span class="sr-only">{ui.notesBrowser.sort}</span>
 						<select
 							name="sort"
-							class="appearance-none rounded-[12px] border border-[#e7dfd5] bg-white py-2.5 pl-4 pr-10 text-sm font-medium text-slate-700 shadow-sm outline-none transition focus:border-slate-300"
+							class="h-[46px] appearance-none rounded-[12px] border border-[#e7dfd5] bg-white py-2.5 pl-4 pr-10 text-sm font-medium text-slate-700 shadow-sm outline-none transition focus:border-slate-300"
 						>
-							<option value="updated" selected={sortBy === "updated"}>Sortera: Senast ändrad</option>
-							<option value="title" selected={sortBy === "title"}>Sortera: Titel A-Ö</option>
+							<option value="updated" selected={sortBy === "updated"}>{ui.notesBrowser.sortByUpdated}</option>
+							<option value="title" selected={sortBy === "title"}>{ui.notesBrowser.sortByTitle}</option>
 						</select>
 						<Icon name="chevron-down" class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
 					</label>
@@ -160,7 +184,7 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 						type="submit"
 						class="rounded-[12px] bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
 					>
-						Filtrera
+						{ui.notesBrowser.filter}
 					</button>
 				</div>
 
@@ -173,7 +197,7 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 								? "border-[#ddd3c5] bg-[#f4efe7] text-slate-900"
 								: "border-[#e7dfd5] bg-white text-slate-500 hover:bg-[#faf6ef]",
 						]}
-						aria-label="Listvy"
+						aria-label={ui.notesBrowser.listView}
 					>
 						<Icon name="layout-list" class="h-4 w-4" />
 					</a>
@@ -185,7 +209,7 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 								? "border-[#ddd3c5] bg-[#f4efe7] text-slate-900"
 								: "border-[#e7dfd5] bg-white text-slate-500 hover:bg-[#faf6ef]",
 						]}
-						aria-label="Kortvy"
+						aria-label={ui.notesBrowser.gridView}
 					>
 						<Icon name="layout-grid" class="h-4 w-4" />
 					</a>
@@ -195,8 +219,8 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 	</section>
 
 	<SectionCard
-		title="Resultat"
-		subtitle={`${filteredItems.length} anteckningar`}
+		title={ui.notesBrowser.results}
+		subtitle={ui.notesBrowser.resultsSubtitle(resultsCountLabel)}
 		bodyClass={layout === "grid" ? "" : "divide-y divide-[#efe8df]"}
 	>
 		{
@@ -208,7 +232,14 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 				<div class="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
 					{
 						filteredItems.map((item) => (
-							<NoteCard item={item} />
+							<NoteCard
+								item={item}
+								selectedTags={selectedTags}
+								searchQuery={query || undefined}
+								searchSnippet={queryResultMap.get(item.id)?.snippet}
+								searchField={queryResultMap.get(item.id)?.field}
+								hrefOverride={queryResultMap.get(item.id)?.href}
+							/>
 						))
 					}
 				</div>
@@ -216,7 +247,14 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 				<div>
 					{
 						filteredItems.map((item) => (
-							<NoteListRow item={item} />
+							<NoteListRow
+								item={item}
+								selectedTags={selectedTags}
+								searchQuery={query || undefined}
+								searchSnippet={queryResultMap.get(item.id)?.snippet}
+								searchField={queryResultMap.get(item.id)?.field}
+								hrefOverride={queryResultMap.get(item.id)?.href}
+							/>
 						))
 					}
 				</div>

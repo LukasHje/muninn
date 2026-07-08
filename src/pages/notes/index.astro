@@ -1,16 +1,17 @@
 ---
-import VaultNotesBrowser from "../../components/VaultNotesBrowser.astro";
-import MainLayout from "../../layouts/MainLayout.astro";
-import { getLibraryItems } from "../../lib/vault";
+import { ui, withSiteName } from "src/i18n";
+import VaultNotesBrowser from "src/components/VaultNotesBrowser.astro";
+import MainLayout from "src/layouts/MainLayout.astro";
+import { getLibraryItems } from "src/lib/vault";
 
 const libraryItems = await getLibraryItems();
 ---
 
-<MainLayout title="Alla anteckningar | Muninn">
+<MainLayout title={withSiteName(ui.pages.allNotes.title)}>
 	<VaultNotesBrowser
-		title="Alla anteckningar"
+		title={ui.pages.allNotes.title}
 		items={libraryItems}
-		emptyMessage="Inga anteckningar matchade filtret."
+		emptyMessage={ui.pages.allNotes.empty}
 		basePath="/notes"
 	/>
 </MainLayout>

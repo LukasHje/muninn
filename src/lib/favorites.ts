@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { APP_STATE_DIR, ensureAppStateDir } from "./state";
+import { ui } from "src/i18n";
+import { APP_STATE_DIR, ensureAppStateDir } from "src/lib/state";
 
 const favoritesFilePath = path.join(APP_STATE_DIR, "favorites.json");
 
@@ -49,7 +50,7 @@ export async function getFavoritesCount() {
 export async function toggleFavoriteNote(noteId: string) {
 	const trimmedId = noteId.trim();
 	if (!trimmedId) {
-		throw new Error("Favorite note id is required.");
+		throw new Error(ui.errors.favoriteNoteIdRequired);
 	}
 
 	const state = await readFavoritesState();

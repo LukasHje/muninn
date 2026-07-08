@@ -1,7 +1,9 @@
 import { readdir, readFile, stat, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { ensureScratchpadStateDir, SCRATCHPAD_STATE_DIR } from "./state";
+import { ui } from "src/i18n";
+import { formatUiDateTime } from "src/i18n/format";
+import { ensureScratchpadStateDir, SCRATCHPAD_STATE_DIR } from "src/lib/state";
 
 export interface ScratchpadNote {
 	id: string;
@@ -19,14 +21,11 @@ function normaliseLineBreaks(value: string) {
 }
 
 function formatDate(value: Date) {
-	return new Intl.DateTimeFormat("sv-SE", {
-		dateStyle: "medium",
-		timeStyle: "short",
-	}).format(value);
+	return formatUiDateTime(value);
 }
 
 function buildTitle(content: string) {
-	const firstLine = content.split("\n").find((line) => line.trim().length > 0) ?? "Tom anteckning";
+	const firstLine = content.split("\n").find((line) => line.trim().length > 0) ?? ui.pages.scratchpad.untitledNote;
 	return firstLine.length > 48 ? `${firstLine.slice(0, 48)}...` : firstLine;
 }
 
@@ -89,7 +88,7 @@ export async function createScratchpadNote(content: string) {
 	const cleanedContent = normaliseLineBreaks(content);
 
 	if (!cleanedContent) {
-		throw new Error("Scratchpad content cannot be empty.");
+		throw new Error(ui.pages.scratchpad.contentRequiredError);
 	}
 
 	await ensureScratchpadDir();

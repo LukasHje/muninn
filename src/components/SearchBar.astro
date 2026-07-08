@@ -1,4 +1,6 @@
 ---
+import { ui } from "src/i18n";
+
 interface Props {
 	placeholder?: string;
 	shortcut?: string;
@@ -7,10 +9,10 @@ interface Props {
 }
 
 const {
-	placeholder = "Sök i alla anteckningar...",
+	placeholder = ui.notesBrowser.searchPlaceholder,
 	shortcut,
 	tone = "light",
-	label = "Sök",
+	label = ui.navigation.searchLabel,
 } = Astro.props;
 
 const wrapperClasses =

@@ -1,0 +1,35 @@
+---
+interface Props {
+	columnCount: number;
+}
+
+const { columnCount } = Astro.props;
+const gridColumns = Math.max(1, Math.min(columnCount || 1, 4));
+---
+
+<section class="surface-card overflow-hidden border-[#e5ddd1] bg-white p-4 shadow-[0_12px_28px_rgba(15,23,42,0.05)] md:p-5">
+	<div class="multi-column-grid" style={`--muninn-column-count:${gridColumns}`}>
+		<slot name="column" />
+	</div>
+</section>
+
+<style>
+	.multi-column-grid {
+		display: grid;
+		gap: 1rem;
+		grid-template-columns: repeat(var(--muninn-column-count), minmax(0, 1fr));
+	}
+
+	@media (max-width: 960px) {
+		.multi-column-grid {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	.multi-column-grid :global(.multi-column-grid__column) {
+		border: 1px solid #ece4d8;
+		border-radius: 20px;
+		background: linear-gradient(180deg, #fffdfa 0%, #fbf8f2 100%);
+		padding: 1rem;
+	}
+</style>

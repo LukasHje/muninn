@@ -2,21 +2,81 @@
 
 When starting the dev server, use background mode:
 
-```
-astro dev --background
+```bash
+npm dev --background
 ```
 
-Manage the background server with `astro dev stop`, `astro dev status`, and `astro dev logs`.
+Manage the background server with:
+
+```bash
+npm dev stop
+npm dev status
+npm dev logs
+```
+
+---
 
 ## Documentation
 
-Full documentation: https://docs.astro.build
+Astro documentation:
 
-Consult these guides before working on related tasks:
+https://docs.astro.build
 
-- [Adding pages, dynamic routes, or middleware](https://docs.astro.build/en/guides/routing/)
-- [Working with Astro components](https://docs.astro.build/en/basics/astro-components/)
-- [Using React, Vue, Svelte, or other framework components](https://docs.astro.build/en/guides/framework-components/)
-- [Adding or managing content](https://docs.astro.build/en/guides/content-collections/)
-- [Adding styles or using Tailwind](https://docs.astro.build/en/guides/styling/)
-- [Supporting multiple languages](https://docs.astro.build/en/guides/internationalization/)
+Project documentation lives in:
+
+```
+docs/
+```
+
+Before making architectural or feature-level changes, always read the relevant internal documentation.
+
+### Rendering
+
+- docs/rendering-pipeline.md
+- docs/ui-boundaries.md
+
+These documents define the separation between Application UI and Markdown UI, ownership boundaries, and the rendering pipeline.
+
+---
+
+### Search
+
+- docs/search-engine.md
+
+Search behaviour must remain centralized.
+
+Do **not** implement matching, ranking, snippet generation, or highlighting inside UI components.
+
+All search experiences (Quick Search, Library Search, future search features) must consume the shared search engine.
+
+---
+
+### General principle
+
+When introducing a new subsystem with non-trivial architecture, document it in `docs/` before expanding the implementation.
+
+AGENTS.md should remain an index into the project documentation rather than duplicating it.
+
+---
+
+## External References
+
+Consult the Astro documentation before making changes in these areas:
+
+- Routing
+  https://docs.astro.build/en/guides/routing/
+
+- Astro Components
+  https://docs.astro.build/en/basics/astro-components/
+
+- Framework Components
+  https://docs.astro.build/en/guides/framework-components/
+
+- Content Collections
+  https://docs.astro.build/en/guides/content-collections/
+
+- Styling / Tailwind
+  https://docs.astro.build/en/guides/styling/
+
+- Internationalization
+  https://docs.astro.build/en/guides/internationalization/

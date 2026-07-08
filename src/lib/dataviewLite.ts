@@ -1,5 +1,6 @@
 import path from "node:path";
-import type { LibraryItem } from "./vault";
+import { ui } from "src/i18n";
+import type { LibraryItem } from "src/lib/vault";
 
 export type DataviewLiteCell =
 	| { kind: "link"; href: string; label: string }
@@ -392,12 +393,12 @@ export function executeDataviewLite(
 ): DataviewLiteResult {
 	const trimmedQuery = query.trim();
 	if (!trimmedQuery) {
-		return toUnsupported(query, "Empty Dataview query.");
+		return toUnsupported(query, ui.dataview.reasons.emptyQuery);
 	}
 
 	const clauses = extractClauses(trimmedQuery);
 	if (!clauses.header) {
-		return toUnsupported(query, "Missing TABLE or LIST clause.");
+		return toUnsupported(query, ui.dataview.reasons.missingClause);
 	}
 
 	const whereConditions = clauses.whereClause ? splitConditions(clauses.whereClause) : [];
@@ -406,13 +407,13 @@ export function executeDataviewLite(
 		.filter(Boolean) as Array<(note: LibraryItem) => boolean>;
 
 	if (whereConditions.length !== predicates.length) {
-		return toUnsupported(query, "Unsupported WHERE clause.");
+		return toUnsupported(query, ui.dataview.reasons.unsupportedWhere);
 	}
 
 	const sortInputs = clauses.sortClause ? splitCommaSeparated(clauses.sortClause) : [];
 	const sortRules = clauses.sortClause ? parseSortRules(clauses.sortClause) : [];
 	if (sortInputs.length > 0 && (!sortRules || sortInputs.length !== sortRules.length)) {
-		return toUnsupported(query, "Unsupported SORT clause.");
+		return toUnsupported(query, ui.dataview.reasons.unsupportedSort);
 	}
 
 	let notes = filterByFrom(allNotes, clauses.fromPath);
@@ -428,7 +429,7 @@ export function executeDataviewLite(
 		const columnExpressions = splitCommaSeparated(tableMatch[1]);
 		const columns = columnExpressions.map((expression) => parseColumn(expression));
 		if (columns.some((column) => !column)) {
-			return toUnsupported(query, "Unsupported TABLE columns.");
+			return toUnsupported(query, ui.dataview.reasons.unsupportedTableColumns);
 		}
 
 		return {
@@ -444,7 +445,7 @@ export function executeDataviewLite(
 	if (listMatch) {
 		const expression = listMatch[1]?.trim() || "file.link";
 		if (!supportedFieldSet.has(normalizeFieldName(expression))) {
-			return toUnsupported(query, "Unsupported LIST expression.");
+			return toUnsupported(query, ui.dataview.reasons.unsupportedListExpression);
 		}
 
 		return {
@@ -453,5 +454,5 @@ export function executeDataviewLite(
 		};
 	}
 
-	return toUnsupported(query, "Only TABLE and LIST Dataview queries are supported.");
+	return toUnsupported(query, ui.dataview.reasons.onlyTableAndList);
 }

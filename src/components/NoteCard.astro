@@ -1,17 +1,107 @@
 ---
-import type { LibraryItem } from "../lib/vault";
-import FavoriteToggleButton from "./FavoriteToggleButton.astro";
-import TagChip from "./TagChip.astro";
+import { highlightSearchText } from "src/lib/searchHighlight";
+import type { NoteSearchMatchField } from "src/lib/noteSearch";
+import type { LibraryItem } from "src/lib/vault";
+import FavoriteToggleButton from "src/components/FavoriteToggleButton.astro";
+import Icon from "src/components/Icon.astro";
+import TagChip from "src/components/TagChip.astro";
 
 interface Props {
 	item: LibraryItem;
+	selectedTags?: string[];
+	searchQuery?: string;
+	searchSnippet?: string;
+	searchField?: NoteSearchMatchField;
+	hrefOverride?: string;
 }
 
-const { item } = Astro.props;
+const { item, selectedTags = [], searchQuery, searchSnippet, searchField, hrefOverride } = Astro.props;
 const redirectTo = Astro.url.pathname + Astro.url.search;
+
+function buildNoteHref(href: string) {
+	const [pathAndQuery, hash = ""] = href.split("#");
+	const separator = pathAndQuery.includes("?") ? "&" : "?";
+	return `${pathAndQuery}${separator}returnTo=${encodeURIComponent(redirectTo)}${hash ? `#${hash}` : ""}`;
+}
+
+const noteHref = buildNoteHref(hrefOverride ?? item.href);
+const selectedTagSet = new Set(selectedTags);
+const prioritizedTags = [
+	...item.tags.filter((tag) => selectedTagSet.has(tag)),
+	...item.tags.filter((tag) => !selectedTagSet.has(tag)),
+];
+const visibleTags = prioritizedTags.slice(0, 4);
+const hiddenTagCount = Math.max(prioritizedTags.length - visibleTags.length, 0);
+
+function getLeadingGlyph(value: string) {
+	const trimmed = value.trim();
+	if (!trimmed) {
+		return "";
+	}
+
+	if (typeof Intl !== "undefined" && "Segmenter" in Intl) {
+		const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+		const first = segmenter.segment(trimmed)[Symbol.iterator]().next().value?.segment;
+		return first ?? "";
+	}
+
+	return Array.from(trimmed)[0] ?? "";
+}
+
+function formatDecorativeGlyph(value: string, fallback: string) {
+	const glyph = getLeadingGlyph(value) || getLeadingGlyph(fallback) || "?";
+	return /[\p{Letter}\p{Number}]/u.test(glyph) ? glyph.toLocaleUpperCase() : glyph;
+}
+
+const decorativeGlyph = formatDecorativeGlyph(item.title, item.categoryLabel);
+
+function readMetadataValue(keys: string[]) {
+	for (const key of keys) {
+		const value = item.normalized.metadata[key];
+		if (Array.isArray(value)) {
+			const joined = value.filter(Boolean).join(", ").trim();
+			if (joined) {
+				return joined;
+			}
+			continue;
+		}
+		if (typeof value === "string" && value.trim()) {
+			return value.trim();
+		}
+	}
+
+	return null;
+}
+
+function getSupplementaryMetadata() {
+	switch (item.categoryKey) {
+		case "bocker":
+			return readMetadataValue(["author", "authors", "year", "publisher"]);
+		case "recept":
+			return readMetadataValue(["servings", "prep-time", "cook-time", "status"]);
+		case "resor":
+			return readMetadataValue(["country", "continent", "travel-type"]);
+		case "teknik":
+		case "projekt":
+			return readMetadataValue(["status", "type"]);
+		case "journal":
+			return readMetadataValue(["created"]);
+		default:
+			return readMetadataValue(["status", "type"]);
+	}
+}
+
+const supplementaryMetadata = getSupplementaryMetadata();
+const metadataItems = [item.updatedLabel, supplementaryMetadata].filter(Boolean) as string[];
+const titleHtml = searchQuery
+	? highlightSearchText(item.title, searchQuery, { field: "title" })
+	: null;
+const snippetHtml = searchQuery && searchSnippet && searchField
+	? highlightSearchText(searchSnippet, searchQuery, { field: searchField })
+	: null;
 ---
 
-<article class="relative overflow-hidden rounded-[14px] border border-[#ece5dc] bg-white shadow-[0_8px_20px_rgba(15,23,42,0.04)]">
+<article class="group relative overflow-hidden rounded-[14px] border border-[#ece5dc] bg-white shadow-[0_8px_20px_rgba(15,23,42,0.04)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(15,23,42,0.08)]">
 	<div class="absolute right-3 top-3 z-10">
 		<FavoriteToggleButton
 			noteId={item.id}
@@ -19,17 +109,37 @@ const redirectTo = Astro.url.pathname + Astro.url.search;
 			redirectTo={redirectTo}
 		/>
 	</div>
-	<a href={item.href} class="block">
+	<a href={noteHref} class="block">
 		{
 			item.imageUrl ? (
 				<img
 					src={item.imageUrl}
 					alt=""
-					class="h-44 w-full object-cover"
+					class="h-44 w-full object-cover transition duration-300 group-hover:scale-[1.015]"
 					loading="lazy"
 				/>
 			) : (
-				<div class="flex h-44 w-full items-end bg-[linear-gradient(135deg,#dbe4f0_0%,#f3ede4_100%)] p-4">
+				<div class="relative flex h-44 w-full items-end overflow-hidden bg-[linear-gradient(135deg,#dbe4f0_0%,#f3ede4_100%)] p-4">
+					<div
+						aria-hidden="true"
+						class="pointer-events-none absolute inset-0 opacity-[0.04] [background-image:linear-gradient(180deg,rgba(255,255,255,0.95)_0,rgba(255,255,255,0.08)_100%),repeating-linear-gradient(180deg,rgba(148,163,184,0.4)_0,rgba(148,163,184,0.4)_1px,transparent_1px,transparent_18px)] mix-blend-soft-light"
+					></div>
+					<div
+						aria-hidden="true"
+						class="pointer-events-none absolute inset-0 flex items-center justify-center"
+					>
+						<span class="select-none text-[82px] font-semibold tracking-[-0.06em] text-slate-900/6">
+							{decorativeGlyph}
+						</span>
+					</div>
+					<div
+						aria-hidden="true"
+						class="pointer-events-none absolute inset-0 flex items-center justify-center"
+					>
+						<div class="rounded-[22px] border border-white/35 bg-white/18 p-4 shadow-[0_18px_34px_rgba(15,23,42,0.04)] backdrop-blur-[2px]">
+							<Icon name="file-text" class="h-10 w-10 text-slate-700/30" />
+						</div>
+					</div>
 					<span class="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-600">
 						{item.categoryLabel}
 					</span>
@@ -37,13 +147,70 @@ const redirectTo = Astro.url.pathname + Astro.url.search;
 			)
 		}
 		<div class="space-y-3 p-4">
-			<TagChip label={item.categoryLabel} tone={item.tone} />
+			<TagChip label={item.categoryLabel} tone={item.tone} icon={item.categoryIcon} />
 			<div>
-				<h3 class="text-[1.05rem] font-semibold tracking-tight text-slate-900">
-					{item.title}
-				</h3>
-				<p class="mt-1 text-sm text-slate-500">{item.updatedLabel}</p>
+				{
+					titleHtml ? (
+						<h3 class="text-[1.05rem] font-semibold tracking-tight text-slate-900" set:html={titleHtml}></h3>
+					) : (
+						<h3 class="text-[1.05rem] font-semibold tracking-tight text-slate-900">
+							{item.title}
+						</h3>
+					)
+				}
+				{
+					metadataItems.length > 0 && (
+						<div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-slate-500">
+							{
+								metadataItems.map((entry, index) => (
+									<>
+										{index > 0 && <span aria-hidden="true" class="text-slate-300">•</span>}
+										<span>{entry}</span>
+									</>
+								))
+							}
+						</div>
+					)
+				}
+					{
+						snippetHtml && (
+							<p class="mt-2 text-sm leading-6 text-slate-600" set:html={snippetHtml}></p>
+						)
+					}
 			</div>
+			{
+				visibleTags.length > 0 && (
+					<div class="flex flex-wrap gap-2">
+						{
+							visibleTags.map((tag) => (
+								<span
+									class:list={[
+										"rounded-full px-2.5 py-0.5 text-xs font-medium",
+										selectedTagSet.has(tag)
+											? "bg-sky-100 text-sky-700 ring-1 ring-sky-200"
+											: "bg-[#f4efe7] text-slate-500",
+									]}
+								>
+									{
+										searchQuery ? (
+											<span set:html={`#${highlightSearchText(tag, searchQuery, { field: "tag" })}`}></span>
+										) : (
+											`#${tag}`
+										)
+									}
+								</span>
+							))
+						}
+						{
+							hiddenTagCount > 0 && (
+								<span class="rounded-full bg-[#f4efe7] px-2.5 py-0.5 text-xs font-medium text-slate-400">
+									+{hiddenTagCount}
+								</span>
+							)
+						}
+					</div>
+				)
+			}
 		</div>
 	</a>
 </article>

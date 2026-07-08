@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { deleteScratchpadNote } from "../../lib/scratchpad";
+import { deleteScratchpadNote } from "src/lib/scratchpad";
 
 export const prerender = false;
 

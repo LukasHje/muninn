@@ -39,4 +39,12 @@
 	.panel-title {
 		@apply text-[1.05rem] font-semibold tracking-tight text-slate-900;
 	}
+
+	.muninn-search-highlight {
+		@apply rounded-[0.3rem] bg-sky-100/85 px-0.5 font-semibold text-sky-700;
+	}
+
+	.muninn-search-highlight--inverse {
+		@apply bg-sky-400/18 text-sky-300;
+	}
 }

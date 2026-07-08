@@ -33,10 +33,13 @@ export function parseFrontmatter(raw: string): ParsedFrontmatter {
 	const frontmatterBlock = raw.slice(4, endIndex);
 	const body = raw.slice(endIndex + 5);
 	const data: Record<string, string | string[]> = {};
+	const lines = frontmatterBlock.split("\n");
 
 	let currentListKey: string | null = null;
 
-	for (const line of frontmatterBlock.split("\n")) {
+	for (let index = 0; index < lines.length; index += 1) {
+		const line = lines[index];
+
 		if (/^\s*-\s+/.test(line) && currentListKey) {
 			const listValue = line.replace(/^\s*-\s+/, "").trim().replace(/^["']|["']$/g, "");
 			const existing = data[currentListKey];
@@ -56,6 +59,66 @@ export function parseFrontmatter(raw: string): ParsedFrontmatter {
 
 		const [, key, rawValue] = match;
 		const trimmedValue = rawValue.trim();
+		const blockScalarMatch = trimmedValue.match(/^([>|])[-+]?\s*$/);
+		if (blockScalarMatch) {
+			const blockLines: string[] = [];
+			let cursor = index + 1;
+
+			while (cursor < lines.length) {
+				const blockLine = lines[cursor];
+				if (blockLine.trim() === "") {
+					blockLines.push("");
+					cursor += 1;
+					continue;
+				}
+
+				if (!/^\s+/.test(blockLine)) {
+					break;
+				}
+
+				blockLines.push(blockLine);
+				cursor += 1;
+			}
+
+			const nonEmptyIndentLengths = blockLines
+				.filter((entry) => entry.trim() !== "")
+				.map((entry) => entry.match(/^\s*/)?.[0].length ?? 0);
+			const sharedIndent =
+				nonEmptyIndentLengths.length > 0 ? Math.min(...nonEmptyIndentLengths) : 0;
+			const normalizedLines = blockLines.map((entry) =>
+				entry.trim() === "" ? "" : entry.slice(sharedIndent).trimEnd()
+			);
+
+			if (blockScalarMatch[1] === ">") {
+				const paragraphs: string[] = [];
+				let currentParagraph: string[] = [];
+
+				for (const normalizedLine of normalizedLines) {
+					if (normalizedLine === "") {
+						if (currentParagraph.length > 0) {
+							paragraphs.push(currentParagraph.join(" "));
+							currentParagraph = [];
+						}
+						continue;
+					}
+
+					currentParagraph.push(normalizedLine.trim());
+				}
+
+				if (currentParagraph.length > 0) {
+					paragraphs.push(currentParagraph.join(" "));
+				}
+
+				data[key] = paragraphs.join("\n\n");
+			} else {
+				data[key] = normalizedLines.join("\n").trim();
+			}
+
+			currentListKey = null;
+			index = cursor - 1;
+			continue;
+		}
+
 		if (!trimmedValue) {
 			data[key] = [];
 			currentListKey = key;

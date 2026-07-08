@@ -1,7 +1,7 @@
 import { cp, mkdir, readdir } from "node:fs/promises";
 import path from "node:path";
-import { RESOLVED_VAULT_PATH } from "../lib/config";
-import { vaultAssetExtensions } from "../lib/vaultAssetIndex";
+import { RESOLVED_VAULT_PATH } from "src/lib/config";
+import { vaultAssetExtensions } from "src/lib/vaultAssetIndex";
 
 const root = process.cwd();
 const sourceRoot = RESOLVED_VAULT_PATH;

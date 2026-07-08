@@ -1,7 +1,8 @@
 ---
-import type { FavoriteLink } from "../lib/vault";
-import Icon from "./Icon.astro";
-import SectionCard from "./SectionCard.astro";
+import { ui } from "src/i18n";
+import type { FavoriteLink } from "src/lib/vault";
+import Icon from "src/components/Icon.astro";
+import SectionCard from "src/components/SectionCard.astro";
 
 interface Props {
 	items: FavoriteLink[];
@@ -10,11 +11,11 @@ interface Props {
 const { items } = Astro.props;
 ---
 
-<SectionCard title="Favoriter">
+<SectionCard title={ui.favorites.sectionTitle}>
 	{
 		items.length === 0 ? (
 			<div class="rounded-[16px] border border-dashed border-[#ddd3c5] bg-[#fbf7f1] px-4 py-6 text-sm text-slate-600">
-				Inga favoriter ännu.
+				{ui.pages.favorites.empty}
 			</div>
 		) : (
 			<ul class="space-y-3">

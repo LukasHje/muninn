@@ -1,0 +1,253 @@
+---
+import { Marked } from "marked";
+import Icon from "src/components/Icon.astro";
+
+interface Props {
+	calloutType: string;
+	title: string;
+	collapsible: boolean;
+	collapsed: boolean;
+}
+
+const { calloutType, title, collapsible, collapsed } = Astro.props;
+const inlineMarkdown = new Marked({ gfm: true, breaks: true });
+
+function renderInlineMarkdown(value: string) {
+	const parsed = inlineMarkdown.parseInline(value);
+	return typeof parsed === "string" ? parsed : value;
+}
+
+function getCalloutAppearance(type: string) {
+	switch (type) {
+		case "abstract":
+		case "summary":
+		case "tldr":
+			return {
+				icon: "clipboard-list",
+				tone: "obsidian-callout--info",
+			};
+		case "info":
+		case "todo":
+			return {
+				icon: "info",
+				tone: "obsidian-callout--info",
+			};
+		case "tip":
+		case "hint":
+			return {
+				icon: "lightbulb",
+				tone: "obsidian-callout--success",
+			};
+		case "success":
+		case "check":
+			return {
+				icon: "check-circle-2",
+				tone: "obsidian-callout--success",
+			};
+		case "warning":
+		case "caution":
+		case "attention":
+			return {
+				icon: "alert-triangle",
+				tone: "obsidian-callout--warning",
+			};
+		case "danger":
+		case "error":
+		case "bug":
+		case "failure":
+		case "fail":
+			return {
+				icon: "alert-octagon",
+				tone: "obsidian-callout--danger",
+			};
+		case "quote":
+		case "cite":
+			return {
+				icon: "quote",
+				tone: "obsidian-callout--quote",
+			};
+		default:
+			return {
+				icon: "file-text",
+				tone: "obsidian-callout--note",
+			};
+	}
+}
+
+const appearance = getCalloutAppearance(calloutType);
+const titleHtml = renderInlineMarkdown(title);
+---
+
+{
+	collapsible ? (
+		<details class:list={["obsidian-callout", appearance.tone]} open={!collapsed}>
+			<summary class="obsidian-callout__summary">
+				<span class="obsidian-callout__summary-main">
+					<Icon name={appearance.icon} class="obsidian-callout__icon" />
+					<span class="obsidian-callout__title" set:html={titleHtml}></span>
+				</span>
+				<Icon name="chevron-right" class="obsidian-callout__chevron" />
+			</summary>
+			<div class="obsidian-callout__content">
+				<slot />
+			</div>
+		</details>
+	) : (
+		<section class:list={["obsidian-callout", appearance.tone]}>
+			<div class="obsidian-callout__summary obsidian-callout__summary--static">
+				<span class="obsidian-callout__summary-main">
+					<Icon name={appearance.icon} class="obsidian-callout__icon" />
+					<span class="obsidian-callout__title" set:html={titleHtml}></span>
+				</span>
+			</div>
+			<div class="obsidian-callout__content">
+				<slot />
+			</div>
+		</section>
+	)
+}
+
+<style>
+	.obsidian-callout {
+		--callout-accent: #8ecae6;
+		--callout-bg: #f5fbff;
+		--callout-border: #d6edf8;
+		--callout-text: #15354b;
+		overflow: hidden;
+		border: 1px solid var(--callout-border);
+		border-top-width: 3px;
+		border-radius: 1.05rem;
+		background: linear-gradient(180deg, #ffffff 0%, var(--callout-bg) 100%);
+		box-shadow: 0 10px 22px rgba(15, 23, 42, 0.045);
+		color: var(--callout-text);
+	}
+
+	.obsidian-callout--info {
+		--callout-accent: #7dc4e5;
+		--callout-bg: #eef8fd;
+		--callout-border: #d2eefa;
+		--callout-text: #17384e;
+	}
+
+	.obsidian-callout--note {
+		--callout-accent: #94a3b8;
+		--callout-bg: #f7f9fc;
+		--callout-border: #e2e8f0;
+		--callout-text: #1f2937;
+	}
+
+	.obsidian-callout--success {
+		--callout-accent: #5fb992;
+		--callout-bg: #f1fbf5;
+		--callout-border: #d8f2e2;
+		--callout-text: #163a2a;
+	}
+
+	.obsidian-callout--warning {
+		--callout-accent: #e8aa4e;
+		--callout-bg: #fff9f0;
+		--callout-border: #f9e6c6;
+		--callout-text: #523515;
+	}
+
+	.obsidian-callout--danger {
+		--callout-accent: #d66f7d;
+		--callout-bg: #fff5f6;
+		--callout-border: #f5d9de;
+		--callout-text: #51222c;
+	}
+
+	.obsidian-callout--quote {
+		--callout-accent: #9b87dd;
+		--callout-bg: #f8f5ff;
+		--callout-border: #e8defc;
+		--callout-text: #35245c;
+	}
+
+	.obsidian-callout__summary {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.85rem;
+		padding: 0.8rem 1rem;
+		cursor: pointer;
+		list-style: none;
+		user-select: none;
+		color: inherit;
+	}
+
+	.obsidian-callout__summary--static {
+		cursor: default;
+	}
+
+	.obsidian-callout__summary-main {
+		display: inline-flex;
+		min-width: 0;
+		align-items: center;
+		gap: 0.58rem;
+	}
+
+	.obsidian-callout :global(.obsidian-callout__icon) {
+		flex-shrink: 0;
+		width: 0.98rem;
+		height: 0.98rem;
+		color: var(--callout-accent);
+		opacity: 0.95;
+	}
+
+	.obsidian-callout__title {
+		min-width: 0;
+		font-size: 0.98rem;
+		font-weight: 700;
+		line-height: 1.35;
+		letter-spacing: -0.01em;
+		color: inherit;
+	}
+
+	.obsidian-callout__title :global(strong) {
+		font-weight: 800;
+	}
+
+	.obsidian-callout__title :global(code) {
+		padding: 0.1rem 0.35rem;
+		border-radius: 0.45rem;
+		background: rgba(255, 255, 255, 0.72);
+		font-size: 0.92em;
+	}
+
+	.obsidian-callout :global(.obsidian-callout__chevron) {
+		flex-shrink: 0;
+		width: 0.9rem;
+		height: 0.9rem;
+		color: var(--callout-accent);
+		transition: transform 140ms ease;
+	}
+
+	.obsidian-callout[open] :global(.obsidian-callout__chevron) {
+		transform: rotate(90deg);
+	}
+
+	.obsidian-callout__content {
+		padding: 0 1rem 0.95rem;
+	}
+
+	.obsidian-callout__content :global(.note-content) {
+		color: inherit;
+	}
+
+	.obsidian-callout__content :global(.note-content > :first-child) {
+		margin-top: 0;
+	}
+
+	.obsidian-callout__content :global(.note-content > :last-child) {
+		margin-bottom: 0;
+	}
+
+	.obsidian-callout summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.obsidian-callout summary::marker {
+		display: none;
+	}
+</style>

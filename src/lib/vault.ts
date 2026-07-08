@@ -1,17 +1,19 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
+import { ui } from "src/i18n";
+import { formatRelativeDateLabel, formatUiDate, formatUiNumber } from "src/i18n/format";
 import {
 	extractImageReferences,
 	parseFrontmatter,
 	slugifySegment,
 	stripMarkdown,
-} from "./parser";
-import type { NormalizedNote } from "./normalizeNote";
-import { normalizeNote } from "./normalizeNote";
-import { parseObsidianAssetRef, resolveObsidianAsset } from "./resolveObsidianAsset";
-import { getVaultAssetIndex } from "./vaultAssetIndex";
-import { RESOLVED_VAULT_PATH } from "./config";
-import { getFavoriteNoteIdSet } from "./favorites";
+} from "src/lib/parser";
+import type { NormalizedNote } from "src/lib/normalizeNote";
+import { normalizeNote } from "src/lib/normalizeNote";
+import { parseObsidianAssetRef, resolveObsidianAsset } from "src/lib/resolveObsidianAsset";
+import { getVaultAssetIndex } from "src/lib/vaultAssetIndex";
+import { RESOLVED_VAULT_PATH } from "src/lib/config";
+import { getFavoriteNoteIdSet } from "src/lib/favorites";
 
 export type CategoryKey =
 	| "projekt"
@@ -56,6 +58,7 @@ export interface LibraryItem {
 	slugPath: string;
 	categoryKey: CategoryKey;
 	categoryLabel: string;
+	categoryIcon: string;
 	tone: Tone;
 	excerpt: string;
 	updatedLabel: string;
@@ -103,27 +106,50 @@ export interface VaultNoteDetail {
 let vaultNotesPromise: Promise<LibraryItem[]> | null = null;
 let noteLookupPromise: Promise<Map<string, string>> | null = null;
 
-export const sidebarNavigation: SidebarNavigationItem[] = [
-	{ label: "Hem", href: "/", icon: "home" },
-	{ label: "Alla anteckningar", href: "/notes", icon: "file-text" },
-	{ label: "Favoriter", href: "/favorites", icon: "star" },
-	{ label: "Nyligen uppdaterade", href: "/recent", icon: "clock-3" },
-	{ label: "Anteckningsblock", href: "/scratchpad", icon: "notebook-pen" },
-];
+export function getSidebarNavigation() {
+	return [
+		{ label: ui.navigation.home, href: "/", icon: "home" },
+		{ label: ui.navigation.allNotes, href: "/notes", icon: "file-text" },
+		{ label: ui.navigation.favorites, href: "/favorites", icon: "star" },
+		{ label: ui.navigation.recentlyUpdated, href: "/recent", icon: "clock-3" },
+		{ label: ui.navigation.scratchpad, href: "/scratchpad", icon: "notebook-pen" },
+	];
+}
 
 const categoryMeta: Record<
 	CategoryKey,
-	{ label: string; icon: string; tone: Tone; href: string }
+	{ icon: string; tone: Tone; href: string }
 > = {
-	projekt: { label: "Projekt", icon: "folder", tone: "sky", href: "/notes?category=projekt" },
-	recept: { label: "Recept", icon: "utensils", tone: "amber", href: "/recipes" },
-	bocker: { label: "Böcker", icon: "book", tone: "slate", href: "/books" },
-	resor: { label: "Resor", icon: "map", tone: "emerald", href: "/notes?category=resor" },
-	teknik: { label: "Teknik", icon: "cpu", tone: "violet", href: "/notes?category=teknik" },
-	journal: { label: "Journal", icon: "notebook-pen", tone: "rose", href: "/notes?category=journal" },
-	traning: { label: "Träning", icon: "dumbbell", tone: "rose", href: "/notes?category=traning" },
-	ovrigt: { label: "Övrigt", icon: "circle", tone: "slate", href: "/notes?category=ovrigt" },
+	projekt: { icon: "folder", tone: "sky", href: "/notes?category=projekt" },
+	recept: { icon: "utensils", tone: "amber", href: "/recipes" },
+	bocker: { icon: "book", tone: "slate", href: "/books" },
+	resor: { icon: "map", tone: "emerald", href: "/notes?category=resor" },
+	teknik: { icon: "cpu", tone: "violet", href: "/notes?category=teknik" },
+	journal: { icon: "notebook-pen", tone: "rose", href: "/notes?category=journal" },
+	traning: { icon: "dumbbell", tone: "rose", href: "/notes?category=traning" },
+	ovrigt: { icon: "circle", tone: "slate", href: "/notes?category=ovrigt" },
 };
+
+function getCategoryLabel(categoryKey: CategoryKey) {
+	switch (categoryKey) {
+		case "projekt":
+			return ui.categories.project;
+		case "recept":
+			return ui.categories.recipe;
+		case "bocker":
+			return ui.categories.book;
+		case "resor":
+			return ui.categories.travel;
+		case "teknik":
+			return ui.categories.technology;
+		case "journal":
+			return ui.categories.journal;
+		case "traning":
+			return ui.categories.training;
+		case "ovrigt":
+			return ui.categories.other;
+	}
+}
 
 function formatRelativePath(value: string) {
 	return value.split(path.sep).join("/");
@@ -152,32 +178,8 @@ async function listFilesRecursively(directory: string): Promise<string[]> {
 	return files.flat();
 }
 
-function formatDate(date: Date) {
-	return new Intl.DateTimeFormat("sv-SE", {
-		dateStyle: "medium",
-		timeStyle: "short",
-	}).format(date);
-}
-
 function formatUpdatedLabel(timestamp: number) {
-	const diffMs = Date.now() - timestamp;
-	const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-	if (diffDays <= 0) {
-		return `Idag ${new Intl.DateTimeFormat("sv-SE", {
-			hour: "2-digit",
-			minute: "2-digit",
-		}).format(new Date(timestamp))}`;
-	}
-
-	if (diffDays === 1) {
-		return `Igår ${new Intl.DateTimeFormat("sv-SE", {
-			hour: "2-digit",
-			minute: "2-digit",
-		}).format(new Date(timestamp))}`;
-	}
-
-	return `${diffDays} dagar sedan`;
+	return formatRelativeDateLabel(timestamp);
 }
 
 function toNoteHref(relativePath: string) {
@@ -206,16 +208,39 @@ function buildLookupKeys(value: string) {
 		return [];
 	}
 
-	const relativeLower = cleaned.toLowerCase();
-	const slugPath = cleaned
-		.split("/")
-		.map((segment) => slugifySegment(segment))
-		.filter(Boolean)
-		.join("/");
-	const basename = cleaned.split("/").at(-1) ?? cleaned;
-	const slugBase = slugifySegment(basename);
+	const segments = cleaned.split("/").map((segment) => segment.trim()).filter(Boolean);
+	const basename = segments.at(-1) ?? cleaned;
+	const strippedBasename = basename.replace(/^(?:on\s*\/\s*)?for\s+/i, "").trim();
+	const candidates = new Set<string>([cleaned, basename]);
 
-	return Array.from(new Set([relativeLower, slugPath, basename.toLowerCase(), slugBase].filter(Boolean)));
+	if (strippedBasename && strippedBasename !== basename) {
+		candidates.add(strippedBasename);
+		if (segments.length > 1) {
+			candidates.add([...segments.slice(0, -1), strippedBasename].join("/"));
+		}
+	}
+
+	return Array.from(
+		new Set(
+			Array.from(candidates).flatMap((candidate) => {
+				const normalizedCandidate = candidate.replace(/^\/+/, "").replace(/\.md$/i, "").trim();
+				if (!normalizedCandidate) {
+					return [];
+				}
+
+				const normalizedSegments = normalizedCandidate.split("/").map((segment) => segment.trim()).filter(Boolean);
+				const relativeLower = normalizedCandidate.toLowerCase();
+				const slugPath = normalizedSegments
+					.map((segment) => slugifySegment(segment))
+					.filter(Boolean)
+					.join("/");
+				const candidateBasename = normalizedSegments.at(-1) ?? normalizedCandidate;
+				const slugBase = slugifySegment(candidateBasename);
+
+				return [relativeLower, slugPath, candidateBasename.toLowerCase(), slugBase].filter(Boolean);
+			})
+		)
+	);
 }
 
 async function loadVaultNotes(): Promise<LibraryItem[]> {
@@ -275,7 +300,8 @@ async function loadVaultNotes(): Promise<LibraryItem[]> {
 					href: toNoteHref(relativePath),
 					slugPath: normalized.slug || toNoteSlugPath(relativePath),
 					categoryKey,
-					categoryLabel: categoryMeta[categoryKey].label,
+					categoryLabel: getCategoryLabel(categoryKey),
+					categoryIcon: categoryMeta[categoryKey].icon,
 					tone: categoryMeta[categoryKey].tone,
 					excerpt: buildExcerpt(body),
 					updatedLabel: formatUpdatedLabel(fileStat.mtimeMs),
@@ -354,7 +380,7 @@ export async function getNoteLookupIndex() {
 export async function getSidebarCategories(): Promise<SidebarCategory[]> {
 	const items = await getLibraryItems();
 	return Object.entries(categoryMeta).map(([key, meta]) => ({
-		label: meta.label,
+		label: getCategoryLabel(key as CategoryKey),
 		href: meta.href,
 		count: items.filter((item) => item.categoryKey === key).length,
 		icon: meta.icon,
@@ -363,9 +389,10 @@ export async function getSidebarCategories(): Promise<SidebarCategory[]> {
 
 export async function getDashboardHero() {
 	const items = await getLibraryItems();
+	const countLabel = formatUiNumber(items.length);
 	return {
-		title: "Välkommen till Muninn",
-		description: `Vaultet innehåller ${items.length} anteckningar just nu.`,
+		title: ui.dashboard.title,
+		description: ui.dashboard.description(countLabel),
 		imageUrl:
 			"https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=80",
 	};
@@ -379,13 +406,31 @@ export async function getDashboardMetrics(): Promise<DashboardMetric[]> {
 	const latest = items[0];
 
 	return [
-		{ label: "Anteckningar", value: `${items.length}`, helper: "Totalt", icon: "file-text", tone: "slate" },
-		{ label: "Taggar", value: `${uniqueTags.size}`, helper: "Unika", icon: "tag", tone: "amber" },
-		{ label: "Bilder", value: `${withImages}`, helper: "Med cover eller bild", icon: "image", tone: "sky" },
 		{
-			label: "Senast ändrad",
-			value: latest ? latest.updatedLabel.split(" ")[0] : "-",
-			helper: latest ? latest.updatedLabel : "Ingen data",
+			label: ui.metrics.notes.label,
+			value: formatUiNumber(items.length),
+			helper: ui.metrics.notes.helper,
+			icon: "file-text",
+			tone: "slate",
+		},
+		{
+			label: ui.metrics.tags.label,
+			value: formatUiNumber(uniqueTags.size),
+			helper: ui.metrics.tags.helper,
+			icon: "tag",
+			tone: "amber",
+		},
+		{
+			label: ui.metrics.images.label,
+			value: formatUiNumber(withImages),
+			helper: ui.metrics.images.helper,
+			icon: "image",
+			tone: "sky",
+		},
+		{
+			label: ui.metrics.latestUpdated.label,
+			value: latest ? formatUiDate(latest.updatedAt, { month: "short", day: "numeric" }) : "-",
+			helper: latest ? latest.updatedLabel : ui.metrics.latestUpdated.helper,
 			icon: "clock-3",
 			tone: "emerald",
 		},
@@ -437,7 +482,7 @@ export async function getTodayEntry(): Promise<TodayEntry | null> {
 	return {
 		date:
 			dateFromFilename ??
-			formatDate(new Date(journal.updatedAt)).split(" ")[0],
+			formatUiDate(new Date(journal.updatedAt)),
 		excerpt: journal.excerpt,
 		imageUrl:
 			"https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=900&q=80",
