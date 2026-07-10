@@ -1,0 +1,45 @@
+name: Notify Muninn Ops
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    name: Trigger muninn-ops
+    runs-on: docker
+
+    steps:
+      - name: Trigger release pipeline
+        env:
+          FORGEJO_URL: http://192.168.0.42:30142
+          OWNER: LukasHje
+          REPOSITORY: muninn-ops
+          WORKFLOW: release.yml
+
+          USERNAME: ${{ secrets.MUNINN_OPS_USERNAME }}
+          TOKEN: ${{ secrets.MUNINN_OPS_TRIGGER_TOKEN }}
+
+        run: |
+          curl \
+            --fail \
+            --show-error \
+            --silent \
+            --write-out "\nHTTP %{http_code}\n" \
+            --request POST \
+            --user "${USERNAME}:${TOKEN}" \
+            --header "Accept: application/json" \
+            --header "Content-Type: application/json" \
+            "${FORGEJO_URL}/api/v1/repos/${OWNER}/${REPOSITORY}/actions/workflows/${WORKFLOW}/dispatches" \
+            --data '{
+              "ref": "main",
+              "inputs": {
+                "source_repository": "${{ forge.repository }}",
+                "source_branch": "${{ forge.ref_name }}",
+                "trigger": "mirror-sync"
+              }
+            }'
