@@ -4,10 +4,10 @@ import NoteCard from "src/components/NoteCard.astro";
 import BookLayout from "src/layouts/BookLayout.astro";
 import SectionCard from "src/components/SectionCard.astro";
 import { ui, withSiteName } from "src/i18n";
-import { getDashboardHero, getItemsByCategory } from "src/lib/vault";
+import { getDashboardHero, getItemsByDomain } from "src/lib/vault";
 
 const [books, dashboardHero] = await Promise.all([
-	getItemsByCategory("bocker"),
+	getItemsByDomain("bocker"),
 	getDashboardHero(),
 ]);
 ---

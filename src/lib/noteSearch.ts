@@ -19,8 +19,8 @@ export interface NoteSearchDocument {
 	aliases: string[];
 	tags: string[];
 	filename: string;
-	categoryIcon: string;
-	categoryLabel: string;
+	domainIcon: string;
+	domainLabel: string;
 	favorite: boolean;
 	updatedAt: number;
 	updatedLabel: string;
@@ -41,8 +41,8 @@ export interface NoteSearchResult {
 	id: string;
 	href: string;
 	title: string;
-	categoryIcon: string;
-	categoryLabel: string;
+	domainIcon: string;
+	domainLabel: string;
 	favorite: boolean;
 	updatedAt: number;
 	updatedLabel: string;
@@ -711,8 +711,8 @@ export function buildNoteSearchDocuments(items: LibraryItem[]): NoteSearchDocume
 			aliases: item.normalized.aliases,
 			tags: item.tags,
 			filename: basenameWithoutExtension(item.relativePath),
-			categoryIcon: item.categoryIcon,
-			categoryLabel: item.categoryLabel,
+			domainIcon: item.domainIcon,
+			domainLabel: item.domainLabel,
 			favorite: Boolean(item.favorite),
 			updatedAt: item.updatedAt,
 			updatedLabel: item.updatedLabel,
@@ -740,8 +740,8 @@ export function searchNoteDocuments(documents: NoteSearchDocument[], query: stri
 				id: document.id,
 				href: bestMatch.href,
 				title: document.title,
-				categoryIcon: document.categoryIcon,
-				categoryLabel: document.categoryLabel,
+				domainIcon: document.domainIcon,
+				domainLabel: document.domainLabel,
 				favorite: document.favorite,
 				updatedAt: document.updatedAt,
 				updatedLabel: document.updatedLabel,

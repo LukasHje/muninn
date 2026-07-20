@@ -1,9 +1,10 @@
 ---
 import Sidebar from "src/components/Sidebar.astro";
 import { getLanguage, ui } from "src/i18n";
+import { buildSidebarExperienceLinks } from "src/lib/experiences/sidebar";
 import { getFavoritesCount } from "src/lib/favorites";
 import { getScratchpadNotesCount } from "src/lib/scratchpad";
-import { getSidebarCategories, getSidebarNavigation } from "src/lib/vault";
+import { getLibraryItems, getSidebarNavigation } from "src/lib/vault";
 import "src/styles/global.css";
 
 interface Props {
@@ -16,11 +17,12 @@ const {
 	description = ui.meta.defaultDescription,
 } = Astro.props;
 
-const [favoritesCount, scratchpadNotesCount, sidebarCategories] = await Promise.all([
+const [favoritesCount, scratchpadNotesCount, libraryItems] = await Promise.all([
 	getFavoritesCount(),
 	getScratchpadNotesCount(),
-	getSidebarCategories(),
+	getLibraryItems(),
 ]);
+const sidebarExperiences = buildSidebarExperienceLinks(libraryItems);
 const navigation = getSidebarNavigation().map((item) => {
 	if (item.href === "/scratchpad") {
 		return { ...item, count: scratchpadNotesCount };
@@ -53,7 +55,7 @@ const navigation = getSidebarNavigation().map((item) => {
 		<div class="min-h-screen bg-[linear-gradient(180deg,_#faf7f2_0%,_#f4efe8_100%)]">
 			<div class="w-full">
 				<div class="grid min-h-screen grid-cols-1 xl:grid-cols-[308px_minmax(0,1fr)]">
-					<Sidebar navigation={navigation} categories={sidebarCategories} />
+					<Sidebar navigation={navigation} experiences={sidebarExperiences} />
 					<main class="min-w-0 p-4 md:p-5 xl:px-6 xl:py-6">
 						<slot />
 					</main>

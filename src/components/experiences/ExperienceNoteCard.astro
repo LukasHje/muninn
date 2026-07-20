@@ -1,0 +1,144 @@
+---
+import FavoriteToggleButton from "src/components/FavoriteToggleButton.astro";
+import type { ExperienceDefinition } from "src/lib/experiences/registry";
+import {
+	getCardImage,
+	getNoteSummary,
+	getNoteMetadataValue,
+	getReadableMetadataLabel,
+	getReadableMetadataValue,
+	isPlaceholderExperienceImage,
+} from "src/lib/experiences/selectors";
+import type { LibraryItem } from "src/lib/vault";
+
+interface Props {
+	definition: ExperienceDefinition;
+	note: LibraryItem;
+	selected?: boolean;
+	redirectTo?: string;
+}
+
+const {
+	definition,
+	note,
+	selected = false,
+	redirectTo = Astro.url.pathname + Astro.url.search,
+} = Astro.props;
+
+const imageUrl = getCardImage(note, definition);
+const metadataEntries = definition.cardMetadata
+	.map((key) => {
+		const value = getNoteMetadataValue(note, key);
+		return value
+			? { key, label: getReadableMetadataLabel(key), value: getReadableMetadataValue(value) }
+			: null;
+	})
+	.filter(Boolean) as Array<{ key: string; label: string; value: string }>;
+const statusEntry = metadataEntries.find((entry) => entry.key === "status");
+const supportingEntries = metadataEntries.filter((entry) => entry.key !== "status").slice(0, 2);
+const isPlaceholderImage = isPlaceholderExperienceImage(imageUrl, definition);
+
+const statusToneClasses = {
+	slate: "border-slate-200 bg-slate-100 text-slate-800",
+	amber: "border-amber-200 bg-amber-50 text-amber-800",
+	sky: "border-sky-200 bg-sky-50 text-sky-800",
+	emerald: "border-emerald-200 bg-emerald-50 text-emerald-800",
+	rose: "border-rose-200 bg-rose-50 text-rose-800",
+	violet: "border-violet-200 bg-violet-50 text-violet-800",
+}[definition.tone];
+---
+
+<article
+	data-selected={selected ? "true" : "false"}
+	class:list={[
+		"experience-note-card group relative overflow-hidden rounded-[26px] border border-[#e5ddd2] bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(250,246,240,0.98)_100%)]",
+	]}
+>
+	<div class="absolute right-3 top-3 z-10">
+		<FavoriteToggleButton
+			noteId={note.id}
+			isFavorite={Boolean(note.favorite)}
+			redirectTo={redirectTo}
+		/>
+	</div>
+	<button
+		type="button"
+		class="block w-full text-left"
+		data-experience-card={note.id}
+		aria-controls="experience-inspector-panel"
+		aria-label={`Inspect ${note.title}`}
+		aria-pressed={selected ? "true" : "false"}
+	>
+		<div class="overflow-hidden border-b border-[#ece3d8] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.94),rgba(246,240,232,0.96)_72%,rgba(242,236,227,0.98))]">
+			<div class="flex h-72 items-center justify-center px-6 py-8">
+				<img
+					src={imageUrl}
+					alt=""
+					class:list={[
+						"h-full w-full",
+						isPlaceholderImage
+							? "object-contain opacity-80 mix-blend-multiply"
+							: "object-contain transition duration-300 group-hover:scale-[1.03]",
+					]}
+					loading="lazy"
+				/>
+			</div>
+		</div>
+
+		<div class="space-y-4 px-5 pb-5 pt-4">
+			<div class="flex flex-wrap items-center gap-2.5">
+				{
+					statusEntry && (
+						<span
+							class:list={[
+								"inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold",
+								statusToneClasses,
+							]}
+						>
+							{statusEntry.value}
+						</span>
+					)
+				}
+				{
+					supportingEntries.length > 0 && (
+						<div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+							{
+								supportingEntries.map((entry) => (
+									<span>{entry.label}: {entry.value}</span>
+								))
+							}
+						</div>
+					)
+				}
+			</div>
+
+			<h2 class="pr-12 text-[1.55rem] font-semibold tracking-[-0.05em] text-slate-900">
+				{note.title}
+			</h2>
+		</div>
+	</button>
+</article>
+
+<style>
+	.experience-note-card {
+		transition:
+			transform 180ms ease,
+			box-shadow 180ms ease,
+			border-color 180ms ease,
+			background-color 180ms ease;
+	}
+
+	.experience-note-card:hover {
+		transform: translateY(-2px);
+		border-color: #d5cab9;
+		background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(250, 246, 240, 1) 100%);
+		box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+	}
+
+	.experience-note-card[data-selected="true"] {
+		transform: none;
+		border-color: rgba(148, 163, 184, 0.6);
+		background: linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(247, 244, 238, 1) 100%);
+		box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+	}
+</style>

@@ -1,0 +1,233 @@
+---
+import FavoriteToggleButton from "src/components/FavoriteToggleButton.astro";
+import Icon from "src/components/Icon.astro";
+import NoteContent from "src/components/notes/NoteContent.astro";
+import type { InspectorSection } from "src/lib/experiences/inspector";
+import type { ExperienceDefinition } from "src/lib/experiences/registry";
+import {
+	getNoteSummary,
+	getNoteMetadataValue,
+	getInspectorImage,
+	getReadableMetadataLabel,
+	getReadableMetadataValue,
+	isPlaceholderExperienceImage,
+} from "src/lib/experiences/selectors";
+import type { LibraryItem } from "src/lib/vault";
+
+interface Props {
+	definition: ExperienceDefinition;
+	note: LibraryItem;
+	sections: InspectorSection[];
+	noteHref: string;
+	redirectTo: string;
+}
+
+const {
+	definition,
+	note,
+	sections,
+	noteHref,
+	redirectTo,
+} = Astro.props;
+
+const metadataEntries = definition.inspectorMetadata
+	.map((key) => {
+		const value = getNoteMetadataValue(note, key);
+		return value
+			? { key, label: getReadableMetadataLabel(key), value: getReadableMetadataValue(value) }
+			: null;
+	})
+	.filter(Boolean) as Array<{ key: string; label: string; value: string }>;
+const imageUrl = getInspectorImage(note, definition);
+const summary = getNoteSummary(note);
+const isPlaceholderImage = imageUrl ? isPlaceholderExperienceImage(imageUrl, definition) : false;
+
+function findSection(...titles: string[]) {
+	const normalizedTitles = titles.map((title) => title.trim().toLocaleLowerCase("en"));
+	return (
+		sections.find((section) => normalizedTitles.includes(section.title.trim().toLocaleLowerCase("en"))) ?? null
+	);
+}
+
+const useCaseSection = findSection("Use case");
+const keyFeaturesSection = findSection("Key features");
+const limitationsSection = findSection("Limitations");
+const notesSection = findSection("Notes", "Wishlist notes", "Review");
+const renderedSectionTitles = new Set(
+	[useCaseSection, keyFeaturesSection, limitationsSection, notesSection]
+		.filter(Boolean)
+		.map((section) => section!.title.trim().toLocaleLowerCase("en"))
+);
+const remainingSectionCount = sections.filter(
+	(section) => !renderedSectionTitles.has(section.title.trim().toLocaleLowerCase("en"))
+).length;
+---
+
+<div class="px-5 pb-8 pt-0 md:px-6">
+	<header class="sticky top-0 z-10 -mx-5 border-b border-[#ded6ca] bg-[linear-gradient(180deg,rgba(244,239,232,0.98)_0%,rgba(242,236,227,0.96)_100%)] px-5 py-4 backdrop-blur-sm md:-mx-6 md:px-6">
+		<div class="flex items-center justify-between gap-3">
+			<div class="flex min-w-0 items-center gap-3">
+				<button
+					type="button"
+					data-experience-close
+					class="experience-inspector-icon-button"
+					aria-label="Close inspector"
+					title="Close inspector"
+				>
+					<Icon name="chevron-left" class="h-4 w-4" />
+				</button>
+				<h2 class="truncate text-[1.08rem] font-semibold tracking-[-0.03em] text-slate-900">
+					{note.title}
+				</h2>
+			</div>
+
+			<div class="flex items-center gap-2">
+				<div data-experience-inspector-favorite>
+					<FavoriteToggleButton
+						noteId={note.id}
+						isFavorite={Boolean(note.favorite)}
+						redirectTo={redirectTo}
+						size="md"
+					/>
+				</div>
+				<a
+					href={noteHref}
+					data-experience-open-note
+					data-note-href={noteHref}
+					class="experience-inspector-icon-button"
+					aria-label="Open full note"
+					title="Open full note"
+				>
+					<Icon name="arrow-up-right" class="h-4 w-4" />
+				</a>
+			</div>
+		</div>
+	</header>
+
+	<div class="experience-inspector-section pt-5">
+		<div
+			class:list={[
+				"grid gap-4",
+				metadataEntries.length > 0 ? "md:grid-cols-[minmax(0,1fr)_15.5rem] md:items-stretch" : "",
+			]}
+		>
+			<div class="overflow-hidden rounded-[28px] border border-[#e7dfd4] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.94),rgba(246,240,232,0.96)_72%,rgba(242,236,227,0.98))]">
+				<div class="flex h-[280px] items-center justify-center p-6">
+					<img
+						src={imageUrl}
+						alt=""
+						class:list={[
+							"h-full w-full",
+							isPlaceholderImage ? "object-contain opacity-80 mix-blend-multiply" : "object-contain",
+						]}
+					/>
+				</div>
+			</div>
+
+			{
+				metadataEntries.length > 0 && (
+					<div class="overflow-hidden rounded-[28px] border border-[#e2d9cd] bg-white/58">
+						<dl class="divide-y divide-[#ebe2d7]">
+							{
+								metadataEntries.map((entry) => (
+									<div class="space-y-1.5 px-4 py-4">
+										<dt class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+											{entry.label}
+										</dt>
+										<dd class="text-sm leading-6 text-slate-700">{entry.value}</dd>
+									</div>
+								))
+							}
+						</dl>
+					</div>
+				)
+			}
+		</div>
+	</div>
+
+	{
+		useCaseSection && (
+			<section class="experience-inspector-section">
+				<h3 class="text-lg font-semibold tracking-tight text-slate-900">Use case</h3>
+				<div class="mt-4">
+					<NoteContent note={note} content={useCaseSection.content} />
+				</div>
+			</section>
+		)
+	}
+
+	{
+		keyFeaturesSection && (
+			<section class="experience-inspector-section">
+				<h3 class="text-lg font-semibold tracking-tight text-slate-900">Key features</h3>
+				<div class="mt-4">
+					<NoteContent note={note} content={keyFeaturesSection.content} />
+				</div>
+			</section>
+		)
+	}
+
+	{
+		limitationsSection && (
+			<section class="experience-inspector-section">
+				<h3 class="text-lg font-semibold tracking-tight text-slate-900">Limitations</h3>
+				<div class="mt-4">
+					<NoteContent note={note} content={limitationsSection.content} />
+				</div>
+			</section>
+		)
+	}
+
+	<section class="experience-inspector-section">
+		<h3 class="text-lg font-semibold tracking-tight text-slate-900">Notes</h3>
+		<p class="mt-4 text-sm leading-7 text-slate-600">{summary}</p>
+		{
+			notesSection && (
+				<div class="mt-4">
+					<NoteContent note={note} content={notesSection.content} />
+				</div>
+			)
+		}
+	</section>
+
+	{
+		remainingSectionCount > 0 && (
+			<p class="experience-inspector-section text-sm leading-7 text-slate-500">
+				{remainingSectionCount} more section{remainingSectionCount === 1 ? "" : "s"} available in the full note.
+			</p>
+		)
+	}
+</div>
+
+<style>
+	.experience-inspector-icon-button {
+		display: inline-flex;
+		height: 2.75rem;
+		width: 2.75rem;
+		align-items: center;
+		justify-content: center;
+		border-radius: 9999px;
+		border: 1px solid #d8d0c4;
+		background: rgba(255, 255, 255, 0.58);
+		color: rgb(71 85 105);
+		transition:
+			background-color 180ms ease,
+			border-color 180ms ease,
+			color 180ms ease;
+	}
+
+	.experience-inspector-icon-button:hover {
+		border-color: #cfc4b5;
+		background: rgba(255, 255, 255, 0.78);
+		color: rgb(15 23 42);
+	}
+
+	.experience-inspector-section {
+		padding-top: 1.5rem;
+	}
+
+	.experience-inspector-section + .experience-inspector-section {
+		margin-top: 1.5rem;
+		border-top: 1px solid #e1d8cc;
+	}
+</style>

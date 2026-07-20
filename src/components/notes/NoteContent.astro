@@ -80,7 +80,7 @@ function isRecipeNote(currentNote: LibraryItem) {
 	return (
 		currentNote.normalized.type === "recept" ||
 		currentNote.normalized.type === "recipe" ||
-		currentNote.normalized.category === "recept"
+		currentNote.normalized.domain === "recept"
 	);
 }
 

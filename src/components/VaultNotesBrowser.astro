@@ -31,8 +31,8 @@ const { query, category: selectedCategory, tags: selectedTags, sort: sortBy, lay
 const categories = Array.from(
 	new Map(
 		items.map((item) => [
-			item.categoryKey,
-			{ value: item.categoryKey, label: item.categoryLabel },
+			item.domainKey,
+			{ value: item.domainKey, label: item.domainLabel },
 		])
 	).values()
 );
@@ -63,7 +63,7 @@ const selectedTagSet = new Set(selectedTags);
 
 const scopedItems = items
 	.filter((item) => {
-		const matchesCategory = selectedCategory === "all" || item.categoryKey === selectedCategory;
+		const matchesCategory = selectedCategory === "all" || item.domainKey === selectedCategory;
 		const matchesTag =
 			selectedTags.length === 0 || item.tags.some((tag) => selectedTagSet.has(tag));
 		return matchesCategory && matchesTag;

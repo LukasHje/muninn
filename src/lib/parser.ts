@@ -155,10 +155,24 @@ export function extractImageReferences(
 	body: string
 ) {
 	const references: string[] = [];
-	const cover = frontmatter.cover;
-	if (typeof cover === "string") {
-		references.push(cover);
-	}
+	const pushFrontmatterReferences = (value: string | string[] | undefined) => {
+		if (Array.isArray(value)) {
+			for (const entry of value) {
+				if (entry) {
+					references.push(entry);
+				}
+			}
+			return;
+		}
+
+		if (typeof value === "string" && value) {
+			references.push(value);
+		}
+	};
+
+	pushFrontmatterReferences(frontmatter.cover);
+	pushFrontmatterReferences(frontmatter.thumbnail);
+	pushFrontmatterReferences(frontmatter.gallery);
 
 	for (const match of body.matchAll(/!\[\[([^\]]+)\]\]/g)) {
 		references.push(match[1]);

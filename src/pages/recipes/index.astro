@@ -4,10 +4,10 @@ import NoteCard from "src/components/NoteCard.astro";
 import RecipeLayout from "src/layouts/RecipeLayout.astro";
 import SectionCard from "src/components/SectionCard.astro";
 import { ui, withSiteName } from "src/i18n";
-import { getDashboardHero, getItemsByCategory } from "src/lib/vault";
+import { getDashboardHero, getItemsByDomain } from "src/lib/vault";
 
 const [recipes, dashboardHero] = await Promise.all([
-	getItemsByCategory("recept"),
+	getItemsByDomain("recept"),
 	getDashboardHero(),
 ]);
 ---

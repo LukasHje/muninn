@@ -1,7 +1,8 @@
 import path from "node:path";
 import { slugifySegment } from "src/lib/parser";
 
-export type NormalizedCategory =
+export type NormalizedDomain =
+	| "gear"
 	| "projekt"
 	| "recept"
 	| "bocker"
@@ -26,7 +27,7 @@ export interface NormalizedNote {
 	title: string;
 	path: string;
 	slug: string;
-	category: NormalizedCategory;
+	domain: NormalizedDomain;
 	type: string;
 	layout: NormalizedLayout;
 	cover?: string;
@@ -224,9 +225,12 @@ function inferType(
 	return "note";
 }
 
-function inferCategory(type: string, tags: string[], relativePath: string): NormalizedCategory {
+function inferDomain(type: string, tags: string[], relativePath: string): NormalizedDomain {
 	const pathLower = relativePath.toLowerCase();
 
+	if (type === "gear") {
+		return "gear";
+	}
 	if (type === "travel" || type.startsWith("travel-") || pathLower.includes("/travel/")) {
 		return "resor";
 	}
@@ -334,7 +338,7 @@ export function normalizeNote(note: NormalizeNoteInput): NormalizedNote {
 	const cover = readString(frontmatter.cover);
 	const metadata = buildMetadata(frontmatter);
 	const type = inferType(frontmatter, tags, note.relativePath);
-	const category = inferCategory(type, tags, note.relativePath);
+	const domain = inferDomain(type, tags, note.relativePath);
 	const slug = note.relativePath
 		.replace(/\.md$/i, "")
 		.split("/")
@@ -346,7 +350,7 @@ export function normalizeNote(note: NormalizeNoteInput): NormalizedNote {
 		title: normalizedTitle,
 		path: note.relativePath,
 		slug,
-		category,
+		domain,
 		type,
 		layout: inferLayout(type, cover, metadata),
 		cover,

@@ -1,0 +1,23 @@
+---
+export const prerender = false;
+
+import ExperienceView from "src/components/experiences/ExperienceView.astro";
+import MainLayout from "src/layouts/MainLayout.astro";
+import { buildExperienceViewModel } from "src/lib/experiences/experience";
+import { getExperienceDefinition } from "src/lib/experiences/registry";
+import { getLibraryItems } from "src/lib/vault";
+
+const experienceKey = Astro.params.experience ?? "";
+const definition = getExperienceDefinition(experienceKey);
+
+if (!definition) {
+	return Astro.redirect("/");
+}
+
+const libraryItems = await getLibraryItems();
+const experience = buildExperienceViewModel(definition, libraryItems, Astro.url.searchParams);
+---
+
+<MainLayout title={`${definition.title} | Muninn`}>
+	<ExperienceView {...experience} />
+</MainLayout>

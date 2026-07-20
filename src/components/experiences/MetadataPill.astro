@@ -1,0 +1,70 @@
+---
+import type { Tone } from "src/lib/vault";
+
+interface Props {
+	label: string;
+	href?: string;
+	active?: boolean;
+	count?: number;
+	tone?: Tone;
+	size?: "sm" | "md";
+	shape?: "pill" | "squircle";
+	className?: string;
+}
+
+const {
+	label,
+	href,
+	active = false,
+	count,
+	tone = "slate",
+	size = "md",
+	shape = "pill",
+	className = "",
+} = Astro.props;
+
+const toneClasses = {
+	slate: active
+		? "border-slate-300 bg-slate-100 text-slate-900"
+		: "border-[#e7dfd5] bg-white/80 text-slate-600 hover:border-slate-300 hover:bg-white hover:text-slate-900",
+	amber: active
+		? "border-amber-300 bg-amber-100 text-amber-800"
+		: "border-amber-200 bg-amber-50/85 text-amber-700 hover:border-amber-300 hover:bg-amber-50",
+	sky: active
+		? "border-sky-300 bg-sky-100 text-sky-800"
+		: "border-sky-200 bg-sky-50/85 text-sky-700 hover:border-sky-300 hover:bg-sky-50",
+	emerald: active
+		? "border-emerald-300 bg-emerald-100 text-emerald-800"
+		: "border-emerald-200 bg-emerald-50/85 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-50",
+	rose: active
+		? "border-rose-300 bg-rose-100 text-rose-800"
+		: "border-rose-200 bg-rose-50/85 text-rose-700 hover:border-rose-300 hover:bg-rose-50",
+	violet: active
+		? "border-violet-300 bg-violet-100 text-violet-800"
+		: "border-violet-200 bg-violet-50/85 text-violet-700 hover:border-violet-300 hover:bg-violet-50",
+}[tone];
+
+const sizeClasses = size === "sm" ? "px-2.5 py-1 text-xs" : "px-3.5 py-1.5 text-sm";
+const shapeClasses = shape === "squircle" ? "rounded-[12px]" : "rounded-full";
+const classes = [
+	"inline-flex items-center gap-2 border font-medium transition",
+	shapeClasses,
+	sizeClasses,
+	toneClasses,
+	className,
+];
+---
+
+{
+	href ? (
+		<a href={href} class={classes.join(" ")}>
+			<span>{label}</span>
+			{typeof count === "number" && <span class="text-xs opacity-75">{count}</span>}
+		</a>
+	) : (
+		<span class={classes.join(" ")}>
+			<span>{label}</span>
+			{typeof count === "number" && <span class="text-xs opacity-75">{count}</span>}
+		</span>
+	)
+}
