@@ -139,6 +139,34 @@ It describes application capabilities.
 
 ---
 
+## Card Family
+
+A Card Family is the presentation model an Experience uses for items in its browser.
+
+Examples:
+
+- Product Card
+- Vehicle Card
+- Journey Card
+- Book Card
+- Generic Note Card
+
+Card Families belong to Muninn UI, not to the Vault.
+
+They decide:
+
+- layout
+- spacing
+- hierarchy
+- highlighted metadata
+- responsive behavior
+
+The Experience chooses a Card Family.
+
+The browser renders the chosen family without knowing domain-specific layout details.
+
+---
+
 ## Mental model
 
 Library = Find

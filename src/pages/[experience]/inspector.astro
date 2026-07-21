@@ -1,0 +1,44 @@
+---
+export const prerender = false;
+export const partial = true;
+
+import SelectedNoteInspector from "src/components/experiences/SelectedNoteInspector.astro";
+import { buildExperienceInspectorModel } from "src/lib/experiences/inspector";
+import { getExperienceNotes } from "src/lib/experiences/selectors";
+import { getExperienceDefinition } from "src/lib/experiences/registry";
+import { getLibraryItems } from "src/lib/vault";
+
+const experienceKey = Astro.params.experience ?? "";
+const definition = getExperienceDefinition(experienceKey);
+
+if (!definition) {
+	return new Response("Experience not found", { status: 404 });
+}
+
+const noteId = Astro.url.searchParams.get("note") ?? "";
+if (!noteId) {
+	return new Response("Missing note id", { status: 400 });
+}
+
+const libraryItems = await getLibraryItems();
+const note = getExperienceNotes(libraryItems, definition).find(
+	(item) => item.id === noteId || item.slugPath === noteId
+);
+
+if (!note) {
+	return new Response("Note not found", { status: 404 });
+}
+
+const redirectTo = Astro.url.searchParams.get("redirectTo") ?? definition.href;
+const inspector = buildExperienceInspectorModel(note, definition, redirectTo);
+---
+
+<div data-experience-inspector-panel={note.id}>
+	<SelectedNoteInspector
+		definition={definition}
+		note={inspector.note}
+		sections={inspector.sections}
+		noteHref={inspector.noteHref}
+		redirectTo={inspector.redirectTo}
+	/>
+</div>

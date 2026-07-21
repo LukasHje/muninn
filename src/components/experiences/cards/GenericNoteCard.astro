@@ -1,0 +1,77 @@
+---
+import FavoriteToggleButton from "src/components/FavoriteToggleButton.astro";
+import type { ExperienceDefinition } from "src/lib/experiences/registry";
+import { getCardImage, getExperienceContextTags, getNoteSummary, isPlaceholderExperienceImage } from "src/lib/experiences/selectors";
+import type { LibraryItem } from "src/lib/vault";
+
+interface Props {
+	definition: ExperienceDefinition;
+	note: LibraryItem;
+	selected?: boolean;
+	redirectTo?: string;
+}
+
+const {
+	definition,
+	note,
+	selected = false,
+	redirectTo = Astro.url.pathname + Astro.url.search,
+} = Astro.props;
+
+const imageUrl = getCardImage(note, definition);
+const tags = getExperienceContextTags(note, 3);
+const summary = getNoteSummary(note);
+const isPlaceholderImage = isPlaceholderExperienceImage(imageUrl, definition);
+---
+
+<article
+	data-selected={selected ? "true" : "false"}
+	class="generic-note-card group relative overflow-hidden rounded-[24px] border border-[#e5ddd2] bg-white/90 shadow-[0_10px_24px_rgba(15,23,42,0.04)]"
+>
+	<div class="absolute right-3 top-3 z-10">
+		<FavoriteToggleButton
+			noteId={note.id}
+			isFavorite={Boolean(note.favorite)}
+			redirectTo={redirectTo}
+		/>
+	</div>
+	<button
+		type="button"
+		class="block w-full text-left"
+		data-experience-card={note.id}
+		aria-controls="experience-inspector-panel"
+		aria-label={`Inspect ${note.title}`}
+		aria-pressed={selected ? "true" : "false"}
+	>
+		<div class="flex h-48 items-center justify-center border-b border-[#ece3d8] bg-[#f7f2ea] px-6 py-6">
+			<img
+				src={imageUrl}
+				alt=""
+				class:list={[
+					"h-full w-full",
+					isPlaceholderImage ? "object-contain opacity-75 mix-blend-multiply" : "object-contain",
+				]}
+				loading="lazy"
+			/>
+		</div>
+		<div class="space-y-3 px-5 py-5">
+			<h2 class="pr-10 text-xl font-semibold tracking-[-0.04em] text-slate-900">{note.title}</h2>
+			{
+				summary && <p class="line-clamp-3 text-sm leading-7 text-slate-600">{summary}</p>
+			}
+			{
+				tags.length > 0 && (
+					<div class="flex flex-wrap gap-2">
+						{
+							tags.map((tag) => (
+								<span class="rounded-full bg-[#f4efe7] px-2.5 py-1 text-xs font-medium text-slate-600">
+									{tag}
+								</span>
+							))
+						}
+					</div>
+				)
+			}
+		</div>
+	</button>
+</article>

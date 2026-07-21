@@ -1,12 +1,11 @@
 ---
 import MetadataPill from "src/components/experiences/MetadataPill.astro";
 import ExperienceHero from "src/components/experiences/ExperienceHero.astro";
-import ExperienceNoteCard from "src/components/experiences/ExperienceNoteCard.astro";
-import SelectedNoteInspector from "src/components/experiences/SelectedNoteInspector.astro";
+import ExperienceCardRenderer from "src/components/experiences/ExperienceCardRenderer.astro";
 import Icon from "src/components/Icon.astro";
 import type { ExperienceDefinition } from "src/lib/experiences/registry";
 import type { ExperienceFilterOption, ExperienceFilterState } from "src/lib/experiences/filters";
-import { buildInspectorSections } from "src/lib/experiences/inspector";
+import { buildExperienceInspectorModel } from "src/lib/experiences/inspector";
 import type { ExperienceStatistic } from "src/lib/experiences/statistics";
 import type { LibraryItem } from "src/lib/vault";
 
@@ -32,6 +31,7 @@ const currentPath = Astro.url.pathname;
 const searchParams = Astro.url.searchParams;
 const currentUrl = `${Astro.url.pathname}${Astro.url.search}`;
 const initialInspectorNote = filterState.inspector === "closed" ? null : selectedNote;
+const inspectorEndpoint = `${currentPath}/inspector`;
 
 function buildHref(mutator?: (params: URLSearchParams) => void) {
 	const params = new URLSearchParams(searchParams);
@@ -65,12 +65,13 @@ function buildInspectorRedirectHref(note: LibraryItem) {
 	});
 }
 
-const inspectorNotes = filteredNotes.map((note) => ({
-	note,
-	sections: buildInspectorSections(note, definition),
-	noteHref: note.href,
-	redirectTo: buildInspectorRedirectHref(note),
-}));
+const initialInspector = initialInspectorNote
+	? buildExperienceInspectorModel(
+			initialInspectorNote,
+			definition,
+			buildInspectorRedirectHref(initialInspectorNote)
+		)
+	: null;
 ---
 
 <div
@@ -78,6 +79,7 @@ const inspectorNotes = filteredNotes.map((note) => ({
 	data-experience-root
 	data-inspector-open={initialInspectorNote ? "true" : "false"}
 	data-initial-selected={initialInspectorNote?.id ?? ""}
+	data-inspector-endpoint={inspectorEndpoint}
 >
 	<div class="experience-canvas" data-experience-workspace>
 		<section class="experience-hero-shell overflow-hidden">
@@ -173,10 +175,11 @@ const inspectorNotes = filteredNotes.map((note) => ({
 					) : (
 						<div class="experience-browser-grid grid gap-5 pb-4 md:grid-cols-2 xl:grid-cols-3">
 							{
-								filteredNotes.map((note) => (
-									<ExperienceNoteCard
+								filteredNotes.map((note, index) => (
+									<ExperienceCardRenderer
 										definition={definition}
 										note={note}
+										index={index}
 										selected={initialInspectorNote?.id === note.id}
 										redirectTo={currentUrl}
 									/>
@@ -204,17 +207,17 @@ const inspectorNotes = filteredNotes.map((note) => ({
 		<div class="experience-inspector-shell flex h-full min-h-0 flex-col overflow-hidden">
 			<div class="min-h-0 flex-1 overflow-y-auto" data-experience-inspector-panels>
 				{
-					inspectorNotes.map(({ note, sections, noteHref, redirectTo }) => (
-						<div data-experience-inspector-panel={note.id} hidden={initialInspectorNote?.id !== note.id}>
+					initialInspector && (
+						<div data-experience-inspector-panel={initialInspector.note.id}>
 							<SelectedNoteInspector
 								definition={definition}
-								note={note}
-								sections={sections}
-								noteHref={noteHref}
-								redirectTo={redirectTo}
+								note={initialInspector.note}
+								sections={initialInspector.sections}
+								noteHref={initialInspector.noteHref}
+								redirectTo={initialInspector.redirectTo}
 							/>
 						</div>
-					))
+					)
 				}
 			</div>
 		</div>
@@ -231,24 +234,32 @@ const inspectorNotes = filteredNotes.map((note) => ({
 
 		root.dataset.experienceReady = "true";
 
-		const workspace = root.querySelector("[data-experience-workspace]");
-		const notesScroll = root.querySelector(".experience-notes-scroll");
+			const workspace = root.querySelector("[data-experience-workspace]");
+			const notesScroll = root.querySelector(".experience-notes-scroll");
 			const inspector = root.querySelector("[data-experience-inspector-root]");
 			const backdrop = root.querySelector("[data-experience-inspector-backdrop]");
+			const inspectorPanelsRoot = root.querySelector("[data-experience-inspector-panels]");
 			const cards = Array.from(root.querySelectorAll("[data-experience-card]"));
-			const closeButtons = Array.from(root.querySelectorAll("[data-experience-close]"));
-			const inspectorPanels = Array.from(root.querySelectorAll("[data-experience-inspector-panel]"));
 			const filterShells = Array.from(root.querySelectorAll("[data-experience-filter-shell]"));
-			const openNoteLinks = Array.from(root.querySelectorAll("[data-experience-open-note]"));
-			const favoriteRedirectInputs = Array.from(
-				root.querySelectorAll("[data-experience-inspector-favorite] input[name='redirectTo']")
-		);
 
-		if (!(workspace instanceof HTMLElement) || !(inspector instanceof HTMLElement)) {
+		if (
+			!(workspace instanceof HTMLElement) ||
+			!(inspector instanceof HTMLElement) ||
+			!(inspectorPanelsRoot instanceof HTMLElement)
+		) {
 			continue;
 		}
 
 		let selectedId = root.dataset.initialSelected ?? "";
+		const inspectorEndpoint = root.dataset.inspectorEndpoint ?? "";
+		const inspectorPanelRequests = new Map();
+
+		const getInspectorPanels = () =>
+			Array.from(root.querySelectorAll("[data-experience-inspector-panel]"));
+		const getOpenNoteLinks = () =>
+			Array.from(root.querySelectorAll("[data-experience-open-note]"));
+		const getFavoriteRedirectInputs = () =>
+			Array.from(root.querySelectorAll("[data-experience-inspector-favorite] input[name='redirectTo']"));
 
 		const buildReturnTo = () => {
 			const url = new URL(window.location.pathname + window.location.search, window.location.origin);
@@ -270,17 +281,18 @@ const inspectorNotes = filteredNotes.map((note) => ({
 		const syncOpenNoteLinks = () => {
 			const returnTo = buildReturnTo();
 
-			for (const link of openNoteLinks) {
+			for (const link of getOpenNoteLinks()) {
 				if (!(link instanceof HTMLAnchorElement)) {
 					continue;
 				}
 
 				const noteHref = link.dataset.noteHref ?? link.getAttribute("href") ?? "#";
-				const separator = noteHref.includes("?") ? "&" : "?";
-				link.href = `${noteHref}${separator}returnTo=${encodeURIComponent(returnTo)}`;
+				const [pathAndQuery, hash = ""] = noteHref.split("#");
+				const separator = pathAndQuery.includes("?") ? "&" : "?";
+				link.href = `${pathAndQuery}${separator}returnTo=${encodeURIComponent(returnTo)}${hash ? `#${hash}` : ""}`;
 			}
 
-			for (const input of favoriteRedirectInputs) {
+			for (const input of getFavoriteRedirectInputs()) {
 				if (!(input instanceof HTMLInputElement)) {
 					continue;
 				}
@@ -300,7 +312,7 @@ const inspectorNotes = filteredNotes.map((note) => ({
 				card.closest("article")?.setAttribute("data-selected", isSelected ? "true" : "false");
 			}
 
-			for (const panel of inspectorPanels) {
+			for (const panel of getInspectorPanels()) {
 				if (!(panel instanceof HTMLElement)) {
 					continue;
 				}
@@ -316,6 +328,64 @@ const inspectorNotes = filteredNotes.map((note) => ({
 			syncOpenNoteLinks();
 		};
 
+		const ensureInspectorPanel = async (noteId) => {
+			if (!noteId || !inspectorEndpoint) {
+				return null;
+			}
+
+			const existingPanel = root.querySelector(`[data-experience-inspector-panel="${CSS.escape(noteId)}"]`);
+			if (existingPanel instanceof HTMLElement) {
+				return existingPanel;
+			}
+
+			const pendingPanelRequest = inspectorPanelRequests.get(noteId);
+			if (pendingPanelRequest) {
+				return pendingPanelRequest;
+			}
+
+			const request = (async () => {
+				inspector.setAttribute("aria-busy", "true");
+				inspectorPanelsRoot.dataset.loading = "true";
+
+				const requestUrl = new URL(inspectorEndpoint, window.location.origin);
+				requestUrl.searchParams.set("note", noteId);
+				requestUrl.searchParams.set("redirectTo", `${window.location.pathname}${window.location.search}`);
+
+				const response = await fetch(requestUrl.toString(), {
+					headers: {
+						"X-Requested-With": "MuninnExperienceInspector",
+					},
+				});
+
+				if (!response.ok) {
+					throw new Error(`Failed to load inspector (${response.status})`);
+				}
+
+				const html = await response.text();
+				const template = document.createElement("template");
+				template.innerHTML = html.trim();
+				const panel = template.content.firstElementChild;
+
+				if (!(panel instanceof HTMLElement)) {
+					throw new Error("Inspector response did not contain a panel");
+				}
+
+				panel.hidden = panel.dataset.experienceInspectorPanel !== selectedId;
+				inspectorPanelsRoot.append(panel);
+				return panel;
+			})();
+
+			inspectorPanelRequests.set(noteId, request);
+
+			try {
+				return await request;
+			} finally {
+				inspectorPanelRequests.delete(noteId);
+				inspector.removeAttribute("aria-busy");
+				delete inspectorPanelsRoot.dataset.loading;
+			}
+		};
+
 		const closeInspector = () => {
 			selectedId = "";
 			syncSelectionState();
@@ -326,15 +396,31 @@ const inspectorNotes = filteredNotes.map((note) => ({
 				continue;
 			}
 
-			card.addEventListener("click", () => {
+			card.addEventListener("click", async () => {
 				selectedId = card.dataset.experienceCard ?? "";
 				syncSelectionState();
+
+				try {
+					await ensureInspectorPanel(selectedId);
+					syncSelectionState();
+				} catch (error) {
+					console.error(error);
+					closeInspector();
+				}
 			});
 		}
 
-		for (const closeButton of closeButtons) {
-			closeButton.addEventListener("click", closeInspector);
-		}
+		root.addEventListener("click", (event) => {
+			const target = event.target;
+			if (!(target instanceof Element)) {
+				return;
+			}
+
+			if (target.closest("[data-experience-close]")) {
+				closeInspector();
+			}
+		});
+
 		backdrop?.addEventListener("click", closeInspector);
 
 		root.addEventListener("keydown", (event) => {

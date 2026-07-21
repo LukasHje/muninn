@@ -48,12 +48,23 @@ Each experience definition owns:
 - `tone`
 - `href`
 - `libraryHref`
+- `heroArtwork`
 - `placeholderThumbnail`
+- `cardFamily`
+- `featureSections`
 - sidebar identity
 - supported metadata filters
 - preferred inspector headings
 
 This keeps the experience configuration declarative.
+
+Hero artwork follows a shared asset convention:
+
+- `/public/experiences/[experience]/experiences-heroart-[experience].webp`
+
+The registry resolves that path from the experience key.
+
+This avoids one-off hero image wiring for individual experiences.
 
 ---
 

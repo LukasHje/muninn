@@ -1,0 +1,44 @@
+---
+import type { ExtractedProductFeature } from "src/lib/experiences/productFeatures";
+import Icon from "src/components/Icon.astro";
+
+interface Props {
+	items: ExtractedProductFeature[];
+}
+
+const { items } = Astro.props;
+---
+
+<div class="flex h-[72px] overflow-hidden bg-transparent">
+	{
+		items.length > 0
+			? items.map((item, index) => (
+					<div
+						class="relative flex min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-1 px-3 text-center"
+						title={item.label}
+						aria-label={`${item.label}: ${item.value}`}
+					>
+						<div
+							class:list={[
+								"absolute left-0 top-1/2 h-8 -translate-y-1/2 border-l border-[#e5dbcf]",
+								index === 0 && "hidden",
+							]}
+							aria-hidden="true"
+						></div>
+						<div class="flex h-8 w-8 shrink-0 items-center justify-center text-slate-500">
+							<Icon name={item.iconName} class="h-6 w-6" />
+						</div>
+						<p class="truncate text-[13px] font-semibold text-slate-700">{item.value}</p>
+					</div>
+				))
+			: Array.from({ length: 4 }).map((_, index) => (
+					<div
+						class:list={[
+							"flex min-w-0 flex-1 basis-0",
+							index === 0 ? "border-l-0" : "",
+						]}
+						aria-hidden="true"
+					></div>
+				))
+	}
+</div>

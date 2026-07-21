@@ -1,0 +1,52 @@
+---
+import type { Tone } from "src/lib/vault";
+import { getCanonicalExperienceStatus } from "src/lib/experiences/status";
+
+interface Props {
+	value: string;
+	tone?: Tone;
+}
+
+const { value, tone = "slate" } = Astro.props;
+const normalizedValue = getCanonicalExperienceStatus(value) ?? value.trim().toLocaleLowerCase("en");
+const displayValue = normalizedValue.replace(/[-_]+/g, " ").trim().toLocaleUpperCase("en");
+
+const semanticTone =
+	normalizedValue.includes("wish") || normalizedValue.includes("plan") || normalizedValue.includes("consider")
+		? "warm"
+		: normalizedValue.includes("own") || normalizedValue.includes("active")
+			? "owned"
+			: normalizedValue.includes("archive") || normalizedValue.includes("retire")
+				? "archive"
+				: tone === "emerald"
+					? "owned"
+					: "archive";
+
+const statusColors = {
+	warm: {
+		base: "#E7B375",
+		background: "rgba(231, 179, 117, 0.14)",
+		border: "rgba(231, 179, 117, 0.32)",
+	},
+	owned: {
+		base: "#AABD9A",
+		background: "rgba(170, 189, 154, 0.16)",
+		border: "rgba(170, 189, 154, 0.34)",
+	},
+	archive: {
+		base: "#B8B3A8",
+		background: "rgba(184, 179, 168, 0.18)",
+		border: "rgba(184, 179, 168, 0.36)",
+	},
+}[semanticTone];
+---
+
+<span
+	class:list={[
+		"inline-flex items-center gap-2 rounded-[5px] border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em]",
+	]}
+	style={`color:${statusColors.base};background:${statusColors.background};border-color:${statusColors.border};`}
+>
+	<span class="h-1.5 w-1.5 rounded-full" style={`background:${statusColors.base};`} aria-hidden="true"></span>
+	{displayValue}
+</span>

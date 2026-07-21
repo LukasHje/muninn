@@ -1,15 +1,21 @@
 ---
 import FavoriteToggleButton from "src/components/FavoriteToggleButton.astro";
 import Icon from "src/components/Icon.astro";
+import InspectorHeader from "src/components/experiences/InspectorHeader.astro";
+import InspectorSection from "src/components/experiences/InspectorSection.astro";
+import MetadataRow from "src/components/experiences/MetadataRow.astro";
 import NoteContent from "src/components/notes/NoteContent.astro";
-import type { InspectorSection } from "src/lib/experiences/inspector";
+import {
+	getInspectorBulletItems,
+	getInspectorFirstParagraph,
+	type InspectorSection as InspectorSectionData,
+} from "src/lib/experiences/inspector";
+import { slugifySegment } from "src/lib/parser";
 import type { ExperienceDefinition } from "src/lib/experiences/registry";
 import {
+	getExperienceMetadataEntries,
 	getNoteSummary,
-	getNoteMetadataValue,
 	getInspectorImage,
-	getReadableMetadataLabel,
-	getReadableMetadataValue,
 	isPlaceholderExperienceImage,
 } from "src/lib/experiences/selectors";
 import type { LibraryItem } from "src/lib/vault";
@@ -17,7 +23,7 @@ import type { LibraryItem } from "src/lib/vault";
 interface Props {
 	definition: ExperienceDefinition;
 	note: LibraryItem;
-	sections: InspectorSection[];
+	sections: InspectorSectionData[];
 	noteHref: string;
 	redirectTo: string;
 }
@@ -30,14 +36,7 @@ const {
 	redirectTo,
 } = Astro.props;
 
-const metadataEntries = definition.inspectorMetadata
-	.map((key) => {
-		const value = getNoteMetadataValue(note, key);
-		return value
-			? { key, label: getReadableMetadataLabel(key), value: getReadableMetadataValue(value) }
-			: null;
-	})
-	.filter(Boolean) as Array<{ key: string; label: string; value: string }>;
+const metadataEntries = getExperienceMetadataEntries(note, definition.inspectorMetadata);
 const imageUrl = getInspectorImage(note, definition);
 const summary = getNoteSummary(note);
 const isPlaceholderImage = imageUrl ? isPlaceholderExperienceImage(imageUrl, definition) : false;
@@ -53,6 +52,11 @@ const useCaseSection = findSection("Use case");
 const keyFeaturesSection = findSection("Key features");
 const limitationsSection = findSection("Limitations");
 const notesSection = findSection("Notes", "Wishlist notes", "Review");
+const keyFeatureItems = keyFeaturesSection ? getInspectorBulletItems(keyFeaturesSection.content) : [];
+const limitationItems = limitationsSection ? getInspectorBulletItems(limitationsSection.content) : [];
+const notesExcerpt = notesSection ? getInspectorFirstParagraph(notesSection.content) : summary;
+const notesIsTruncated = notesSection ? notesExcerpt.trim() !== notesSection.content.trim() : false;
+const notesSectionHref = `${noteHref}#${slugifySegment(notesSection?.title ?? "notes")}`;
 const renderedSectionTitles = new Set(
 	[useCaseSection, keyFeaturesSection, limitationsSection, notesSection]
 		.filter(Boolean)
@@ -64,23 +68,19 @@ const remainingSectionCount = sections.filter(
 ---
 
 <div class="px-5 pb-8 pt-0 md:px-6">
-	<header class="sticky top-0 z-10 -mx-5 border-b border-[#ded6ca] bg-[linear-gradient(180deg,rgba(244,239,232,0.98)_0%,rgba(242,236,227,0.96)_100%)] px-5 py-4 backdrop-blur-sm md:-mx-6 md:px-6">
-		<div class="flex items-center justify-between gap-3">
-			<div class="flex min-w-0 items-center gap-3">
-				<button
-					type="button"
-					data-experience-close
-					class="experience-inspector-icon-button"
-					aria-label="Close inspector"
-					title="Close inspector"
-				>
-					<Icon name="chevron-left" class="h-4 w-4" />
-				</button>
-				<h2 class="truncate text-[1.08rem] font-semibold tracking-[-0.03em] text-slate-900">
-					{note.title}
-				</h2>
-			</div>
-
+	<InspectorHeader title={note.title}>
+		<Fragment slot="leading">
+			<button
+				type="button"
+				data-experience-close
+				class="experience-inspector-icon-button"
+				aria-label="Close inspector"
+				title="Close inspector"
+			>
+				<Icon name="chevron-left" class="h-6 w-6" />
+			</button>
+		</Fragment>
+		<Fragment slot="actions">
 			<div class="flex items-center gap-2">
 				<div data-experience-inspector-favorite>
 					<FavoriteToggleButton
@@ -88,6 +88,7 @@ const remainingSectionCount = sections.filter(
 						isFavorite={Boolean(note.favorite)}
 						redirectTo={redirectTo}
 						size="md"
+						variant="chromeless"
 					/>
 				</div>
 				<a
@@ -98,46 +99,53 @@ const remainingSectionCount = sections.filter(
 					aria-label="Open full note"
 					title="Open full note"
 				>
-					<Icon name="arrow-up-right" class="h-4 w-4" />
+					<Icon name="square-arrow-up-right" class="h-6 w-6" />
 				</a>
 			</div>
-		</div>
-	</header>
+		</Fragment>
+	</InspectorHeader>
 
-	<div class="experience-inspector-section pt-5">
-		<div
-			class:list={[
-				"grid gap-4",
-				metadataEntries.length > 0 ? "md:grid-cols-[minmax(0,1fr)_15.5rem] md:items-stretch" : "",
-			]}
-		>
-			<div class="overflow-hidden rounded-[28px] border border-[#e7dfd4] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.94),rgba(246,240,232,0.96)_72%,rgba(242,236,227,0.98))]">
-				<div class="flex h-[280px] items-center justify-center p-6">
-					<img
-						src={imageUrl}
-						alt=""
+	<div class="experience-inspector-section pt-3">
+			<div
+				class:list={[
+					"grid gap-4",
+					metadataEntries.length > 0 ? "md:grid-cols-[minmax(0,1fr)_15.5rem] md:items-start" : "",
+				]}
+			>
+					<div class="self-start overflow-hidden rounded-[10px] border border-[#e7dfd4] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.94),rgba(246,240,232,0.96)_72%,rgba(242,236,227,0.98))]">
+					<div
 						class:list={[
-							"h-full w-full",
-							isPlaceholderImage ? "object-contain opacity-80 mix-blend-multiply" : "object-contain",
+							"relative aspect-[3/5] w-full",
+							isPlaceholderImage ? "flex items-center justify-center p-6" : "overflow-hidden",
 						]}
-					/>
-				</div>
+					>
+						<img
+							src={imageUrl}
+							alt=""
+							class:list={[
+								"h-full w-full",
+								isPlaceholderImage ? "object-contain opacity-80 mix-blend-multiply" : "object-cover",
+							]}
+						/>
+					</div>
 			</div>
 
 			{
 				metadataEntries.length > 0 && (
-					<div class="overflow-hidden rounded-[28px] border border-[#e2d9cd] bg-white/58">
-						<dl class="divide-y divide-[#ebe2d7]">
-							{
-								metadataEntries.map((entry) => (
-									<div class="space-y-1.5 px-4 py-4">
-										<dt class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-											{entry.label}
-										</dt>
-										<dd class="text-sm leading-6 text-slate-700">{entry.value}</dd>
-									</div>
-								))
-							}
+						<div class="overflow-hidden rounded-[10px] border border-[#e2d9cd] bg-white/58">
+						<dl class="divide-y divide-[#ebe2d7] px-4 py-2">
+								{
+									metadataEntries.map((entry) => (
+										<div>
+											<MetadataRow
+												metadataKey={entry.key}
+												icon={entry.icon}
+												label={entry.label}
+												value={entry.value}
+											/>
+										</div>
+									))
+								}
 						</dl>
 					</div>
 				)
@@ -147,48 +155,60 @@ const remainingSectionCount = sections.filter(
 
 	{
 		useCaseSection && (
-			<section class="experience-inspector-section">
-				<h3 class="text-lg font-semibold tracking-tight text-slate-900">Use case</h3>
-				<div class="mt-4">
+			<InspectorSection title="Use case" highlightKey="usecase">
+				<div>
 					<NoteContent note={note} content={useCaseSection.content} />
 				</div>
-			</section>
+			</InspectorSection>
 		)
 	}
 
 	{
 		keyFeaturesSection && (
-			<section class="experience-inspector-section">
-				<h3 class="text-lg font-semibold tracking-tight text-slate-900">Key features</h3>
-				<div class="mt-4">
-					<NoteContent note={note} content={keyFeaturesSection.content} />
-				</div>
-			</section>
+			<InspectorSection title="Key features" highlightKey="keyfeatures" className="mt-8">
+				<ul class="list-outside list-disc space-y-2.5 pl-5 text-sm leading-7 text-slate-700 marker:text-slate-500">
+					{
+						keyFeatureItems.map((item) => (
+							<li>{item}</li>
+						))
+					}
+				</ul>
+			</InspectorSection>
 		)
 	}
 
 	{
 		limitationsSection && (
-			<section class="experience-inspector-section">
-				<h3 class="text-lg font-semibold tracking-tight text-slate-900">Limitations</h3>
-				<div class="mt-4">
-					<NoteContent note={note} content={limitationsSection.content} />
-				</div>
-			</section>
+			<InspectorSection title="Limitations" highlightKey="limitations" className="mt-8">
+				<ul class="list-outside list-disc space-y-2.5 pl-5 text-sm leading-7 text-slate-700 marker:text-slate-500">
+					{
+						limitationItems.map((item) => (
+							<li>{item}</li>
+						))
+					}
+				</ul>
+			</InspectorSection>
 		)
 	}
 
-	<section class="experience-inspector-section">
-		<h3 class="text-lg font-semibold tracking-tight text-slate-900">Notes</h3>
-		<p class="mt-4 text-sm leading-7 text-slate-600">{summary}</p>
-		{
-			notesSection && (
-				<div class="mt-4">
-					<NoteContent note={note} content={notesSection.content} />
-				</div>
-			)
-		}
-	</section>
+	<InspectorSection title="Notes" highlightKey="notes" surface="panel" className="mt-10 experience-inspector-notes">
+		<p class="text-sm leading-8">
+			{notesExcerpt}
+				{
+					notesIsTruncated && (
+						<a
+						href={notesSectionHref}
+						data-experience-open-note
+						data-note-href={notesSectionHref}
+						class="ml-2 inline text-slate-400 underline-offset-4 transition-colors hover:text-slate-500 hover:underline"
+					>
+							<span aria-hidden="true">. . .</span>
+							<span class="ml-1">open note for full description</span>
+						</a>
+					)
+				}
+			</p>
+		</InspectorSection>
 
 	{
 		remainingSectionCount > 0 && (
@@ -202,32 +222,29 @@ const remainingSectionCount = sections.filter(
 <style>
 	.experience-inspector-icon-button {
 		display: inline-flex;
-		height: 2.75rem;
-		width: 2.75rem;
+		height: 3rem;
+		width: 3rem;
 		align-items: center;
 		justify-content: center;
-		border-radius: 9999px;
-		border: 1px solid #d8d0c4;
-		background: rgba(255, 255, 255, 0.58);
+		border: none;
+		background: transparent;
 		color: rgb(71 85 105);
-		transition:
-			background-color 180ms ease,
-			border-color 180ms ease,
-			color 180ms ease;
+		transition: color 180ms ease;
 	}
 
 	.experience-inspector-icon-button:hover {
-		border-color: #cfc4b5;
-		background: rgba(255, 255, 255, 0.78);
 		color: rgb(15 23 42);
 	}
 
 	.experience-inspector-section {
-		padding-top: 1.5rem;
+		margin-top: 0;
 	}
 
-	.experience-inspector-section + .experience-inspector-section {
-		margin-top: 1.5rem;
-		border-top: 1px solid #e1d8cc;
+	.experience-inspector-notes {
+		color: rgb(142 156 113 / 50%);
+	}
+
+	.experience-inspector-notes :is(h3, p, a) {
+		color: inherit;
 	}
 </style>

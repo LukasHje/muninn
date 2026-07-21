@@ -1,6 +1,12 @@
 import type { LibraryItem } from "src/lib/vault";
 import type { ExperienceDefinition } from "src/lib/experiences/registry";
 import { getNoteMetadataValue } from "src/lib/experiences/selectors";
+import {
+	experienceStatusOrder,
+	getCanonicalExperienceStatus,
+	getExperienceStatusIndex,
+	isExperienceStatus,
+} from "src/lib/experiences/status";
 
 export interface ExperienceFilterState {
 	metadata: Record<string, string>;
@@ -38,7 +44,10 @@ export function getExperienceFilterState(
 	return {
 		metadata: Object.fromEntries(
 			definition.metadataFilters
-				.map((key) => [key, normalizeQueryValue(searchParams.get(toFilterParamName(key)))])
+				.map((key) => {
+					const value = normalizeQueryValue(searchParams.get(toFilterParamName(key)));
+					return [key, key === "status" ? getCanonicalExperienceStatus(value) : value];
+				})
 				.filter((entry): entry is [string, string] => Boolean(entry[1]))
 		),
 		tag: normalizeQueryValue(searchParams.get("tag")),
@@ -70,6 +79,12 @@ export function filterExperienceNotes(notes: LibraryItem[], filterState: Experie
 export function buildMetadataFilterOptions(notes: LibraryItem[], key: string): ExperienceFilterOption[] {
 	const counts = new Map<string, number>();
 
+	if (key === "status") {
+		for (const status of experienceStatusOrder) {
+			counts.set(status, 0);
+		}
+	}
+
 	for (const note of notes) {
 		const value = getNoteMetadataValue(note, key);
 		if (!value) {
@@ -81,6 +96,14 @@ export function buildMetadataFilterOptions(notes: LibraryItem[], key: string): E
 
 	return Array.from(counts.entries())
 		.sort((left, right) => {
+			if (key === "status") {
+				const leftIndex = getExperienceStatusIndex(left[0]);
+				const rightIndex = getExperienceStatusIndex(right[0]);
+				if (leftIndex !== rightIndex) {
+					return leftIndex - rightIndex;
+				}
+			}
+
 			if (left[1] !== right[1]) {
 				return right[1] - left[1];
 			}
@@ -88,7 +111,7 @@ export function buildMetadataFilterOptions(notes: LibraryItem[], key: string): E
 			return left[0].localeCompare(right[0], "sv");
 		})
 		.map(([value, count]) => ({
-			value,
+			value: key === "status" && isExperienceStatus(value) ? getCanonicalExperienceStatus(value)! : value,
 			label: humanizeValue(value),
 			count,
 		}));

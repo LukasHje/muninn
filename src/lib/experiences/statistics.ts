@@ -1,6 +1,7 @@
 import type { LibraryItem } from "src/lib/vault";
 import type { ExperienceDefinition } from "src/lib/experiences/registry";
 import { getNoteMetadataValue, getReadableMetadataValue } from "src/lib/experiences/selectors";
+import { experienceStatusOrder, getExperienceStatusIndex } from "src/lib/experiences/status";
 
 export interface ExperienceStatistic {
 	label: string;
@@ -24,8 +25,24 @@ export function buildExperienceStatistics(
 		counts.set(value, (counts.get(value) ?? 0) + 1);
 	}
 
+	if (definition.statistics.metadataKey === "status") {
+		for (const status of experienceStatusOrder) {
+			if (!counts.has(status)) {
+				counts.set(status, 0);
+			}
+		}
+	}
+
 	const metadataStats = Array.from(counts.entries())
 		.sort((left, right) => {
+			if (definition.statistics.metadataKey === "status") {
+				const leftIndex = getExperienceStatusIndex(left[0]);
+				const rightIndex = getExperienceStatusIndex(right[0]);
+				if (leftIndex !== rightIndex) {
+					return leftIndex - rightIndex;
+				}
+			}
+
 			if (left[1] !== right[1]) {
 				return right[1] - left[1];
 			}

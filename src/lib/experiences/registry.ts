@@ -1,4 +1,5 @@
 import type { Tone } from "src/lib/vault";
+import type { ExperienceCardFamily } from "src/lib/experiences/cardFamilies";
 
 export type ExperienceKey = "gear";
 
@@ -15,6 +16,8 @@ export interface ExperienceDefinition {
 	sidebar: {
 		label: string;
 	};
+	cardFamily: ExperienceCardFamily;
+	featureSections: string[];
 	metadataFilters: string[];
 	cardMetadata: string[];
 	inspectorMetadata: string[];
@@ -24,6 +27,8 @@ export interface ExperienceDefinition {
 		maxValues: number;
 	};
 }
+
+type ExperienceDefinitionConfig = Omit<ExperienceDefinition, "heroArtwork">;
 
 const commonInspectorSections = [
 	"Use case",
@@ -36,7 +41,19 @@ const commonInspectorSections = [
 	"Links",
 ];
 
-export const experienceDefinitions = [
+const gearFeatureSections = [
+	"Key features",
+	"Features",
+	"Highlights",
+	"Specifications",
+	"Technical highlights",
+];
+
+function getExperienceHeroArtworkPath(key: string) {
+	return `/experiences/${key}/experiences-heroart-${key}.webp`;
+}
+
+const experienceDefinitionConfigs: ExperienceDefinitionConfig[] = [
 	{
 		key: "gear",
 		title: "Gear",
@@ -46,21 +63,27 @@ export const experienceDefinitions = [
 		tone: "emerald",
 		href: "/gear",
 		libraryHref: "/notes?category=gear",
-		heroArtwork: "/experiences/gear/gear-hero.webp",
 		placeholderThumbnail: "/assets/experiences/gear/placeholder-thumbnail.webp",
 		sidebar: {
 			label: "Gear",
 		},
+		cardFamily: "product",
+		featureSections: gearFeatureSections,
 		metadataFilters: ["status", "category"],
 		cardMetadata: ["status", "category", "manufacturer"],
-		inspectorMetadata: ["type", "status", "category", "manufacturer", "variant", "updated"],
+		inspectorMetadata: ["type", "status", "category", "manufacturer", "variant", "tags", "updated"],
 		inspectorSections: commonInspectorSections,
 		statistics: {
 			metadataKey: "status",
 			maxValues: 4,
 		},
 	},
-] satisfies ExperienceDefinition[];
+] satisfies ExperienceDefinitionConfig[];
+
+export const experienceDefinitions = experienceDefinitionConfigs.map((definition) => ({
+	...definition,
+	heroArtwork: getExperienceHeroArtworkPath(definition.key),
+})) satisfies ExperienceDefinition[];
 
 const experienceDefinitionMap = new Map(experienceDefinitions.map((definition) => [definition.key, definition]));
 
