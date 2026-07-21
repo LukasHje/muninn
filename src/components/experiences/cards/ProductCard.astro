@@ -62,7 +62,7 @@ const isPlaceholderImage = isPlaceholderExperienceImage(imageUrl, definition);
 			<div
 				class="experience-note-card__image-column relative flex mt-8 self-stretch items-start justify-center overflow-visible bg-transparent"
 			>
-				<img
+				{imageUrl && <img
 					src={imageUrl}
 					alt=""
 					aria-hidden="true"
@@ -72,8 +72,8 @@ const isPlaceholderImage = isPlaceholderExperienceImage(imageUrl, definition);
 					loading="lazy"
 					fetchpriority="low"
 					decoding="async"
-				/>
-				<img
+				/>}
+				{imageUrl && <img
 					src={imageUrl}
 					alt=""
 					class:list={[
@@ -85,7 +85,7 @@ const isPlaceholderImage = isPlaceholderExperienceImage(imageUrl, definition);
 					loading="lazy"
 					fetchpriority="low"
 					decoding="async"
-				/>
+				/>}
 			</div>
 			<div class="min-w-0 flex flex-col pt-8">
 				<h2 class="truncate pr-14 text-[1.2rem] font-semibold leading-[1.02] tracking-[-0.06em] text-slate-900">
@@ -110,7 +110,7 @@ const isPlaceholderImage = isPlaceholderExperienceImage(imageUrl, definition);
 				{
 					statusValue && (
 						<div class="mt-auto pt-2.5 pb-2">
-							<StatusBadge value={statusValue} tone={definition.tone} />
+							<StatusBadge value={statusValue} tone={definition.theme} />
 						</div>
 					)
 				}

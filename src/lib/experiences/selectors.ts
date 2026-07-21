@@ -2,8 +2,9 @@ import { stripMarkdown } from "src/lib/parser";
 import type { ExperienceMetadataIconDescriptor } from "src/lib/experiences/metadataIcons";
 import { getMetadataIcon } from "src/lib/experiences/metadataIcons";
 import { getCanonicalExperienceStatus } from "src/lib/experiences/status";
+import { matchesExperienceSelector } from "src/lib/experiences/selectorEngine";
 import type { LibraryItem, FrontmatterValue } from "src/lib/vault";
-import type { ExperienceDefinition, ExperienceKey } from "src/lib/experiences/registry";
+import type { ExperienceDefinition } from "src/lib/experiences/registry";
 
 export interface ExperienceMetadataEntry {
 	key: string;
@@ -71,12 +72,8 @@ function resolveConfiguredImage(note: LibraryItem, key: string) {
 }
 
 
-const experienceNoteSelectors: Record<ExperienceKey, (note: LibraryItem) => boolean> = {
-	gear: (note) => note.normalized.type === "gear",
-};
-
 export function matchesExperienceDefinition(note: LibraryItem, definition: ExperienceDefinition) {
-	return experienceNoteSelectors[definition.key]?.(note) ?? false;
+	return matchesExperienceSelector(note, definition.selector);
 }
 
 export function getExperienceNotes(items: LibraryItem[], definition: ExperienceDefinition) {
@@ -147,7 +144,7 @@ export function getCardImage(note: LibraryItem, definition: ExperienceDefinition
 		resolveConfiguredImage(note, "thumbnail") ??
 		resolveConfiguredImage(note, "cover") ??
 		note.imageUrl ??
-		definition.placeholderThumbnail
+		definition.assets.placeholderThumbnail
 	);
 }
 
@@ -156,12 +153,12 @@ export function getInspectorImage(note: LibraryItem, definition: ExperienceDefin
 		resolveConfiguredImage(note, "cover") ??
 		resolveConfiguredImage(note, "thumbnail") ??
 		note.imageUrl ??
-		definition.placeholderThumbnail
+		definition.assets.placeholderThumbnail
 	);
 }
 
-export function isPlaceholderExperienceImage(imageUrl: string, definition: ExperienceDefinition) {
-	return imageUrl === definition.placeholderThumbnail;
+export function isPlaceholderExperienceImage(imageUrl: string | null, definition: ExperienceDefinition) {
+	return Boolean(imageUrl && imageUrl === definition.assets.placeholderThumbnail);
 }
 
 export function getNoteSummary(note: LibraryItem) {

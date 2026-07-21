@@ -1,0 +1,17 @@
+---
+import DefaultExperienceLanding from "src/components/experiences/DefaultExperienceLanding.astro";
+import GearExperienceLanding from "src/components/experiences/GearExperienceLanding.astro";
+import type { ExperienceViewModel } from "src/lib/experiences/experience";
+
+type Props = ExperienceViewModel;
+
+const props = Astro.props;
+const landingPageComponents = {
+	gear: GearExperienceLanding,
+};
+const LandingPage = props.definition.landingPage
+	? landingPageComponents[props.definition.landingPage]
+	: DefaultExperienceLanding;
+---
+
+<LandingPage {...props} />

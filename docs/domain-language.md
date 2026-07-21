@@ -139,6 +139,22 @@ It describes application capabilities.
 
 ---
 
+## Experience Selector
+
+A declarative rule that determines which Notes belong to an Experience.
+
+Current selector types are frontmatter and path. Selectors belong to the Experience discovery layer and do not define presentation.
+
+---
+
+## Default Experience
+
+The fallback application UI for registered Experiences without custom components.
+
+It provides a default landing page, hero, Generic Note Card, inspector, and metadata presentation. A custom Experience overrides only the components it needs.
+
+---
+
 ## Card Family
 
 A Card Family is the presentation model an Experience uses for items in its browser.

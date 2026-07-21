@@ -9,11 +9,23 @@ import {
 import { getExperienceNotes } from "src/lib/experiences/selectors";
 import { buildExperienceStatistics } from "src/lib/experiences/statistics";
 
+export interface ExperienceViewModel {
+	definition: ExperienceDefinition;
+	notes: LibraryItem[];
+	filterState: ReturnType<typeof getExperienceFilterState>;
+	filteredNotes: LibraryItem[];
+	totalFilteredNotes: number;
+	selectedNote: LibraryItem | null;
+	statistics: ReturnType<typeof buildExperienceStatistics>;
+	metadataOptions: Record<string, ReturnType<typeof buildMetadataFilterOptions>>;
+	tagOptions: ReturnType<typeof buildTagFilterOptions>;
+}
+
 export function buildExperienceViewModel(
 	definition: ExperienceDefinition,
 	items: LibraryItem[],
 	searchParams: URLSearchParams
-) {
+): ExperienceViewModel {
 	const notes = getExperienceNotes(items, definition);
 	const filterState = getExperienceFilterState(searchParams, definition);
 	const filteredNotes = filterExperienceNotes(notes, filterState);

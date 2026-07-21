@@ -133,3 +133,19 @@ When adding a new feature, ask:
 2. Is this Obsidian syntax? Put it in Obsidian.
 3. Is this introduced by an Obsidian plugin? Put it in Plugin.
 4. Is this only about how content looks or behaves in the browser? Put it in Renderer/UI.
+
+## Experience Pipeline
+
+Experience discovery runs before application UI composition and is separate from Markdown parsing:
+
+```text
+Vault notes
+    ↓
+Experience Selector Engine
+    ↓
+Experience Definition and Card Family
+    ↓
+Application UI
+```
+
+If an inspector renders Markdown, that content then enters the normal Core → Obsidian → Plugin → Renderer pipeline. Selectors must never parse Markdown or introduce rendering rules.

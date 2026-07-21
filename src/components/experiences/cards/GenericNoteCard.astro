@@ -1,5 +1,6 @@
 ---
 import FavoriteToggleButton from "src/components/FavoriteToggleButton.astro";
+import Icon from "src/components/Icon.astro";
 import type { ExperienceDefinition } from "src/lib/experiences/registry";
 import { getCardImage, getExperienceContextTags, getNoteSummary, isPlaceholderExperienceImage } from "src/lib/experiences/selectors";
 import type { LibraryItem } from "src/lib/vault";
@@ -44,15 +45,21 @@ const isPlaceholderImage = isPlaceholderExperienceImage(imageUrl, definition);
 		aria-pressed={selected ? "true" : "false"}
 	>
 		<div class="flex h-48 items-center justify-center border-b border-[#ece3d8] bg-[#f7f2ea] px-6 py-6">
-			<img
-				src={imageUrl}
-				alt=""
-				class:list={[
-					"h-full w-full",
-					isPlaceholderImage ? "object-contain opacity-75 mix-blend-multiply" : "object-contain",
-				]}
-				loading="lazy"
-			/>
+			{
+				imageUrl ? (
+					<img
+						src={imageUrl}
+						alt=""
+						class:list={[
+							"h-full w-full",
+							isPlaceholderImage ? "object-contain opacity-75 mix-blend-multiply" : "object-contain",
+						]}
+						loading="lazy"
+					/>
+				) : (
+					<Icon name={definition.icons.hero} class="h-14 w-14 text-slate-400" />
+				)
+			}
 		</div>
 		<div class="space-y-3 px-5 py-5">
 			<h2 class="pr-10 text-xl font-semibold tracking-[-0.04em] text-slate-900">{note.title}</h2>

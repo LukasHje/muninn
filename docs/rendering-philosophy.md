@@ -38,3 +38,9 @@ Examples:
 - cover
 
 Narrative belongs in Markdown.
+
+## Discovery Is Declarative
+
+Experiences discover notes through registered selectors. Frontmatter is one supported source, not a requirement for every Experience; path-based discovery is also supported.
+
+Selectors decide membership only. They must not alter Markdown rendering or presentation.

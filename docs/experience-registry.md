@@ -1,225 +1,68 @@
 # Experience Registry
 
-Status: Proposed and Implemented Incrementally
+Status: Implemented
 
----
+The central registry is the source of truth for Experience identity and composition. It prevents routes, sidebar navigation, selectors, assets, and UI choices from being scattered through the application.
 
-## Purpose
+## Definition
 
-Muninn needs one place where curated experiences are defined.
+Each `ExperienceDefinition` owns:
 
-Without a registry, experience behaviour gets scattered across:
+- `id`, title, description, route, and Library link
+- a typed `selector`
+- a `theme`
+- sidebar and hero icons
+- hero artwork and placeholder assets
+- a Card Family
+- optional landing page and inspector overrides
+- filter, statistics, metadata, and section preferences
 
-- sidebar navigation
-- routes
-- placeholder assets
-- titles and descriptions
-- note selection logic
-- future widgets
+The registry does not implement selectors, traverse the Vault, parse Markdown, or render UI.
 
-The registry keeps that identity in one place.
+## Registered Experiences
 
----
+- Gear: custom landing page, Product Card, and custom inspector
+- Vehicles: Default Experience
+- Travel: Default Experience
+- Recipes: Default Experience
+- Books: Default Experience
+- Technology: Default Experience
+- Homelab: Default Experience
 
-## Scope
+The first six use frontmatter selectors. A selector may accept multiple equivalent values, as Recipes does for `recipes` and `recept`. Homelab uses a path selector and demonstrates that the registry is not tied to `type` metadata.
 
-The registry defines **Experiences**.
+## Assets
 
-It does not replace:
+Assets are declared by each definition. Existing hero artwork follows:
 
-- the unified note model
-- the generic Library Browser
-- note layouts
+```text
+/public/experiences/[experience]/experiences-heroart-[experience].webp
+```
 
-Notes remain normal markdown notes.
+Hero artwork and placeholder thumbnails may be absent. Default UI then renders the registered hero icon instead of requesting a missing image.
 
-The registry only decides how a collection of notes is presented as a Muninn-level experience.
+## Component Fallbacks
 
----
+`landingPage` and `inspector` are optional. Their absence selects the Default Experience implementation. `cardFamily` always resolves through the generic card renderer and falls back to `generic-note`.
 
-## Definition Shape
+The browser consumes only the resolved definition. It must not contain Experience-id branches.
 
-Each experience definition owns:
+## Data Ownership
 
-- `key`
-- `title`
-- `description`
-- `icon`
-- `tone`
-- `href`
-- `libraryHref`
-- `heroArtwork`
-- `placeholderThumbnail`
-- `cardFamily`
-- `featureSections`
-- sidebar identity
-- supported metadata filters
-- preferred inspector headings
-
-This keeps the experience configuration declarative.
-
-Hero artwork follows a shared asset convention:
-
-- `/public/experiences/[experience]/experiences-heroart-[experience].webp`
-
-The registry resolves that path from the experience key.
-
-This avoids one-off hero image wiring for individual experiences.
-
----
-
-## Ownership Boundaries
-
-### Registry
-
-Owns:
-
-- experience identity
-- application routing targets
-- sidebar visibility
-- placeholder assets
-- which metadata dimensions are important for browsing
-
-Must not own:
-
-- markdown parsing
-- Obsidian syntax
-- note rendering internals
-- note selection logic
-- statistics logic
-- filtering logic
-
-### Experience Data Layer
-
-Owns:
-
-- selecting notes for an experience
-- computing statistics
-- building filter options
-- choosing the selected inspector note
-- resolving thumbnail fallback behaviour
-
-Must not own:
-
-- raw markdown parsing rules outside standard helper utilities
-- page styling details
-
-Recommended split:
-
-- `registry.ts`
-- `selectors.ts`
-- `filters.ts`
-- `statistics.ts`
-- optional small composition helpers
-
-### Experience UI
-
-Owns:
-
-- hero
-- stats
-- filters
-- card browser
-- inspector panel
-
-Must not own:
-
-- note classification heuristics
-- vault traversal
-- markdown syntax rules
-
----
-
-## Placeholder Behaviour
-
-Experience placeholder thumbnails are application assets.
-
-Notes should never reference them directly.
-
-Resolution order:
-
-1. frontmatter `thumbnail`
-2. frontmatter `cover`
-3. first resolved note image
-4. experience placeholder asset
-
-This keeps notes portable while allowing the application to remain visually complete.
-
----
-
-## Inspector Panel
-
-The inspector panel is part of the application UI, not the full note layout.
-
-Its job is to:
-
-- show the currently selected note
-- surface important metadata
-- render recognized markdown sections when present
-- allow opening the full note
-
-The first implementation is query-driven and server-rendered:
-
-- selecting a card updates the experience page state
-- the user remains inside the experience
-- full note navigation remains explicit
-
-This preserves reuse and avoids an experience-specific client state system.
-
-The inspector panel must remain a generic selected-note inspector.
-
-It must not contain Gear-specific assumptions.
-
----
-
-## Composition Order
-
-The intended layering is:
-
+```text
 Registry
+    ↓
+Selector Engine
+    ↓
+Filters and Statistics
+    ↓
+Component Resolvers
+    ↓
+Experience Browser
+```
 
-↓
-
-Selectors / Filters / Statistics
-
-↓
-
-Reusable UI Components
-
-↓
-
-Experience View
-
-↓
-
-Route
-
-The experience orchestration layer should stay relatively small.
-
-Its main responsibility is orchestration and composition, not feature ownership.
+Adding an Experience should normally require one registry entry and its assets. New selector algorithms or Card Families are separate subsystem changes.
 
 ## Browser Scaling
 
-The card grid exposes a stable `data-experience-card-list` boundary plus rendered and total counts. Card interaction uses event delegation from the Experience root, so cards added or recycled by future incremental rendering do not require new listeners.
-
-The current server render still emits the complete filtered collection. A future incremental or virtualized renderer should replace that behavior behind this boundary while keeping filtering, statistics, and inspector loading in their existing owners.
-
----
-
-## Why This Minimizes Duplication
-
-Adding a future experience should primarily require:
-
-1. registering a new definition
-2. optionally adding a placeholder asset
-3. optionally adjusting experience-specific filter preferences
-
-It should not require:
-
-- a new sidebar switch branch
-- a bespoke route implementation
-- a bespoke inspector panel
-- a bespoke card browser
-- duplicated placeholder logic
-
-That is the main architectural goal of this subsystem.
+The card grid exposes a stable `data-experience-card-list` boundary and uses delegated interaction. Future incremental rendering or virtualization can replace full server emission behind that boundary without changing selector, filter, inspector, or registry ownership.

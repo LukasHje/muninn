@@ -2,7 +2,7 @@
 export const prerender = false;
 export const partial = true;
 
-import SelectedNoteInspector from "src/components/experiences/SelectedNoteInspector.astro";
+import ExperienceInspectorRenderer from "src/components/experiences/ExperienceInspectorRenderer.astro";
 import { buildExperienceInspectorModel } from "src/lib/experiences/inspector";
 import { getExperienceNotes } from "src/lib/experiences/selectors";
 import { getExperienceDefinition } from "src/lib/experiences/registry";
@@ -34,7 +34,7 @@ const inspector = buildExperienceInspectorModel(note, definition, redirectTo);
 ---
 
 <div data-experience-inspector-panel={note.id}>
-	<SelectedNoteInspector
+	<ExperienceInspectorRenderer
 		definition={definition}
 		note={inspector.note}
 		sections={inspector.sections}

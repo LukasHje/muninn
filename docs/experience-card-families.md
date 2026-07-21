@@ -34,6 +34,8 @@ Examples:
 - Books → `book`
 - fallback browsing → `generic-note`
 
+Only `product` and `generic-note` are implemented today. Vehicle, Journey, and Book Cards describe intended future families; those Experiences use `generic-note` until their custom family exists.
+
 ## Responsibilities
 
 ### Experience
@@ -80,3 +82,5 @@ Rendering is routed through a generic Experience card renderer that selects the 
 This keeps the Experience layer declarative while allowing each family to evolve independently.
 
 Product-oriented card families should consume a dedicated Product Feature Extraction system rather than arbitrary frontmatter fields.
+
+The Default Experience always has a viable fallback through `generic-note`. Registering an Experience does not require creating a new Card Family.

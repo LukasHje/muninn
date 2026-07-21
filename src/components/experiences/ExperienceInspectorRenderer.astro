@@ -1,0 +1,25 @@
+---
+import DefaultNoteInspector from "src/components/experiences/DefaultNoteInspector.astro";
+import SelectedNoteInspector from "src/components/experiences/SelectedNoteInspector.astro";
+import type { InspectorSection } from "src/lib/experiences/inspector";
+import type { ExperienceDefinition } from "src/lib/experiences/registry";
+import type { LibraryItem } from "src/lib/vault";
+
+interface Props {
+	definition: ExperienceDefinition;
+	note: LibraryItem;
+	sections: InspectorSection[];
+	noteHref: string;
+	redirectTo: string;
+}
+
+const props = Astro.props;
+const inspectorComponents = {
+	gear: SelectedNoteInspector,
+};
+const InspectorComponent = props.definition.inspector
+	? inspectorComponents[props.definition.inspector]
+	: DefaultNoteInspector;
+---
+
+<InspectorComponent {...props} />

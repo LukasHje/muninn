@@ -14,6 +14,6 @@ export function buildSidebarExperienceLinks(items: LibraryItem[]): SidebarExperi
 		label: definition.sidebar.label,
 		href: definition.href,
 		count: getExperienceNotes(items, definition).length,
-		icon: definition.icon,
+		icon: definition.icons.sidebar,
 	}));
 }

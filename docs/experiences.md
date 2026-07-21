@@ -1,6 +1,6 @@
 # Experiences
 
-Status: Proposed Architecture
+Status: Implemented Incrementally
 
 ---
 
@@ -168,6 +168,10 @@ Vault
 
 ↓
 
+Selector Engine
+
+↓
+
 Experience Definition
 
 ↓
@@ -188,32 +192,31 @@ These responsibilities should remain separate.
 
 # Experience Definition
 
-Every experience should be defined in a central registry.
+Every Experience is defined in a central registry.
 
 Example:
 
 ```ts
 ExperienceDefinition {
 
-    key
-
-    sidebar
-
-    experience
-
-    library
-
-    noteLayouts
+	 id
+	 selector
+	 theme
+	 icons
+	 assets
+	 cardFamily
+	 landingPage?
+	 inspector?
 
 }
 ```
 
 An Experience Definition owns:
 
-- sidebar navigation
-- icon
-- colors
-- hero image
+- selector
+- sidebar and hero icons
+- theme
+- hero and placeholder assets
 - title
 - description
 - landing page
@@ -221,7 +224,9 @@ An Experience Definition owns:
 - widgets
 - sections
 
-No experience-specific information should be scattered throughout the application.
+No Experience-specific information should be scattered throughout the application.
+
+Experiences without component overrides inherit the Default Experience landing page, hero, Generic Note Card, inspector, and metadata presentation. Gear is currently the only custom implementation.
 
 ---
 
@@ -383,7 +388,7 @@ Preferred URLs:
 
 /journal
 
-Internally these should all resolve through the same Experience system.
+Internally these all resolve through the same dynamic Experience route and registry.
 
 Avoid creating separate implementations for each route.
 

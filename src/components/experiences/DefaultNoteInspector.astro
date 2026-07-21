@@ -1,0 +1,124 @@
+---
+import FavoriteToggleButton from "src/components/FavoriteToggleButton.astro";
+import Icon from "src/components/Icon.astro";
+import InspectorHeader from "src/components/experiences/InspectorHeader.astro";
+import MetadataRow from "src/components/experiences/MetadataRow.astro";
+import type { InspectorSection } from "src/lib/experiences/inspector";
+import type { ExperienceDefinition } from "src/lib/experiences/registry";
+import {
+	getExperienceMetadataEntries,
+	getInspectorImage,
+	getNoteSummary,
+	isPlaceholderExperienceImage,
+} from "src/lib/experiences/selectors";
+import type { LibraryItem } from "src/lib/vault";
+
+interface Props {
+	definition: ExperienceDefinition;
+	note: LibraryItem;
+	sections: InspectorSection[];
+	noteHref: string;
+	redirectTo: string;
+}
+
+const { definition, note, noteHref, redirectTo } = Astro.props;
+const metadataEntries = getExperienceMetadataEntries(note, definition.inspectorMetadata);
+const imageUrl = getInspectorImage(note, definition);
+const summary = getNoteSummary(note);
+const isPlaceholderImage = isPlaceholderExperienceImage(imageUrl, definition);
+---
+
+<div class="px-5 pb-8 md:px-6">
+	<InspectorHeader title={note.title}>
+		<Fragment slot="leading">
+			<button
+				type="button"
+				data-experience-close
+				class="default-inspector-icon-button"
+				aria-label="Close inspector"
+				title="Close inspector"
+			>
+				<Icon name="arrow-left" class="h-6 w-6" />
+			</button>
+		</Fragment>
+		<Fragment slot="actions">
+			<div class="flex items-center gap-2">
+				<div data-experience-inspector-favorite>
+					<FavoriteToggleButton
+						noteId={note.id}
+						isFavorite={Boolean(note.favorite)}
+						redirectTo={redirectTo}
+						size="md"
+						variant="chromeless"
+					/>
+				</div>
+				<a
+					href={noteHref}
+					data-experience-open-note
+					data-note-href={noteHref}
+					class="default-inspector-icon-button"
+					aria-label="Open full note"
+					title="Open full note"
+				>
+					<Icon name="square-arrow-up-right" class="h-6 w-6" />
+				</a>
+			</div>
+		</Fragment>
+	</InspectorHeader>
+
+	<div class="grid gap-4 pt-3 md:grid-cols-[minmax(0,1fr)_15.5rem] md:items-start">
+		<div class="flex min-h-52 items-center justify-center overflow-hidden rounded-[10px] border border-[#e7dfd4] bg-[#f7f2ea] p-5">
+			{
+				imageUrl ? (
+					<img
+						src={imageUrl}
+						alt=""
+						class:list={[
+							"max-h-72 w-full object-contain",
+							isPlaceholderImage && "opacity-75 mix-blend-multiply",
+						]}
+					/>
+				) : (
+					<Icon name={definition.icons.hero} class="h-16 w-16 text-slate-400" />
+				)
+			}
+		</div>
+
+		{
+			metadataEntries.length > 0 && (
+				<div class="overflow-hidden rounded-[10px] border border-[#e2d9cd] bg-white/58">
+					<dl class="divide-y divide-[#ebe2d7] px-4 py-2">
+						{metadataEntries.map((entry) => (
+							<MetadataRow
+								metadataKey={entry.key}
+								icon={entry.icon}
+								label={entry.label}
+								value={entry.value}
+							/>
+						))}
+					</dl>
+				</div>
+			)
+		}
+	</div>
+
+	<div class="my-6 border-t border-[#d8d0c5]" aria-hidden="true"></div>
+
+	{summary && <p class="text-sm leading-8 text-slate-700">{summary}</p>}
+</div>
+
+<style>
+	.default-inspector-icon-button {
+		display: inline-flex;
+		height: 3rem;
+		width: 3rem;
+		align-items: center;
+		justify-content: center;
+		color: rgb(71 85 105);
+		transition: color 180ms ease;
+	}
+
+	.default-inspector-icon-button:hover {
+		color: rgb(15 23 42);
+	}
+</style>

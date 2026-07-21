@@ -1,7 +1,7 @@
 ---
 export const prerender = false;
 
-import ExperienceView from "src/components/experiences/ExperienceView.astro";
+import ExperienceLandingRenderer from "src/components/experiences/ExperienceLandingRenderer.astro";
 import MainLayout from "src/layouts/MainLayout.astro";
 import { buildExperienceViewModel } from "src/lib/experiences/experience";
 import { getExperienceDefinition } from "src/lib/experiences/registry";
@@ -19,5 +19,5 @@ const experience = buildExperienceViewModel(definition, libraryItems, Astro.url.
 ---
 
 <MainLayout title={`${definition.title} | Muninn`}>
-	<ExperienceView {...experience} />
+	<ExperienceLandingRenderer {...experience} />
 </MainLayout>

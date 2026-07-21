@@ -46,6 +46,8 @@ These describe the note or its lifecycle.
 
 They belong in the Inspector, not on the Product Card.
 
+Default Generic Note Cards may show a summary and contextual tags, but they do not promote unknown metadata into specifications.
+
 ## Architecture
 
 Product features are extracted through a dedicated extraction layer.
@@ -119,3 +121,5 @@ This system is intended to be reusable across future product-oriented Experience
 - Vehicles
 
 Each Experience can provide different source headings while reusing the same Product Card and extraction architecture.
+
+An Experience using `generic-note` does not run Product Feature Extraction. Feature extraction is selected by the Card Family, not by the browser or selector.

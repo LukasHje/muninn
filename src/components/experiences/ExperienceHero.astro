@@ -10,24 +10,29 @@ interface Props {
 }
 
 const { definition, statistics } = Astro.props;
+const heroArtwork = definition.assets.heroArtwork;
 ---
 
 <div class="relative overflow-hidden">
 	<div class="absolute inset-y-0 right-0 hidden w-[320px] xl:block" aria-hidden="true">
 		<div class="absolute inset-0 bg-[radial-gradient(circle_at_right_center,rgba(255,255,255,0.18),rgba(247,242,235,0.04)_52%,transparent_76%)]"></div>
-		<picture>
-			<source media="(min-width: 1280px)" srcset={definition.heroArtwork} />
-			<img
-				src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
-				alt=""
-				class="pointer-events-none absolute inset-0 h-full w-full object-contain px-6 py-4 opacity-[0.08] mix-blend-multiply"
-				width="1000"
-				height="1000"
-				loading="eager"
-				fetchpriority="high"
-				decoding="async"
-			/>
-		</picture>
+		{
+			heroArtwork && (
+				<picture>
+					<source media="(min-width: 1280px)" srcset={heroArtwork} />
+					<img
+						src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+						alt=""
+						class="pointer-events-none absolute inset-0 h-full w-full object-contain px-6 py-4 opacity-[0.08] mix-blend-multiply"
+						width="1000"
+						height="1000"
+						loading="eager"
+						fetchpriority="high"
+						decoding="async"
+					/>
+				</picture>
+			)
+		}
 	</div>
 
 		<div class="relative z-10 grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-4">
@@ -40,7 +45,7 @@ const { definition, statistics } = Astro.props;
 
 				<div class="flex items-start gap-3.5 md:gap-4">
 					<div class="flex h-[4rem] w-[4rem] shrink-0 items-center justify-center rounded-[22px] border border-[#e7dfd3] bg-[#fbf7f1] shadow-[0_8px_18px_rgba(15,23,42,0.04)]">
-						<Icon name={definition.icon} class="h-7 w-7 text-slate-700" />
+						<Icon name={definition.icons.hero} class="h-7 w-7 text-slate-700" />
 					</div>
 
 					<div class="min-w-0 space-y-2.5">
