@@ -25,6 +25,7 @@ const { code } = Astro.props;
 	import initMermaidDiagrams from "src/components/plugins/MermaidDiagramClient.ts";
 
 	initMermaidDiagrams();
+	document.addEventListener("astro:page-load", initMermaidDiagrams);
 </script>
 
 <style>

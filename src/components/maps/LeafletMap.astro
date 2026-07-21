@@ -24,4 +24,5 @@ const { map } = Astro.props;
 	import initLeafletMaps from "src/components/maps/LeafletMapClient.ts";
 
 	initLeafletMaps();
+	document.addEventListener("astro:page-load", initLeafletMaps);
 </script>
