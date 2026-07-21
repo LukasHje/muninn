@@ -76,7 +76,7 @@ const updatedLabel = formatDate(note.normalized.updated) ?? note.updatedLabel;
 							{breadcrumb && <p class="text-sm font-medium text-white/68">{breadcrumb}</p>}
 							<div class="flex flex-wrap items-center gap-2.5">
 								<span class="rounded-full border border-white/14 bg-white/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/88 backdrop-blur-sm">
-									{note.categoryLabel}
+									{note.domainLabel}
 								</span>
 								{
 									typeLabel && (
@@ -151,7 +151,7 @@ const updatedLabel = formatDate(note.normalized.updated) ?? note.updatedLabel;
 					<div class="space-y-4 md:space-y-5">
 						<div class="flex flex-wrap items-center gap-2.5">
 							<span class="rounded-full border border-[#ece3d7] bg-[#fbf8f3] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-								{note.categoryLabel}
+								{note.domainLabel}
 							</span>
 							{
 								typeLabel && (

@@ -1,0 +1,32 @@
+---
+import Icon from "src/components/Icon.astro";
+import { getInspectorHighlightIconName, type InspectorHighlightKey } from "src/lib/experiences/inspectorHighlights";
+
+interface Props {
+	title: string;
+	className?: string;
+	highlightKey?: InspectorHighlightKey;
+	surface?: "plain" | "panel";
+}
+
+const { title, className = "", highlightKey, surface = "plain" } = Astro.props;
+const highlightIconName = highlightKey ? getInspectorHighlightIconName(highlightKey) : null;
+---
+
+<section
+	class:list={[
+		"experience-inspector-section w-full min-w-0",
+		surface === "panel" ? "rounded-[10px] border border-[#d9d8c7] bg-[rgba(142,156,113,0.08)] px-5 py-4" : "",
+		className,
+	]}
+>
+	<div class="flex items-center gap-3">
+		{
+			highlightIconName && <Icon name={highlightIconName} class="h-7 w-7 shrink-0 text-[#8E9C71]" />
+		}
+		<h3 class="text-[1.35rem] font-semibold tracking-tight text-slate-900">{title}</h3>
+	</div>
+	<div class="mt-2 w-full min-w-0">
+		<slot />
+	</div>
+</section>

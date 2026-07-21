@@ -1,0 +1,26 @@
+---
+import Icon from "src/components/Icon.astro";
+import { getMetadataIcon } from "src/lib/experiences/metadataIcons";
+
+interface Props {
+	metadataKey: string;
+	value?: string | null;
+	className?: string;
+}
+
+const { metadataKey, value = null, className = "" } = Astro.props;
+const icon = getMetadataIcon(metadataKey, value);
+---
+
+<div
+	class:list={["experience-metadata-icon-fallback flex items-center justify-center", className]}
+	style={icon.color ? `color:${icon.color};` : undefined}
+>
+	<Icon name={icon.name} class="h-5 w-5" />
+</div>
+
+<style>
+	.experience-metadata-icon-fallback {
+		color: #4B4F5B;
+	}
+</style>

@@ -1,0 +1,22 @@
+---
+import type { ExperienceStatistic } from "src/lib/experiences/statistics";
+
+interface Props {
+	items: ExperienceStatistic[];
+}
+
+const { items } = Astro.props;
+---
+
+<div class="flex min-w-0 flex-nowrap items-center gap-x-3 overflow-hidden text-sm text-slate-500 md:gap-x-4">
+	{
+		items.map((item) => (
+			<div class="flex min-w-0 shrink items-baseline gap-1.5 whitespace-nowrap border-l border-[#e9e0d4] pl-3 first:border-l-0 first:pl-0 md:gap-2 md:pl-4">
+				<p class="text-[clamp(1.15rem,2vw,1.6rem)] font-semibold tracking-[-0.05em] text-slate-900">
+					{item.value}
+				</p>
+				<p class="truncate text-[clamp(0.8rem,1.1vw,0.95rem)] text-slate-500">{item.label.toLowerCase()}</p>
+			</div>
+		))
+	}
+</div>

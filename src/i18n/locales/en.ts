@@ -11,7 +11,7 @@ export const en = {
 		favorites: "Favorites",
 		recentlyUpdated: "Recently updated",
 		scratchpad: "Scratchpad",
-		categories: "Categories",
+		experiences: "Experiences",
 		poweredByAstro: "Powered by Astro",
 	},
 	quickSearch: {
@@ -24,7 +24,8 @@ export const en = {
 		results: (countLabel: string) => `${countLabel} results`,
 		result: "1 result",
 	},
-	categories: {
+	domains: {
+		gear: "Gear",
 		project: "Projects",
 		recipe: "Recipes",
 		book: "Books",

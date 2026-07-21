@@ -2,15 +2,21 @@
 interface Props {
 	name: string;
 	class?: string;
+	filled?: boolean;
 }
 
-const { name, class: className = "h-4 w-4" } = Astro.props;
+const { name, class: className = "h-4 w-4", filled = false } = Astro.props;
+const specialViewBoxes: Record<string, string> = {
+	"usa-flag": "0 -8 72 72",
+	zipper: "0 0 411.759 411.759"
+};
+const viewBox = specialViewBoxes[name] ?? "0 0 24 24";
 ---
 
 <svg
 	class={className}
-	viewBox="0 0 24 24"
-	fill="none"
+	viewBox={viewBox}
+	fill={filled ? "currentColor" : "none"}
 	stroke="currentColor"
 	stroke-width="1.8"
 	stroke-linecap="round"
@@ -65,6 +71,62 @@ const { name, class: className = "h-4 w-4" } = Astro.props;
 			<path d="M3 6.5A2.5 2.5 0 0 1 5.5 4H10l2 2h6.5A2.5 2.5 0 0 1 21 8.5v9A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5z"></path>
 		</>
 	)}
+	{name === "metadata-category" && (
+		<path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"></path>
+	)}
+	{name === "metadata-tags" && (
+		<>
+			<line x1="4" x2="20" y1="9" y2="9"></line>
+			<line x1="4" x2="20" y1="15" y2="15"></line>
+			<line x1="10" x2="8" y1="3" y2="21"></line>
+			<line x1="16" x2="14" y1="3" y2="21"></line>
+		</>
+	)}
+	{name === "metadata-calendar" && (
+		<>
+			<path d="M8 2v4"></path>
+			<path d="M16 2v4"></path>
+			<rect width="18" height="18" x="3" y="4" rx="2"></rect>
+			<path d="M3 10h18"></path>
+			<path d="M8 14h.01"></path>
+			<path d="M12 14h.01"></path>
+			<path d="M16 14h.01"></path>
+			<path d="M8 18h.01"></path>
+			<path d="M12 18h.01"></path>
+			<path d="M16 18h.01"></path>
+		</>
+	)}
+	{name === "metadata-type" && (
+		<>
+			<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"></path>
+			<circle cx="7.5" cy="7.5" r=".5" fill="currentColor"></circle>
+		</>
+	)}
+	{name === "mountain" && <path d="m8 3 4 8 5-5 5 15H2L8 3z"></path>}
+	{name === "notes" && (
+		<>
+			<path d="M2 10h4"></path>
+			<path d="M2 14h4"></path>
+			<path d="M2 18h4"></path>
+			<rect width="16" height="20" x="4" y="2" rx="2"></rect>
+			<path d="M9.5 8h5"></path>
+			<path d="M9.5 12H16"></path>
+			<path d="M9.5 16H14"></path>
+		</>
+	)}
+	{name === "circle-check" && (
+		<>
+			<circle cx="12" cy="12" r="10"></circle>
+			<path d="m9 12 2 2 4-4"></path>
+		</>
+	)}
+	{name === "circle-alert" && (
+		<>
+			<circle cx="12" cy="12" r="10"></circle>
+			<line x1="12" x2="12" y1="8" y2="12"></line>
+			<line x1="12" x2="12.01" y1="16" y2="16"></line>
+		</>
+	)}
 	{name === "map" && (
 		<>
 			<path d="m3 6 6-2 6 2 6-2v14l-6 2-6-2-6 2z"></path>
@@ -72,9 +134,67 @@ const { name, class: className = "h-4 w-4" } = Astro.props;
 			<path d="M15 6v14"></path>
 		</>
 	)}
-	{name === "cpu" && (
+	{name === "travel" && (
 		<>
-			<rect x="7" y="7" width="10" height="10" rx="2"></rect>
+			<path d="M12.5 11.134 18.196 21"></path>
+			<path d="M20.425 5.299a10 10 0 0 0-16.941 9.78c.183.563.843.774 1.355.478L20.16 6.711c.512-.296.66-.973.264-1.413"></path>
+			<path d="M21 21H3"></path>
+		</>
+	)}
+	{name === "recipes" && (
+		<>
+			<path d="M2 12h20"></path>
+			<path d="M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"></path>
+			<path d="m4 8 16-4"></path>
+			<path d="m8.86 6.78-.45-1.81a2 2 0 0 1 1.45-2.43l1.94-.48a2 2 0 0 1 2.43 1.46l.45 1.8"></path>
+		</>
+	)}
+	{name === "vehicles" && (
+		<>
+			<rect width="18" height="18" x="3" y="3" rx="2"></rect>
+			<path d="M9 17V7h4a3 3 0 0 1 0 6H9"></path>
+		</>
+	)}
+	{name === "books" && (
+		<>
+			<rect width="8" height="18" x="3" y="3" rx="1"></rect>
+			<path d="M7 3v18"></path>
+			<path d="M20.4 18.9c.2.5-.1 1.1-.6 1.3l-1.9.7c-.5.2-1.1-.1-1.3-.6L11.1 5.1c-.2-.5.1-1.1.6-1.3l1.9-.7c.5-.2 1.1.1 1.3.6Z"></path>
+		</>
+	)}
+	{name === "server" && (
+		<>
+			<rect width="20" height="8" x="2" y="2" rx="2" ry="2"></rect>
+			<rect width="20" height="8" x="2" y="14" rx="2" ry="2"></rect>
+			<line x1="6" x2="6.01" y1="6" y2="6"></line>
+			<line x1="6" x2="6.01" y1="18" y2="18"></line>
+		</>
+	)}
+	{name === "map-folded" && (
+		<>
+			<path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"></path>
+			<path d="M15 5.764v15"></path>
+			<path d="M9 3.236v15"></path>
+		</>
+	)}
+	{name === "hard-drive" && (
+		<>
+			<path d="M10 16h.01"></path>
+			<path d="M2.212 11.577a2 2 0 0 0-.212.896V18a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5.527a2 2 0 0 0-.212-.896L18.55 5.11A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
+			<path d="M21.946 12.013H2.054"></path>
+			<path d="M6 16h.01"></path>
+		</>
+	)}
+	{name === "database" && (
+		<>
+			<ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+			<path d="M3 5v14a9 3 0 0 0 18 0V5"></path>
+			<path d="M3 12a9 3 0 0 0 18 0"></path>
+		</>
+	)}
+		{name === "cpu" && (
+			<>
+				<rect x="7" y="7" width="10" height="10" rx="2"></rect>
 			<path d="M4 10h3"></path>
 			<path d="M4 14h3"></path>
 			<path d="M17 10h3"></path>
@@ -82,16 +202,53 @@ const { name, class: className = "h-4 w-4" } = Astro.props;
 			<path d="M10 4v3"></path>
 			<path d="M14 4v3"></path>
 			<path d="M10 17v3"></path>
-			<path d="M14 17v3"></path>
-		</>
-	)}
-	{name === "dumbbell" && (
+				<path d="M14 17v3"></path>
+			</>
+		)}
+		{name === "gear" && (
+			<>
+				<circle cx="4" cy="4" r="2"></circle>
+				<path d="m14 5 3-3 3 3"></path>
+				<path d="m14 10 3-3 3 3"></path>
+				<path d="M17 14V2"></path>
+				<path d="M17 14H7l-5 8h20Z"></path>
+				<path d="M8 14v8"></path>
+				<path d="m9 14 5 8"></path>
+			</>
+		)}
+		{name === "package" && (
+			<>
+				<path d="m12 3 8 4.5-8 4.5L4 7.5 12 3z"></path>
+				<path d="M4 7.5V16.5L12 21l8-4.5V7.5"></path>
+				<path d="M12 12v9"></path>
+			</>
+		)}
+		{name === "rifle-capacity" && (
+			<>
+				<path d="m10 16 4-4-4-4"></path>
+				<path d="M3 12h11"></path>
+				<path d="M3 8V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3"></path>
+			</>
+		)}
+		{name === "factory" && (
+			<>
+				<path d="M12 16h.01"></path>
+				<path d="M16 16h.01"></path>
+				<path d="M3 19a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.5a.5.5 0 0 0-.769-.422l-4.462 2.844A.5.5 0 0 1 15 10.5v-2a.5.5 0 0 0-.769-.422L9.77 10.922A.5.5 0 0 1 9 10.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2z"></path>
+				<path d="M8 16h.01"></path>
+			</>
+		)}
+		{name === "layers-3" && (
+			<>
+				<path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"></path>
+				<path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"></path>
+				<path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"></path>
+			</>
+		)}
+	{name === "weight" && (
 		<>
-			<path d="M4 10v4"></path>
-			<path d="M7 8v8"></path>
-			<path d="M17 8v8"></path>
-			<path d="M20 10v4"></path>
-			<path d="M7 12h10"></path>
+			<circle cx="12" cy="5" r="3"/>
+			<path d="M6.5 8a2 2 0 0 0-1.905 1.46L2.1 18.5A2 2 0 0 0 4 21h16a2 2 0 0 0 1.925-2.54L19.4 9.5A2 2 0 0 0 17.48 8Z"/>
 		</>
 	)}
 	{name === "notebook-pen" && (
@@ -105,6 +262,12 @@ const { name, class: className = "h-4 w-4" } = Astro.props;
 		</>
 	)}
 	{name === "circle" && <circle cx="12" cy="12" r="8"></circle>}
+	{name === "status" && (
+		<>
+			<circle cx="12" cy="12" r="10"></circle>
+			<circle cx="12" cy="12" r="1"></circle>
+		</>
+	)}
 	{name === "tag" && (
 		<>
 			<path d="M20.6 13.4 12 22l-9-9V4h9z"></path>
@@ -137,6 +300,160 @@ const { name, class: className = "h-4 w-4" } = Astro.props;
 			<path d="M14 11a5 5 0 0 0-7.07 0L5.5 12.41a5 5 0 0 0 7.07 7.07L14 19"></path>
 		</>
 	)}
+	{name === "plug" && (
+		<>
+			<path d="M9 8V3"></path>
+			<path d="M15 8V3"></path>
+			<path d="M8 8h8v4a4 4 0 0 1-4 4h0a4 4 0 0 1-4-4z"></path>
+			<path d="M12 16v5"></path>
+		</>
+	)}
+	{name === "usb" && (
+		<>
+			<circle cx="10" cy="7" r="1"></circle>
+			<circle cx="4" cy="20" r="1"></circle>
+			<path d="M4.7 19.3 19 5"></path>
+			<path d="m21 3-3 1 2 2Z"></path>
+			<path d="M9.26 7.68 5 12l2 5"></path>
+			<path d="m10 14 5 2 3.5-3.5"></path>
+			<path d="m18 12 1-1 1 1-1 1Z"></path>
+		</>
+	)}
+	{name === "flag" && (
+		<>
+			<path d="M5 21V4"></path>
+			<path d="M5 5h10l-1.5 3 1.5 3H5"></path>
+		</>
+	)}
+	{name === "usa-flag" && (
+		<path fill="currentColor" d="M8,8V48.1H64V8Zm20.58,4.9.74-1.49.73,1.49,1.65.24-1.19,1.17L30.79,16l-1.47-.78L27.84,16l.28-1.64-1.19-1.17Zm2.21,13.72-1.47-.77-1.48.77L28.12,25l-1.19-1.17,1.65-.23.74-1.5.73,1.5,1.65.23L30.51,25Zm-5.28-9.8.74,1.49,1.65.24-1.19,1.17L27,21.36l-1.48-.78L24,21.36l.28-1.64-1.19-1.17,1.65-.24Zm-2.6,9.8-1.47-.77L20,26.62,20.24,25l-1.19-1.17,1.65-.23.74-1.5.73,1.5,1.65.23L22.63,25ZM20.7,12.9l.74-1.49.73,1.49,1.65.24-1.19,1.17L22.91,16l-1.47-.78L20,16l.28-1.64-1.19-1.17Zm-3.45,3.92L18,18.31l1.65.24-1.19,1.17.28,1.64-1.48-.78-1.47.78.28-1.64-1.2-1.17,1.65-.24ZM13.11,12.9l.74-1.49.74,1.49,1.65.24L15,14.31,15.33,16l-1.48-.78L12.38,16l.28-1.64-1.2-1.17Zm0,10.68.74-1.5.74,1.5,1.65.23L15,25l.29,1.64-1.48-.77-1.48.77L12.66,25l-1.2-1.17Zm48,21.94L11,45.57v-3.7H61.08Zm0-6.19H11V35.69H61.08Zm0-5.85H11V29.84H61.08Zm0-6.5H35.5V23.34H61.08Zm0-6.59H35.5V16.74H61.08Zm0-6.21H35.5V10.53H61.08Z"></path>
+	)}
+	{name === "zipper" && (
+		<>
+			<path fill="currentColor" d="M278.103,240h-2.224v-40h-25v-40h-40v-40h40V80h-40V40h40V0h-50v40h-40v40h40v40h-40v40h40v40h-65v40 h-2.224L113.81,372.301l92.069,39.458l92.069-39.458L278.103,240z M205.88,368.241l-47.931-20.542L168.103,280h75.553l10.154,67.699 L205.88,368.241z"></path>
+		</>
+	)}
+	{name === "crosshair" && (
+		<>
+			<circle cx="12" cy="12" r="10"></circle>
+			<line x1="22" x2="18" y1="12" y2="12"></line>
+			<line x1="6" x2="2" y1="12" y2="12"></line>
+			<line x1="12" x2="12" y1="6" y2="2"></line>
+			<line x1="12" x2="12" y1="22" y2="18"></line>
+		</>
+	)}
+	{name === "steel" && (
+		<>
+			<path d="M7 10H6a4 4 0 0 1-4-4 1 1 0 0 1 1-1h4"></path>
+			<path d="M7 5a1 1 0 0 1 1-1h13a1 1 0 0 1 1 1 7 7 0 0 1-7 7H8a1 1 0 0 1-1-1z"></path>
+			<path d="M9 12v5"></path>
+			<path d="M15 12v5"></path>
+			<path d="M5 20a3 3 0 0 1 3-3h8a3 3 0 0 1 3 3 1 1 0 0 1-1 1H6a1 1 0 0 1-1-1"></path>
+		</>
+	)}
+	{name === "blade-length" && (
+		<>
+			<path d="M10 15v-3"></path>
+			<path d="M14 15v-3"></path>
+			<path d="M18 15v-3"></path>
+			<path d="M2 8V4"></path>
+			<path d="M22 6H2"></path>
+			<path d="M22 8V4"></path>
+			<path d="M6 15v-3"></path>
+			<rect x="2" y="12" width="20" height="8" rx="2"></rect>
+		</>
+	)}
+	{name === "press-capacity" && (
+		<>
+			<path d="M12 17V3"></path>
+			<path d="m6 11 6 6 6-6"></path>
+			<path d="M19 21H5"></path>
+		</>
+	)}
+	{name === "glass" && (
+		<>
+			<path d="M11 6 8 9"></path>
+			<path d="m16 7-8 8"></path>
+			<rect x="4" y="2" width="16" height="20" rx="2"></rect>
+		</>
+	)}
+	{name === "water-resistance-atm" && (
+		<>
+			<path d="M12 10V2"></path>
+			<path d="M16 6 12 10 8 6"></path>
+			<path d="M2 15c.6.5 1.2 1 2.5 1C7 16 7 14 9.5 14c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"></path>
+			<path d="M2 21c.6.5 1.2 1 2.5 1C7 22 7 20 9.5 20c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"></path>
+		</>
+	)}
+	{name === "wind" && (
+		<>
+			<path d="M12.8 19.6A2 2 0 1 0 14 16H2"></path>
+			<path d="M17.5 8a2.5 2.5 0 1 1 2 4H2"></path>
+			<path d="M9.8 4.4A2 2 0 1 1 11 8H2"></path>
+		</>
+	)}
+	{name === "waterproof" && (
+		<>
+			<path d="M12 2v2"></path>
+			<path d="m4.93 4.93 1.41 1.41"></path>
+			<path d="M20 12h2"></path>
+			<path d="m19.07 4.93-1.41 1.41"></path>
+			<path d="M15.947 12.65a4 4 0 0 0-5.925-4.128"></path>
+			<path d="M3 20a5 5 0 1 1 8.9-4H13a3 3 0 0 1 2 5.24"></path>
+			<path d="M11 20v2"></path>
+			<path d="M7 19v2"></path>
+		</>
+	)}
+	{name === "badge-check" && (
+		<>
+			<path d="m12 3 2.2 1.5 2.7-.2 1.1 2.4 2.2 1.5-.7 2.6.7 2.6-2.2 1.5-1.1 2.4-2.7-.2L12 21l-2.2-1.5-2.7.2-1.1-2.4L3.8 15.8l.7-2.6-.7-2.6L6 9.1l1.1-2.4 2.7.2z"></path>
+			<path d="m9.5 12 1.7 1.7 3.3-3.4"></path>
+		</>
+	)}
+	{name === "expand" && (
+		<>
+			<path d="M9 3H3v6"></path>
+			<path d="M15 3h6v6"></path>
+			<path d="M21 15v6h-6"></path>
+			<path d="M3 15v6h6"></path>
+			<path d="m8 8-5 5"></path>
+			<path d="m16 8 5 5"></path>
+			<path d="m8 16-5 5"></path>
+			<path d="m16 16 5 5"></path>
+		</>
+	)}
+	{name === "archive" && (
+		<>
+			<rect x="3" y="5" width="18" height="4" rx="1"></rect>
+			<path d="M5 9h14v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2z"></path>
+			<path d="M10 13h4"></path>
+		</>
+	)}
+	{name === "thermometer" && (
+		<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"></path>
+	)}
+	{name === "thermometer-snowflake" && (
+		<>
+			<path d="m10 20-1.25-2.5L6 18"></path>
+			<path d="M10 4 8.75 6.5 6 6"></path>
+			<path d="M10.585 15H10"></path>
+			<path d="M2 12h6.5L10 9"></path>
+			<path d="M20 14.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0z"></path>
+			<path d="m4 10 1.5 2L4 14"></path>
+			<path d="m7 21 3-6-1.5-3"></path>
+			<path d="m7 3 3 6h2"></path>
+		</>
+	)}
+	{name === "thermometer-sun" && (
+		<>
+			<path d="M12 2v2"></path>
+			<path d="M12 8a4 4 0 0 0-1.645 7.647"></path>
+			<path d="M2 12h2"></path>
+			<path d="M20 14.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0z"></path>
+			<path d="m4.93 4.93 1.41 1.41"></path>
+			<path d="m6.34 17.66-1.41 1.41"></path>
+		</>
+	)}
 	{name === "code" && (
 		<>
 			<path d="m8 9-4 3 4 3"></path>
@@ -152,16 +469,65 @@ const { name, class: className = "h-4 w-4" } = Astro.props;
 	{name === "moon" && (
 		<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 1 0 9.8 9.8z"></path>
 	)}
-	{name === "trash-2" && (
+	{name === "lightbulb" && (
 		<>
-			<path d="M3 6h18"></path>
+			<path d="M9 18h6"></path>
+			<path d="M10 21h4"></path>
+			<path d="M8.2 14.8A6 6 0 1 1 15.8 14.8c-.8.8-1.3 1.6-1.6 2.2H9.8c-.3-.6-.8-1.4-1.6-2.2Z"></path>
+		</>
+	)}
+	{name === "flame" && (
+		<>
+			<path d="M12 3c1.6 2.2 3.5 4.2 3.5 7A3.5 3.5 0 0 1 12 13.5 3.5 3.5 0 0 1 8.5 10c0-1.8.8-3.4 2-4.8"></path>
+			<path d="M8 14a4 4 0 1 0 8 0c0-1.6-.8-3-2-4-.4 1.5-1.6 2.5-3 2.5-1 0-1.9-.4-2.5-1.1A5.2 5.2 0 0 0 8 14Z"></path>
+		</>
+	)}
+	{name === "fuel" && (
+		<>
+			<path d="M6 20V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v14"></path>
+			<path d="M9 8h4"></path>
+			<path d="M18 10V7l2 2v9a2 2 0 0 1-2 2h-2"></path>
+		</>
+	)}
+	{name === "car-front" && (
+		<>
+			<path d="M7 17h10"></path>
+			<path d="M6 17V9l2-4h8l2 4v8"></path>
+			<path d="M7.5 11h9"></path>
+			<circle cx="8.5" cy="17.5" r="1"></circle>
+			<circle cx="15.5" cy="17.5" r="1"></circle>
+		</>
+	)}
+	{name === "gauge" && (
+		<>
+			<path d="M5 16a7 7 0 1 1 14 0"></path>
+			<path d="m12 12 3-3"></path>
+			<path d="M12 16h.01"></path>
+		</>
+	)}
+		{name === "trash-2" && (
+			<>
+				<path d="M3 6h18"></path>
 			<path d="M8 6V4h8v2"></path>
 			<path d="M19 6l-1 14H6L5 6"></path>
 			<path d="M10 11v6"></path>
-			<path d="M14 11v6"></path>
-		</>
-	)}
-	{name === "chevron-left" && <path d="m15 18-6-6 6-6"></path>}
+				<path d="M14 11v6"></path>
+			</>
+		)}
+		{name === "square-arrow-up-right" && (
+			<>
+				<path d="M14 4h6v6"></path>
+				<path d="m10 14 10-10"></path>
+				<path d="M20 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h4"></path>
+			</>
+		)}
+		{name === "chevron-left" && <path d="m15 18-6-6 6-6"></path>}
+		{name === "arrow-left" && (
+			<>
+				<path d="m12 19-7-7 7-7"></path>
+				<path d="M19 12H5"></path>
+			</>
+		)}
 	{name === "chevron-down" && <path d="m6 9 6 6 6-6"></path>}
 	{name === "layout-list" && (
 		<>
@@ -185,6 +551,60 @@ const { name, class: className = "h-4 w-4" } = Astro.props;
 		<>
 			<circle cx="11" cy="11" r="7"></circle>
 			<path d="m20 20-3.5-3.5"></path>
+		</>
+	)}
+	{name === "battery" && (
+		<g transform="rotate(270 12 12)">
+			<path d="M10 14v-4"/>
+			<path d="M22 14v-4"/>
+			<path d="M6 14v-4"/>
+			<rect x="2" y="6" width="16" height="12" rx="2"/>
+		</g>
+	)}
+	{name === "droplets" && (
+		<>
+			<path d="M12 3.5c2.8 3.7 5 6.3 5 9.1a5 5 0 1 1-10 0c0-2.8 2.2-5.4 5-9.1Z"></path>
+		</>
+	)}
+	{name === "compass" && (
+		<>
+			<circle cx="12" cy="12" r="10"></circle>
+			<path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z"></path>
+		</>
+	)}
+	{name === "binoculars" && (
+		<>
+			<path d="M10 10h4"></path>
+			<path d="M19 7V4a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v3"></path>
+			<path d="M20 21a2 2 0 0 0 2-2v-3.851c0-1.39-2-2.962-2-4.829V8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v11a2 2 0 0 0 2 2z"></path>
+			<path d="M22 16H2"></path>
+			<path d="M4 21a2 2 0 0 1-2-2v-3.851c0-1.39 2-2.962 2-4.829V8a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v11a2 2 0 0 1-2 2z"></path>
+			<path d="M9 7V4a1 1 0 0 0-1-1H6a1 1 0 0 0-1 1v3"></path>
+		</>
+	)}
+	{name === "zap" && (
+		<path d="M13 2 5 14h5l-1 8 8-12h-5l1-8Z"></path>
+	)}
+	{name === "ruler" && (
+		<>
+			<path d="M3 14.5 14.5 3 21 9.5 9.5 21 3 14.5Z"></path>
+			<path d="m11 6 2 2"></path>
+			<path d="m8 9 2 2"></path>
+			<path d="m14 12 2 2"></path>
+			<path d="m11 15 2 2"></path>
+		</>
+	)}
+	{name === "sun-medium" && (
+		<>
+			<circle cx="12" cy="12" r="4"></circle>
+			<path d="M12 2.5v2.5"></path>
+			<path d="M12 19v2.5"></path>
+			<path d="m4.9 4.9 1.8 1.8"></path>
+			<path d="m17.3 17.3 1.8 1.8"></path>
+			<path d="M2.5 12H5"></path>
+			<path d="M19 12h2.5"></path>
+			<path d="m4.9 19.1 1.8-1.8"></path>
+			<path d="m17.3 6.7 1.8-1.8"></path>
 		</>
 	)}
 </svg>

@@ -1,6 +1,6 @@
-# Category Experiences
+# Experiences
 
-Status: Proposed Architecture
+Status: Implemented Incrementally
 
 ---
 
@@ -12,9 +12,11 @@ Every note is still "just a note".
 
 The difference is how users browse and experience collections of notes.
 
-This introduces the concept of **Category Experiences**.
+This introduces the concept of **Experiences**.
 
-A Category Experience is a curated landing page for a specific category.
+An Experience is a curated Muninn browsing surface.
+
+It may be focused on one note domain, but it is not the same thing as a note category.
 
 It does **not** replace the generic Library Browser.
 
@@ -30,7 +32,7 @@ Examples:
 - Training
 - Travel
 
-Each category should feel like its own small application while sharing the exact same underlying note model.
+Each experience should feel like its own small application while sharing the exact same underlying note model.
 
 ---
 
@@ -38,11 +40,11 @@ Each category should feel like its own small application while sharing the exact
 
 Muninn contains three different navigation experiences.
 
-## 1. Category Experience
+## 1. Experience
 
 Purpose:
 
-Discover and browse a category.
+Discover and browse an experience.
 
 Examples:
 
@@ -104,7 +106,7 @@ Software
 
 Browse technology notes
 
-Category Experiences are inspirational and exploratory.
+Experiences are inspirational and exploratory.
 
 ---
 
@@ -122,7 +124,7 @@ Browse every note.
 
 The Library Browser remains the primary interface for finding notes.
 
-Every Category Experience should expose a clear entry point into the Library Browser.
+Every Experience should expose a clear entry point into the Library Browser.
 
 Example:
 
@@ -154,7 +156,7 @@ Technology note
 
 Layouts affect one note only.
 
-Category Experiences affect an entire collection.
+Experiences affect an entire collection.
 
 ---
 
@@ -166,11 +168,15 @@ Vault
 
 ↓
 
-Category Definition
+Selector Engine
 
 ↓
 
-Category Experience
+Experience Definition
+
+↓
+
+Experience View
 
 ↓
 
@@ -184,34 +190,33 @@ These responsibilities should remain separate.
 
 ---
 
-# Category Definition
+# Experience Definition
 
-Every category should be defined in a central registry.
+Every Experience is defined in a central registry.
 
 Example:
 
 ```ts
-CategoryDefinition {
+ExperienceDefinition {
 
-    key
-
-    sidebar
-
-    experience
-
-    library
-
-    noteLayouts
+	 id
+	 selector
+	 theme
+	 icons
+	 assets
+	 cardFamily
+	 landingPage?
+	 inspector?
 
 }
 ```
 
-A Category Definition owns:
+An Experience Definition owns:
 
-- sidebar navigation
-- icon
-- colors
-- hero image
+- selector
+- sidebar and hero icons
+- theme
+- hero and placeholder assets
 - title
 - description
 - landing page
@@ -219,13 +224,15 @@ A Category Definition owns:
 - widgets
 - sections
 
-No category-specific information should be scattered throughout the application.
+No Experience-specific information should be scattered throughout the application.
+
+Experiences without component overrides inherit the Default Experience landing page, hero, Generic Note Card, inspector, and metadata presentation. Gear is currently the only custom implementation.
 
 ---
 
-# Category Experience
+# Experience View
 
-A Category Experience is composed from reusable building blocks.
+An Experience is composed from reusable building blocks.
 
 Examples:
 
@@ -247,7 +254,7 @@ Browse Library
 
 Widgets
 
-A Category Experience should compose these blocks rather than becoming a custom application.
+An Experience should compose these blocks rather than becoming a custom application.
 
 ---
 
@@ -294,7 +301,7 @@ Widgets should remain independent reusable components.
 
 # Hero Identity
 
-Every category owns its own visual identity.
+Every experience owns its own visual identity.
 
 Examples
 
@@ -339,11 +346,11 @@ They should never be random placeholders.
 
 # Shared Components
 
-Category Experiences should be built from reusable components.
+Experiences should be built from reusable components.
 
 Examples
 
-CategoryHero
+ExperienceHero
 
 Section
 
@@ -361,7 +368,7 @@ Statistics
 
 BrowseLibraryCard
 
-Future categories should mostly be composition rather than implementation.
+Future experiences should mostly be composition rather than implementation.
 
 ---
 
@@ -381,7 +388,7 @@ Preferred URLs:
 
 /journal
 
-Internally these should all resolve through the same Category Experience system.
+Internally these all resolve through the same dynamic Experience route and registry.
 
 Avoid creating separate implementations for each route.
 
@@ -389,9 +396,9 @@ Avoid creating separate implementations for each route.
 
 # Design Principles
 
-Every category should feel unique.
+Every experience should feel unique.
 
-Every category should reuse the same architecture.
+Every experience should reuse the same architecture.
 
 Users should immediately recognize the subject matter.
 

@@ -1,0 +1,838 @@
+---
+import MetadataPill from "src/components/experiences/MetadataPill.astro";
+import DefaultExperienceHero from "src/components/experiences/DefaultExperienceHero.astro";
+import ExperienceCardRenderer from "src/components/experiences/ExperienceCardRenderer.astro";
+import ExperienceInspectorRenderer from "src/components/experiences/ExperienceInspectorRenderer.astro";
+import Icon from "src/components/Icon.astro";
+import type { ExperienceDefinition } from "src/lib/experiences/registry";
+import type { ExperienceFilterOption, ExperienceFilterState } from "src/lib/experiences/filters";
+import { buildExperienceInspectorModel } from "src/lib/experiences/inspector";
+import type { ExperienceStatistic } from "src/lib/experiences/statistics";
+import type { LibraryItem } from "src/lib/vault";
+
+interface Props {
+	definition: ExperienceDefinition;
+	filteredNotes: LibraryItem[];
+	selectedNote: LibraryItem | null;
+	filterState: ExperienceFilterState;
+	totalFilteredNotes: number;
+	metadataOptions: Record<string, ExperienceFilterOption[]>;
+	statistics: ExperienceStatistic[];
+	heroComponent?: typeof DefaultExperienceHero;
+}
+
+const {
+	definition,
+	filteredNotes,
+	selectedNote,
+	filterState,
+	totalFilteredNotes,
+	metadataOptions,
+	statistics,
+	heroComponent: HeroComponent = DefaultExperienceHero,
+} = Astro.props;
+
+const currentPath = Astro.url.pathname;
+const searchParams = Astro.url.searchParams;
+const currentUrl = `${Astro.url.pathname}${Astro.url.search}`;
+const initialInspectorNote = filterState.inspector === "closed" ? null : selectedNote;
+const inspectorEndpoint = `${currentPath}/inspector`;
+
+function buildHref(mutator?: (params: URLSearchParams) => void) {
+	const params = new URLSearchParams(searchParams);
+	if (mutator) {
+		mutator(params);
+	}
+
+	const query = params.toString();
+	return query ? `${currentPath}?${query}` : currentPath;
+}
+
+function buildFilterHref(key: string, value: string | null) {
+	return buildHref((params) => {
+		const queryKey = `filter-${key}`;
+		if (value) {
+			params.set(queryKey, value);
+		} else {
+			params.delete(queryKey);
+		}
+		params.delete("selected");
+		params.delete("inspector");
+		params.delete("experienceScroll");
+	});
+}
+
+function buildInspectorRedirectHref(note: LibraryItem) {
+	return buildHref((params) => {
+		params.set("selected", note.id);
+		params.set("inspector", "open");
+		params.delete("experienceScroll");
+	});
+}
+
+const initialInspector = initialInspectorNote
+	? buildExperienceInspectorModel(
+			initialInspectorNote,
+			definition,
+			buildInspectorRedirectHref(initialInspectorNote)
+		)
+	: null;
+const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
+---
+
+<div
+	class="experience-page"
+	data-experience-root
+	data-inspector-open={initialInspectorNote ? "true" : "false"}
+	data-initial-selected={initialInspectorNote?.id ?? ""}
+	data-inspector-endpoint={inspectorEndpoint}
+	data-experience-total-count={totalFilteredNotes}
+>
+	<div class="experience-canvas" data-experience-workspace>
+		<section class="experience-hero-shell">
+			<HeroComponent definition={definition} statistics={statistics}>
+				<div class="experience-filter-row">
+					{
+						primaryFilterKey && (
+							<div class="flex shrink-0 items-center gap-2.5 whitespace-nowrap">
+								<MetadataPill
+									label="All"
+									href={buildFilterHref(primaryFilterKey, null)}
+									active={!filterState.metadata[primaryFilterKey]}
+									tone={definition.theme}
+									shape="squircle"
+									className="min-w-[4.1rem] justify-center whitespace-nowrap"
+								/>
+								{(metadataOptions[primaryFilterKey] ?? []).map((option) => (
+									<MetadataPill
+										label={option.label}
+										href={buildFilterHref(primaryFilterKey, option.value)}
+										active={filterState.metadata[primaryFilterKey] === option.value}
+										tone={definition.theme}
+										shape="squircle"
+										className="min-w-[4.1rem] justify-center whitespace-nowrap"
+									/>
+								))}
+							</div>
+						)
+					}
+
+					{primaryFilterKey && secondaryFilterKey && <div class="experience-filter-divider" aria-hidden="true"></div>}
+
+					{
+						secondaryFilterKey && (
+							<div
+								class="experience-filter-scroller"
+								data-experience-filter-shell
+								data-scrollable="false"
+								data-can-scroll-prev="false"
+								data-can-scroll-next="false"
+							>
+								<button
+									type="button"
+									class="experience-filter-arrow experience-filter-arrow--prev"
+									data-experience-filter-prev
+									aria-label={`Scroll ${secondaryFilterKey} left`}
+								>
+									<Icon name="chevron-left" class="h-4 w-4" />
+								</button>
+								<div class="experience-filter-viewport" data-experience-filter-viewport>
+									<div class="experience-filter-track">
+										<MetadataPill
+											label="All"
+											href={buildFilterHref(secondaryFilterKey, null)}
+											active={!filterState.metadata[secondaryFilterKey]}
+											tone="slate"
+											shape="squircle"
+											className="whitespace-nowrap"
+										/>
+										{(metadataOptions[secondaryFilterKey] ?? []).map((option) => (
+											<MetadataPill
+												label={option.label}
+												href={buildFilterHref(secondaryFilterKey, option.value)}
+												active={filterState.metadata[secondaryFilterKey] === option.value}
+												tone="slate"
+												shape="squircle"
+												className="whitespace-nowrap"
+											/>
+										))}
+									</div>
+								</div>
+								<button
+									type="button"
+									class="experience-filter-arrow experience-filter-arrow--next"
+									data-experience-filter-next
+									aria-label={`Scroll ${secondaryFilterKey} right`}
+								>
+									<Icon name="chevron-left" class="h-4 w-4 rotate-180" />
+								</button>
+							</div>
+						)
+					}
+				</div>
+			</HeroComponent>
+		</section>
+
+		<div class="experience-workspace">
+			<section class="experience-notes-scroll min-w-0">
+				{
+					filteredNotes.length === 0 ? (
+						<div class="experience-empty-state p-6">
+							<h2 class="panel-title">No matching notes</h2>
+							<p class="mt-2 text-sm leading-7 text-slate-600">
+								Adjust the current filters to browse this experience again.
+							</p>
+						</div>
+					) : (
+						<div
+							class="experience-browser-grid grid gap-5 pb-4 md:grid-cols-2 xl:grid-cols-3"
+							data-experience-card-list
+							data-rendered-count={filteredNotes.length}
+						>
+							{
+								filteredNotes.map((note, index) => (
+									<ExperienceCardRenderer
+										definition={definition}
+										note={note}
+										index={index}
+										selected={initialInspectorNote?.id === note.id}
+										redirectTo={currentUrl}
+									/>
+								))
+							}
+						</div>
+					)
+				}
+			</section>
+		</div>
+	</div>
+
+	<div
+		class="experience-inspector-backdrop"
+		data-experience-inspector-backdrop
+		aria-hidden={initialInspectorNote ? "false" : "true"}
+	></div>
+
+	<aside
+		id="experience-inspector-panel"
+		class="experience-inspector-panel"
+		data-experience-inspector-root
+		aria-hidden={initialInspectorNote ? "false" : "true"}
+	>
+		<div class="experience-inspector-shell flex h-full min-h-0 flex-col overflow-hidden">
+			<div class="min-h-0 flex-1 overflow-y-auto" data-experience-inspector-panels>
+				{
+					initialInspector && (
+						<div data-experience-inspector-panel={initialInspector.note.id}>
+							<ExperienceInspectorRenderer
+								definition={definition}
+								note={initialInspector.note}
+								sections={initialInspector.sections}
+								noteHref={initialInspector.noteHref}
+								redirectTo={initialInspector.redirectTo}
+							/>
+						</div>
+					)
+				}
+			</div>
+		</div>
+	</aside>
+</div>
+
+<script type="module">
+	const roots = Array.from(document.querySelectorAll("[data-experience-root]"));
+
+	for (const root of roots) {
+		if (!(root instanceof HTMLElement) || root.dataset.experienceReady === "true") {
+			continue;
+		}
+
+		root.dataset.experienceReady = "true";
+
+			const workspace = root.querySelector("[data-experience-workspace]");
+			const notesScroll = root.querySelector(".experience-notes-scroll");
+			const inspector = root.querySelector("[data-experience-inspector-root]");
+			const backdrop = root.querySelector("[data-experience-inspector-backdrop]");
+			const inspectorPanelsRoot = root.querySelector("[data-experience-inspector-panels]");
+			const filterShells = Array.from(root.querySelectorAll("[data-experience-filter-shell]"));
+
+		if (
+			!(workspace instanceof HTMLElement) ||
+			!(inspector instanceof HTMLElement) ||
+			!(inspectorPanelsRoot instanceof HTMLElement)
+		) {
+			continue;
+		}
+
+		let selectedId = root.dataset.initialSelected ?? "";
+		const inspectorEndpoint = root.dataset.inspectorEndpoint ?? "";
+		const inspectorPanelRequests = new Map();
+
+		const getCards = () => Array.from(root.querySelectorAll("[data-experience-card]"));
+		const getInspectorPanels = () =>
+			Array.from(root.querySelectorAll("[data-experience-inspector-panel]"));
+		const getOpenNoteLinks = () =>
+			Array.from(root.querySelectorAll("[data-experience-open-note]"));
+		const getFavoriteRedirectInputs = () =>
+			Array.from(root.querySelectorAll("[data-experience-inspector-favorite] input[name='redirectTo']"));
+		const getFavoriteForms = (noteId) =>
+			Array.from(root.querySelectorAll("[data-favorite-toggle]")).filter(
+				(form) => form instanceof HTMLFormElement && form.dataset.favoriteNoteId === noteId
+			);
+
+		const buildReturnTo = () => {
+			const url = new URL(window.location.pathname + window.location.search, window.location.origin);
+			if (selectedId) {
+				url.searchParams.set("selected", selectedId);
+				url.searchParams.set("inspector", "open");
+			} else {
+				url.searchParams.delete("selected");
+				url.searchParams.delete("inspector");
+			}
+
+			if (notesScroll instanceof HTMLElement) {
+				url.searchParams.set("experienceScroll", String(Math.round(notesScroll.scrollTop)));
+			}
+
+			return `${url.pathname}${url.search}${url.hash}`;
+		};
+
+		const syncOpenNoteLinks = () => {
+			const returnTo = buildReturnTo();
+
+			for (const link of getOpenNoteLinks()) {
+				if (!(link instanceof HTMLAnchorElement)) {
+					continue;
+				}
+
+				const noteHref = link.dataset.noteHref ?? link.getAttribute("href") ?? "#";
+				const [pathAndQuery, hash = ""] = noteHref.split("#");
+				const separator = pathAndQuery.includes("?") ? "&" : "?";
+				link.href = `${pathAndQuery}${separator}returnTo=${encodeURIComponent(returnTo)}${hash ? `#${hash}` : ""}`;
+			}
+
+			for (const input of getFavoriteRedirectInputs()) {
+				if (!(input instanceof HTMLInputElement)) {
+					continue;
+				}
+
+				input.value = returnTo;
+			}
+		};
+
+		const syncSelectionState = () => {
+			for (const card of getCards()) {
+				if (!(card instanceof HTMLElement)) {
+					continue;
+				}
+
+				const isSelected = card.dataset.experienceCard === selectedId;
+				card.setAttribute("aria-pressed", isSelected ? "true" : "false");
+				card.closest("article")?.setAttribute("data-selected", isSelected ? "true" : "false");
+			}
+
+			for (const panel of getInspectorPanels()) {
+				if (!(panel instanceof HTMLElement)) {
+					continue;
+				}
+
+				panel.hidden = panel.dataset.experienceInspectorPanel !== selectedId;
+			}
+
+			const isOpen = Boolean(selectedId);
+			root.dataset.inspectorOpen = isOpen ? "true" : "false";
+			workspace.dataset.inspectorOpen = isOpen ? "true" : "false";
+			inspector.setAttribute("aria-hidden", isOpen ? "false" : "true");
+			backdrop?.setAttribute("aria-hidden", isOpen ? "false" : "true");
+			syncOpenNoteLinks();
+		};
+
+		const ensureInspectorPanel = async (noteId) => {
+			if (!noteId || !inspectorEndpoint) {
+				return null;
+			}
+
+			const existingPanel = root.querySelector(`[data-experience-inspector-panel="${CSS.escape(noteId)}"]`);
+			if (existingPanel instanceof HTMLElement) {
+				return existingPanel;
+			}
+
+			const pendingPanelRequest = inspectorPanelRequests.get(noteId);
+			if (pendingPanelRequest) {
+				return pendingPanelRequest;
+			}
+
+			const request = (async () => {
+				inspector.setAttribute("aria-busy", "true");
+				inspectorPanelsRoot.dataset.loading = "true";
+
+				const requestUrl = new URL(inspectorEndpoint, window.location.origin);
+				requestUrl.searchParams.set("note", noteId);
+				requestUrl.searchParams.set("redirectTo", `${window.location.pathname}${window.location.search}`);
+
+				const response = await fetch(requestUrl.toString(), {
+					headers: {
+						"X-Requested-With": "MuninnExperienceInspector",
+					},
+				});
+
+				if (!response.ok) {
+					throw new Error(`Failed to load inspector (${response.status})`);
+				}
+
+				const html = await response.text();
+				const template = document.createElement("template");
+				template.innerHTML = html.trim();
+				const panel = template.content.firstElementChild;
+
+				if (!(panel instanceof HTMLElement)) {
+					throw new Error("Inspector response did not contain a panel");
+				}
+
+				panel.hidden = panel.dataset.experienceInspectorPanel !== selectedId;
+				inspectorPanelsRoot.append(panel);
+				return panel;
+			})();
+
+			inspectorPanelRequests.set(noteId, request);
+
+			try {
+				return await request;
+			} finally {
+				inspectorPanelRequests.delete(noteId);
+				inspector.removeAttribute("aria-busy");
+				delete inspectorPanelsRoot.dataset.loading;
+			}
+		};
+
+		const closeInspector = () => {
+			selectedId = "";
+			syncSelectionState();
+		};
+
+		const setFavoritePending = (noteId, pending) => {
+			for (const form of getFavoriteForms(noteId)) {
+				if (!(form instanceof HTMLFormElement)) {
+					continue;
+				}
+
+				form.dataset.favoritePending = pending ? "true" : "false";
+				const button = form.querySelector("button[type='submit']");
+				if (button instanceof HTMLButtonElement) {
+					button.disabled = pending;
+					button.setAttribute("aria-busy", pending ? "true" : "false");
+				}
+			}
+		};
+
+		const setFavoriteState = (noteId, isFavorite) => {
+			for (const form of getFavoriteForms(noteId)) {
+				if (!(form instanceof HTMLFormElement)) {
+					continue;
+				}
+
+				form.dataset.favoriteState = isFavorite ? "true" : "false";
+				const button = form.querySelector("button[type='submit']");
+				const label = isFavorite
+					? form.dataset.favoriteRemoveLabel ?? "Remove favorite"
+					: form.dataset.favoriteAddLabel ?? "Mark as favorite";
+
+				if (button instanceof HTMLButtonElement) {
+					button.setAttribute("aria-label", label);
+					button.setAttribute("aria-pressed", isFavorite ? "true" : "false");
+					button.title = label;
+					button.querySelector("svg")?.setAttribute("fill", isFavorite ? "currentColor" : "none");
+				}
+			}
+		};
+
+		root.addEventListener("submit", async (event) => {
+			const target = event.target;
+			if (!(target instanceof HTMLFormElement) || !target.matches("[data-favorite-toggle]")) {
+				return;
+			}
+
+			event.preventDefault();
+			const noteId = target.dataset.favoriteNoteId ?? "";
+			if (!noteId || target.dataset.favoritePending === "true") {
+				return;
+			}
+
+			setFavoritePending(noteId, true);
+
+			try {
+				const response = await fetch(target.action, {
+					method: "POST",
+					body: new FormData(target),
+					headers: {
+						Accept: "application/json",
+						"X-Requested-With": "MuninnFavoriteToggle",
+					},
+				});
+				const payload = await response.json();
+
+				if (
+					!response.ok ||
+					payload.noteId !== noteId ||
+					typeof payload.isFavorite !== "boolean" ||
+					typeof payload.favoritesCount !== "number"
+				) {
+					throw new Error(`Failed to update favorite (${response.status})`);
+				}
+
+				setFavoriteState(noteId, payload.isFavorite);
+				window.dispatchEvent(new CustomEvent("muninn:favorite-change", { detail: payload }));
+			} catch (error) {
+				console.error(error);
+			} finally {
+				setFavoritePending(noteId, false);
+			}
+		});
+
+		root.addEventListener("click", async (event) => {
+			const target = event.target;
+			if (!(target instanceof Element)) {
+				return;
+			}
+
+			if (target.closest("[data-experience-close]")) {
+				closeInspector();
+				return;
+			}
+
+			const card = target.closest("[data-experience-card]");
+			if (!(card instanceof HTMLButtonElement)) {
+				return;
+			}
+
+			selectedId = card.dataset.experienceCard ?? "";
+			syncSelectionState();
+
+			try {
+				await ensureInspectorPanel(selectedId);
+				syncSelectionState();
+			} catch (error) {
+				console.error(error);
+				closeInspector();
+			}
+		});
+
+		backdrop?.addEventListener("click", closeInspector);
+
+		root.addEventListener("keydown", (event) => {
+			if (event.key === "Escape" && selectedId) {
+				closeInspector();
+			}
+		});
+
+			if (notesScroll instanceof HTMLElement) {
+				const restoreUrl = new URL(window.location.href);
+			const restoreScroll = Number.parseInt(restoreUrl.searchParams.get("experienceScroll") ?? "", 10);
+
+			if (!Number.isNaN(restoreScroll)) {
+				requestAnimationFrame(() => {
+					notesScroll.scrollTop = restoreScroll;
+				});
+				restoreUrl.searchParams.delete("experienceScroll");
+				window.history.replaceState({}, "", `${restoreUrl.pathname}${restoreUrl.search}${restoreUrl.hash}`);
+			}
+
+				notesScroll.addEventListener("scroll", () => {
+					syncOpenNoteLinks();
+				}, { passive: true });
+			}
+
+			for (const shell of filterShells) {
+				if (!(shell instanceof HTMLElement)) {
+					continue;
+				}
+
+				const viewport = shell.querySelector("[data-experience-filter-viewport]");
+				const prevButton = shell.querySelector("[data-experience-filter-prev]");
+				const nextButton = shell.querySelector("[data-experience-filter-next]");
+
+				if (!(viewport instanceof HTMLElement)) {
+					continue;
+				}
+
+				const updateFilterControls = () => {
+					const maxScrollLeft = Math.max(viewport.scrollWidth - viewport.clientWidth, 0);
+					const hasOverflow = maxScrollLeft > 4;
+					const canScrollPrev = viewport.scrollLeft > 4;
+					const canScrollNext = viewport.scrollLeft < maxScrollLeft - 4;
+
+					shell.dataset.scrollable = hasOverflow ? "true" : "false";
+					shell.dataset.canScrollPrev = canScrollPrev ? "true" : "false";
+					shell.dataset.canScrollNext = canScrollNext ? "true" : "false";
+				};
+
+				prevButton?.addEventListener("click", () => {
+					viewport.scrollBy({
+						left: -Math.max(viewport.clientWidth * 0.7, 220),
+						behavior: "smooth",
+					});
+				});
+
+				nextButton?.addEventListener("click", () => {
+					viewport.scrollBy({
+						left: Math.max(viewport.clientWidth * 0.7, 220),
+						behavior: "smooth",
+					});
+				});
+
+				viewport.addEventListener("scroll", updateFilterControls, { passive: true });
+				window.addEventListener("resize", updateFilterControls);
+				requestAnimationFrame(updateFilterControls);
+			}
+
+			syncSelectionState();
+		}
+	</script>
+
+<style>
+	.experience-page {
+		position: relative;
+		display: flex;
+		height: calc(100dvh - 2rem);
+		min-height: 0;
+		flex-direction: column;
+		overflow: hidden;
+	}
+
+	.experience-canvas {
+		display: flex;
+		min-height: 0;
+		min-width: 0;
+		flex: 1;
+		flex-direction: column;
+		gap: 0.85rem;
+		transition: padding-right 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+
+		.experience-filter-row {
+			display: flex;
+			align-items: center;
+		gap: 0.85rem;
+		min-width: 0;
+	}
+
+		.experience-filter-divider {
+			height: 1.9rem;
+			width: 1px;
+			flex-shrink: 0;
+			background: rgba(148, 163, 184, 0.2);
+		}
+
+	.experience-filter-scroller {
+		position: relative;
+		display: flex;
+		min-width: 0;
+		flex: 1;
+		align-items: center;
+	}
+
+	.experience-filter-viewport {
+		min-width: 0;
+		flex: 1;
+		overflow-x: auto;
+		scrollbar-width: none;
+		-ms-overflow-style: none;
+	}
+
+	.experience-filter-viewport::-webkit-scrollbar {
+		display: none;
+	}
+
+	.experience-filter-track {
+		display: flex;
+		width: max-content;
+		align-items: center;
+		gap: 0.65rem;
+		padding-left: 2.85rem;
+		padding-right: 2.85rem;
+		white-space: nowrap;
+	}
+
+	.experience-filter-scroller::before,
+	.experience-filter-scroller::after {
+		content: "";
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		z-index: 1;
+		width: 3.5rem;
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity 180ms ease;
+	}
+
+	.experience-filter-scroller::before {
+		left: 0;
+		background: linear-gradient(
+			90deg,
+			rgba(247, 242, 235, 1) 0%,
+			rgba(247, 242, 235, 0.98) 42%,
+			rgba(247, 242, 235, 0.72) 70%,
+			rgba(247, 242, 235, 0) 100%
+		);
+	}
+
+	.experience-filter-scroller::after {
+		right: 0;
+		background: linear-gradient(
+			270deg,
+			rgba(247, 242, 235, 1) 0%,
+			rgba(247, 242, 235, 0.98) 42%,
+			rgba(247, 242, 235, 0.72) 70%,
+			rgba(247, 242, 235, 0) 100%
+		);
+	}
+
+	.experience-filter-scroller[data-can-scroll-prev="true"]::before,
+	.experience-filter-scroller[data-can-scroll-next="true"]::after {
+		opacity: 1;
+	}
+
+	.experience-filter-arrow {
+		position: absolute;
+		top: 50%;
+		z-index: 2;
+		display: inline-flex;
+		height: 2rem;
+		width: 2rem;
+		align-items: center;
+		justify-content: center;
+		border: 1px solid #ddd4c8;
+		border-radius: 9999px;
+		background: rgba(255, 255, 255, 0.85);
+		color: rgb(71 85 105);
+		transform: translateY(-50%);
+		transition:
+			opacity 180ms ease,
+			border-color 180ms ease,
+			color 180ms ease,
+			background-color 180ms ease;
+	}
+
+	.experience-filter-arrow:hover {
+		border-color: #cfc4b5;
+		background: rgba(255, 255, 255, 0.98);
+		color: rgb(15 23 42);
+	}
+
+	.experience-filter-arrow--prev {
+		left: -0.15rem;
+	}
+
+	.experience-filter-arrow--next {
+		right: -0.15rem;
+	}
+
+	.experience-filter-scroller[data-scrollable="false"] .experience-filter-arrow,
+	.experience-filter-scroller[data-can-scroll-prev="false"] .experience-filter-arrow--prev,
+	.experience-filter-scroller[data-can-scroll-next="false"] .experience-filter-arrow--next {
+		opacity: 0;
+		pointer-events: none;
+	}
+
+	.experience-workspace {
+		min-height: 0;
+		flex: 1;
+		overflow: hidden;
+	}
+
+	.experience-notes-scroll {
+		height: 100%;
+		overflow-y: auto;
+		overscroll-behavior: contain;
+		padding-right: 0.1rem;
+	}
+
+	.experience-inspector-backdrop {
+		position: fixed;
+		inset: 0;
+		z-index: 39;
+		background: rgba(15, 23, 42, 0.1);
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 220ms ease;
+	}
+
+	.experience-inspector-panel {
+		position: fixed;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 40;
+		width: min(100%, 34rem);
+		max-width: 100%;
+		transform: translateX(100%);
+		opacity: 0;
+		pointer-events: none;
+		transition:
+			transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1),
+			opacity 220ms ease;
+	}
+
+	.experience-inspector-shell {
+		height: 100%;
+		border-left: 1px solid #ddd4c8;
+		background: linear-gradient(180deg, #f6f1e8 0%, #f1ebe2 100%);
+		box-shadow: -10px 0 28px rgba(15, 23, 42, 0.05);
+	}
+
+	.experience-empty-state {
+		border: 1px solid #e6ddd1;
+		border-radius: 1.5rem;
+		background: rgba(255, 255, 255, 0.74);
+	}
+
+	.experience-page[data-inspector-open="true"] .experience-inspector-backdrop {
+		opacity: 1;
+		pointer-events: auto;
+	}
+
+	.experience-page[data-inspector-open="true"] .experience-inspector-panel {
+		transform: translateX(0);
+		opacity: 1;
+		pointer-events: auto;
+	}
+
+	@media (min-width: 768px) {
+		.experience-page {
+			height: calc(100dvh - 2.5rem);
+		}
+	}
+
+	@media (max-width: 767px) {
+		.experience-filter-row {
+			gap: 0.7rem;
+		}
+
+		.experience-filter-divider {
+			display: none;
+		}
+	}
+
+	@media (min-width: 1280px) {
+		.experience-page {
+			height: calc(100dvh - 2.75rem);
+		}
+
+		.experience-inspector-panel {
+			width: clamp(29rem, 36vw, 34rem);
+		}
+
+		.experience-page[data-inspector-open="true"] .experience-canvas {
+			padding-right: calc(clamp(29rem, 36vw, 34rem) + 1.5rem);
+		}
+
+		.experience-page[data-inspector-open="true"] .experience-browser-grid {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+
+		.experience-inspector-backdrop {
+			display: none;
+		}
+	}
+</style>

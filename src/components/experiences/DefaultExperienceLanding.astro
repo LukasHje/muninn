@@ -1,0 +1,10 @@
+---
+import ExperienceView from "src/components/experiences/ExperienceView.astro";
+import type { ExperienceViewModel } from "src/lib/experiences/experience";
+
+type Props = ExperienceViewModel;
+
+const props = Astro.props;
+---
+
+<ExperienceView {...props} />

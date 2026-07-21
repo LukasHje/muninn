@@ -1,0 +1,252 @@
+---
+import FavoriteToggleButton from "src/components/FavoriteToggleButton.astro";
+import Icon from "src/components/Icon.astro";
+import InspectorHeader from "src/components/experiences/InspectorHeader.astro";
+import InspectorSection from "src/components/experiences/InspectorSection.astro";
+import MetadataRow from "src/components/experiences/MetadataRow.astro";
+import NoteContent from "src/components/notes/NoteContent.astro";
+import {
+	getInspectorBulletItems,
+	getInspectorFirstParagraph,
+	type InspectorSection as InspectorSectionData,
+} from "src/lib/experiences/inspector";
+import { slugifySegment } from "src/lib/parser";
+import type { ExperienceDefinition } from "src/lib/experiences/registry";
+import {
+	getExperienceMetadataEntries,
+	getNoteSummary,
+	getInspectorImage,
+	isPlaceholderExperienceImage,
+} from "src/lib/experiences/selectors";
+import type { LibraryItem } from "src/lib/vault";
+
+interface Props {
+	definition: ExperienceDefinition;
+	note: LibraryItem;
+	sections: InspectorSectionData[];
+	noteHref: string;
+	redirectTo: string;
+}
+
+const {
+	definition,
+	note,
+	sections,
+	noteHref,
+	redirectTo,
+} = Astro.props;
+
+const metadataEntries = getExperienceMetadataEntries(note, definition.inspectorMetadata);
+const imageUrl = getInspectorImage(note, definition);
+const summary = getNoteSummary(note);
+const isPlaceholderImage = imageUrl ? isPlaceholderExperienceImage(imageUrl, definition) : false;
+
+function findSection(...titles: string[]) {
+	const normalizedTitles = titles.map((title) => title.trim().toLocaleLowerCase("en"));
+	return (
+		sections.find((section) => normalizedTitles.includes(section.title.trim().toLocaleLowerCase("en"))) ?? null
+	);
+}
+
+const useCaseSection = findSection("Use case");
+const keyFeaturesSection = findSection("Key features");
+const limitationsSection = findSection("Limitations");
+const notesSection = findSection("Notes", "Wishlist notes", "Review");
+const keyFeatureItems = keyFeaturesSection ? getInspectorBulletItems(keyFeaturesSection.content) : [];
+const limitationItems = limitationsSection ? getInspectorBulletItems(limitationsSection.content) : [];
+const notesExcerpt = notesSection ? getInspectorFirstParagraph(notesSection.content) : summary;
+const notesIsTruncated = notesSection ? notesExcerpt.trim() !== notesSection.content.trim() : false;
+const notesSectionHref = `${noteHref}#${slugifySegment(notesSection?.title ?? "notes")}`;
+const renderedSectionTitles = new Set(
+	[useCaseSection, keyFeaturesSection, limitationsSection, notesSection]
+		.filter(Boolean)
+		.map((section) => section!.title.trim().toLocaleLowerCase("en"))
+);
+const remainingSectionCount = sections.filter(
+	(section) => !renderedSectionTitles.has(section.title.trim().toLocaleLowerCase("en"))
+).length;
+---
+
+<div class="px-5 pb-8 pt-0 md:px-6">
+	<InspectorHeader title={note.title}>
+		<Fragment slot="leading">
+			<button
+				type="button"
+				data-experience-close
+				class="experience-inspector-icon-button"
+				aria-label="Close inspector"
+				title="Close inspector"
+			>
+				<Icon name="arrow-left" class="h-6 w-6" />
+			</button>
+		</Fragment>
+		<Fragment slot="actions">
+			<div class="flex items-center gap-2">
+				<div data-experience-inspector-favorite>
+					<FavoriteToggleButton
+						noteId={note.id}
+						isFavorite={Boolean(note.favorite)}
+						redirectTo={redirectTo}
+						size="md"
+						variant="chromeless"
+					/>
+				</div>
+				<a
+					href={noteHref}
+					data-experience-open-note
+					data-note-href={noteHref}
+					class="experience-inspector-icon-button"
+					aria-label="Open full note"
+					title="Open full note"
+				>
+					<Icon name="square-arrow-up-right" class="h-6 w-6" />
+				</a>
+			</div>
+		</Fragment>
+	</InspectorHeader>
+
+	<div class="experience-inspector-section pt-3">
+			<div
+				class:list={[
+					"grid gap-4",
+					metadataEntries.length > 0 ? "md:grid-cols-[minmax(0,1fr)_15.5rem] md:items-start" : "",
+				]}
+			>
+					<div class="self-start overflow-hidden rounded-[10px] border border-[#e7dfd4] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.94),rgba(246,240,232,0.96)_72%,rgba(242,236,227,0.98))]">
+					<div
+						class:list={[
+							"relative aspect-[3/5] w-full",
+							isPlaceholderImage ? "flex items-center justify-center p-6" : "overflow-hidden",
+						]}
+					>
+						<img
+							src={imageUrl}
+							alt=""
+							class:list={[
+								"h-full w-full",
+								isPlaceholderImage ? "object-contain opacity-80 mix-blend-multiply" : "object-cover",
+							]}
+						/>
+					</div>
+			</div>
+
+			{
+				metadataEntries.length > 0 && (
+						<div class="overflow-hidden rounded-[10px] border border-[#e2d9cd] bg-white/58">
+						<dl class="divide-y divide-[#ebe2d7] px-4 py-2">
+								{
+									metadataEntries.map((entry) => (
+										<div>
+											<MetadataRow
+												metadataKey={entry.key}
+												icon={entry.icon}
+												label={entry.label}
+												value={entry.value}
+											/>
+										</div>
+									))
+								}
+						</dl>
+					</div>
+				)
+			}
+		</div>
+	</div>
+
+	<div class="my-6 w-full border-t border-[#d8d0c5]" aria-hidden="true"></div>
+
+	<div class="w-full min-w-0">
+		{
+			useCaseSection && (
+				<InspectorSection title="Use case" highlightKey="usecase">
+					<NoteContent note={note} content={useCaseSection.content} />
+				</InspectorSection>
+			)
+		}
+
+		{
+			keyFeaturesSection && (
+				<InspectorSection title="Key features" highlightKey="keyfeatures" className="mt-8">
+					<ul class="w-full list-outside list-disc space-y-2.5 pl-5 text-sm leading-7 text-slate-700 marker:text-slate-500">
+						{
+							keyFeatureItems.map((item) => (
+								<li>{item}</li>
+							))
+						}
+					</ul>
+				</InspectorSection>
+			)
+		}
+
+		{
+			limitationsSection && (
+				<InspectorSection title="Limitations" highlightKey="limitations" className="mt-8">
+					<ul class="w-full list-outside list-disc space-y-2.5 pl-5 text-sm leading-7 text-slate-700 marker:text-slate-500">
+						{
+							limitationItems.map((item) => (
+								<li>{item}</li>
+							))
+						}
+					</ul>
+				</InspectorSection>
+			)
+		}
+
+		<InspectorSection title="Notes" highlightKey="notes" surface="panel" className="mt-10 experience-inspector-notes">
+			<p class="w-full text-sm leading-8">
+				{notesExcerpt}
+				{
+					notesIsTruncated && (
+						<a
+							href={notesSectionHref}
+							data-experience-open-note
+							data-note-href={notesSectionHref}
+							class="ml-2 inline text-slate-400 underline-offset-4 transition-colors hover:text-slate-500 hover:underline"
+						>
+							<span aria-hidden="true">. . .</span>
+							<span class="ml-1">open note for full description</span>
+						</a>
+					)
+				}
+			</p>
+		</InspectorSection>
+
+		{
+			remainingSectionCount > 0 && (
+				<p class="experience-inspector-section w-full text-sm leading-7 text-slate-500">
+					{remainingSectionCount} more section{remainingSectionCount === 1 ? "" : "s"} available in the full note.
+				</p>
+			)
+		}
+	</div>
+</div>
+
+<style>
+	.experience-inspector-icon-button {
+		display: inline-flex;
+		height: 3rem;
+		width: 3rem;
+		align-items: center;
+		justify-content: center;
+		border: none;
+		background: transparent;
+		color: rgb(71 85 105);
+		transition: color 180ms ease;
+	}
+
+	.experience-inspector-icon-button:hover {
+		color: rgb(15 23 42);
+	}
+
+	.experience-inspector-section {
+		margin-top: 0;
+	}
+
+	.experience-inspector-notes {
+		color: rgb(142 156 113 / 50%);
+	}
+
+	.experience-inspector-notes :is(h3, p, a) {
+		color: inherit;
+	}
+</style>

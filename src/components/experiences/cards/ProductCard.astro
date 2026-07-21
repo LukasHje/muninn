@@ -1,0 +1,199 @@
+---
+import FavoriteToggleButton from "src/components/FavoriteToggleButton.astro";
+import SpecificationRow from "src/components/experiences/SpecificationRow.astro";
+import StatusBadge from "src/components/experiences/StatusBadge.astro";
+import { extractProductFeatures } from "src/lib/experiences/productFeatures";
+import type { ExperienceDefinition } from "src/lib/experiences/registry";
+import {
+	getCardImage,
+	getExperienceContextTags,
+	getNoteMetadataValue,
+	isPlaceholderExperienceImage,
+} from "src/lib/experiences/selectors";
+import type { LibraryItem } from "src/lib/vault";
+
+interface Props {
+	definition: ExperienceDefinition;
+	note: LibraryItem;
+	selected?: boolean;
+	redirectTo?: string;
+	index?: number;
+}
+
+const {
+	definition,
+	note,
+	selected = false,
+	redirectTo = Astro.url.pathname + Astro.url.search,
+	index = 0,
+} = Astro.props;
+
+const imageUrl = getCardImage(note, definition);
+const statusValue = getNoteMetadataValue(note, "status");
+const contextTags = getExperienceContextTags(note, 4);
+const specificationEntries = extractProductFeatures(note, definition.featureSections, 4);
+const isPlaceholderImage = isPlaceholderExperienceImage(imageUrl, definition);
+---
+
+<article
+	data-selected={selected ? "true" : "false"}
+	class:list={[
+		"experience-note-card group relative overflow-hidden rounded-[5px] border border-[#e4dbcf] bg-[linear-gradient(180deg,rgba(255,255,255,0.97)_0%,rgba(248,243,236,0.98)_100%)]",
+	]}
+>
+	<div class="absolute right-0.5 top-0.5 z-20">
+		<FavoriteToggleButton
+			noteId={note.id}
+			isFavorite={Boolean(note.favorite)}
+			redirectTo={redirectTo}
+			variant="chromeless"
+			size="md"
+		/>
+	</div>
+	<button
+		type="button"
+		class="block w-full text-left"
+		data-experience-card={note.id}
+		aria-controls="experience-inspector-panel"
+		aria-label={`Inspect ${note.title}`}
+		aria-pressed={selected ? "true" : "false"}
+	>
+		<div class="experience-note-card__top grid grid-cols-[34%_minmax(0,1fr)] items-stretch gap-4 p-4.5">
+			<div
+				class="experience-note-card__image-column relative flex mt-8 self-stretch items-start justify-center overflow-visible bg-transparent"
+			>
+				{imageUrl && <img
+					src={imageUrl}
+					alt=""
+					aria-hidden="true"
+					class="experience-note-card__image-spacer invisible block h-[90%] w-full max-w-full"
+					width="1000"
+					height="1000"
+					loading="lazy"
+					fetchpriority="low"
+					decoding="async"
+				/>}
+				{imageUrl && <img
+					src={imageUrl}
+					alt=""
+					class:list={[
+						"experience-note-card__image absolute block max-w-none bg-transparent object-contain",
+						isPlaceholderImage && "opacity-80",
+					]}
+					width="1000"
+					height="1000"
+					loading="lazy"
+					fetchpriority="low"
+					decoding="async"
+				/>}
+			</div>
+			<div class="min-w-0 flex flex-col pt-8">
+				<h2 class="truncate pr-14 text-[1.2rem] font-semibold leading-[1.02] tracking-[-0.06em] text-slate-900">
+					{note.title}
+				</h2>
+
+				{
+					contextTags.length > 0 && (
+						<div class="mt-2 flex max-h-[2.9rem] flex-wrap gap-x-1 gap-y-1 overflow-hidden pr-2">
+							{
+								contextTags.map((tag) => (
+									<span
+										class="shrink-0 rounded-[5px] border border-[#ece3d8] bg-[rgba(249,245,239,0.76)] px-2 py-0.5 text-[10px] font-medium text-slate-500"
+									>
+										{tag}
+									</span>
+								))
+							}
+						</div>
+						)
+					}
+				{
+					statusValue && (
+						<div class="mt-auto pt-2.5 pb-2">
+							<StatusBadge value={statusValue} tone={definition.theme} />
+						</div>
+					)
+				}
+			</div>
+		</div>
+
+		<SpecificationRow items={specificationEntries} />
+	</button>
+</article>
+
+<style>
+	.experience-note-card {
+		box-shadow:
+			0 18px 42px rgba(15, 23, 42, 0.05),
+			0 2px 8px rgba(15, 23, 42, 0.03);
+	}
+
+	.experience-note-card::after {
+		position: absolute;
+		z-index: 30;
+		inset: 0;
+		border: 1.25px solid transparent;
+		border-radius: inherit;
+		content: "";
+		pointer-events: none;
+		transition: border-color 180ms ease;
+	}
+
+	.experience-note-card:hover::after {
+		border-color: #C3A885;
+	}
+
+	.experience-note-card[data-selected="true"] {
+		background: linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(248, 244, 238, 1) 100%);
+		box-shadow:
+			0 20px 40px rgba(15, 23, 42, 0.07),
+			inset 0 0 0 1px rgba(215, 203, 184, 0.26);
+	}
+
+	.experience-note-card[data-selected="true"]::after {
+		border-width: 1.5px;
+		border-color: #C3A885;
+	}
+
+	.experience-note-card__image-column,
+	.experience-note-card__image {
+		background: transparent;
+	}
+
+	.experience-note-card__image {
+		left: 50%;
+		top: -2.25rem;
+		height: calc(100% + 3.375rem);
+		width: 120%;
+		filter: none;
+		box-shadow: none;
+		mix-blend-mode: normal;
+		transform: translateX(-50%);
+	}
+
+	@media (max-width: 720px) {
+		.experience-note-card__top {
+			grid-template-columns: minmax(8.25rem, 34%) minmax(0, 1fr);
+			gap: 0.875rem;
+			padding: 0.75rem;
+		}
+
+		.experience-note-card__image-column,
+		.experience-note-card__top > :global(div:last-child) {
+			min-height: 11.5rem;
+		}
+
+		.experience-note-card__image-column {
+			margin-top: 1.5rem;
+		}
+
+		.experience-note-card__image {
+			top: -1.375rem;
+			height: calc(100% + 2.125rem);
+		}
+
+		.experience-note-card__top > :global(div:last-child) {
+			padding-top: 1.5rem;
+		}
+	}
+</style>

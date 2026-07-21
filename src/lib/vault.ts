@@ -15,7 +15,8 @@ import { getVaultAssetIndex } from "src/lib/vaultAssetIndex";
 import { RESOLVED_VAULT_PATH } from "src/lib/config";
 import { getFavoriteNoteIdSet } from "src/lib/favorites";
 
-export type CategoryKey =
+export type DomainKey =
+	| "gear"
 	| "projekt"
 	| "recept"
 	| "bocker"
@@ -36,13 +37,6 @@ export interface SidebarNavigationItem {
 	count?: number;
 }
 
-export interface SidebarCategory {
-	label: string;
-	href: string;
-	count: number;
-	icon: string;
-}
-
 export interface DashboardMetric {
 	label: string;
 	value: string;
@@ -56,9 +50,9 @@ export interface LibraryItem {
 	title: string;
 	href: string;
 	slugPath: string;
-	categoryKey: CategoryKey;
-	categoryLabel: string;
-	categoryIcon: string;
+	domainKey: DomainKey;
+	domainLabel: string;
+	domainIcon: string;
 	tone: Tone;
 	excerpt: string;
 	updatedLabel: string;
@@ -97,7 +91,7 @@ export interface VaultNoteDetail {
 	title: string;
 	relativePath: string;
 	content: string;
-	categoryLabel: string;
+	domainLabel: string;
 	tags: string[];
 	updatedLabel: string;
 	imageUrl?: string;
@@ -116,38 +110,41 @@ export function getSidebarNavigation() {
 	];
 }
 
-const categoryMeta: Record<
-	CategoryKey,
+const domainMeta: Record<
+	DomainKey,
 	{ icon: string; tone: Tone; href: string }
 > = {
+	gear: { icon: "cpu", tone: "emerald", href: "/gear" },
 	projekt: { icon: "folder", tone: "sky", href: "/notes?category=projekt" },
 	recept: { icon: "utensils", tone: "amber", href: "/recipes" },
 	bocker: { icon: "book", tone: "slate", href: "/books" },
 	resor: { icon: "map", tone: "emerald", href: "/notes?category=resor" },
 	teknik: { icon: "cpu", tone: "violet", href: "/notes?category=teknik" },
 	journal: { icon: "notebook-pen", tone: "rose", href: "/notes?category=journal" },
-	traning: { icon: "dumbbell", tone: "rose", href: "/notes?category=traning" },
+	traning: { icon: "weight", tone: "rose", href: "/notes?category=traning" },
 	ovrigt: { icon: "circle", tone: "slate", href: "/notes?category=ovrigt" },
 };
 
-function getCategoryLabel(categoryKey: CategoryKey) {
-	switch (categoryKey) {
+function getDomainLabel(domainKey: DomainKey) {
+	switch (domainKey) {
+		case "gear":
+			return ui.domains.gear;
 		case "projekt":
-			return ui.categories.project;
+			return ui.domains.project;
 		case "recept":
-			return ui.categories.recipe;
+			return ui.domains.recipe;
 		case "bocker":
-			return ui.categories.book;
+			return ui.domains.book;
 		case "resor":
-			return ui.categories.travel;
+			return ui.domains.travel;
 		case "teknik":
-			return ui.categories.technology;
+			return ui.domains.technology;
 		case "journal":
-			return ui.categories.journal;
+			return ui.domains.journal;
 		case "traning":
-			return ui.categories.training;
+			return ui.domains.training;
 		case "ovrigt":
-			return ui.categories.other;
+			return ui.domains.other;
 	}
 }
 
@@ -267,7 +264,7 @@ async function loadVaultNotes(): Promise<LibraryItem[]> {
 					content: body,
 				});
 				const title = normalized.title;
-				const categoryKey = normalized.category as CategoryKey;
+				const domainKey = normalized.domain as DomainKey;
 				const rawImageReferences = extractImageReferences(frontmatter, body);
 				const resolvedImages = Object.fromEntries(
 					rawImageReferences
@@ -299,10 +296,10 @@ async function loadVaultNotes(): Promise<LibraryItem[]> {
 					title,
 					href: toNoteHref(relativePath),
 					slugPath: normalized.slug || toNoteSlugPath(relativePath),
-					categoryKey,
-					categoryLabel: getCategoryLabel(categoryKey),
-					categoryIcon: categoryMeta[categoryKey].icon,
-					tone: categoryMeta[categoryKey].tone,
+					domainKey,
+					domainLabel: getDomainLabel(domainKey),
+					domainIcon: domainMeta[domainKey].icon,
+					tone: domainMeta[domainKey].tone,
 					excerpt: buildExcerpt(body),
 					updatedLabel: formatUpdatedLabel(fileStat.mtimeMs),
 					imageUrl,
@@ -375,16 +372,6 @@ export async function getNoteLookupIndex() {
 	})();
 
 	return noteLookupPromise;
-}
-
-export async function getSidebarCategories(): Promise<SidebarCategory[]> {
-	const items = await getLibraryItems();
-	return Object.entries(categoryMeta).map(([key, meta]) => ({
-		label: getCategoryLabel(key as CategoryKey),
-		href: meta.href,
-		count: items.filter((item) => item.categoryKey === key).length,
-		icon: meta.icon,
-	}));
 }
 
 export async function getDashboardHero() {
@@ -473,7 +460,7 @@ export async function getFavoriteLinks(): Promise<FavoriteLink[]> {
 
 export async function getTodayEntry(): Promise<TodayEntry | null> {
 	const items = await getLibraryItems();
-	const journal = items.find((item) => item.categoryKey === "journal") ?? items[0];
+	const journal = items.find((item) => item.domainKey === "journal") ?? items[0];
 	if (!journal) {
 		return null;
 	}
@@ -490,9 +477,9 @@ export async function getTodayEntry(): Promise<TodayEntry | null> {
 	};
 }
 
-export async function getItemsByCategory(categoryKey: CategoryKey) {
+export async function getItemsByDomain(domainKey: DomainKey) {
 	const items = await getLibraryItems();
-	return items.filter((item) => item.categoryKey === categoryKey);
+	return items.filter((item) => item.domainKey === domainKey);
 }
 
 export async function getNoteByHrefSlug(slugPath: string) {
