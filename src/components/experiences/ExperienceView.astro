@@ -240,6 +240,7 @@ const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
 </div>
 
 <script type="module">
+	function initExperienceViews() {
 	const roots = Array.from(document.querySelectorAll("[data-experience-root]"));
 
 	for (const root of roots) {
@@ -587,7 +588,11 @@ const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
 
 			syncSelectionState();
 		}
-	</script>
+	}
+
+	initExperienceViews();
+	document.addEventListener("astro:page-load", initExperienceViews);
+</script>
 
 <style>
 	.experience-page {

@@ -57,4 +57,5 @@ import { ui } from "src/i18n";
 	import initQuickSearch from "src/components/QuickSearchClient.ts";
 
 	initQuickSearch();
+	document.addEventListener("astro:page-load", initQuickSearch);
 </script>

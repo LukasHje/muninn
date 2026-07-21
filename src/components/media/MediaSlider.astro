@@ -100,4 +100,5 @@ const { items } = Astro.props;
 	import initMediaSliders from "src/components/media/MediaSliderClient.ts";
 
 	initMediaSliders();
+	document.addEventListener("astro:page-load", initMediaSliders);
 </script>

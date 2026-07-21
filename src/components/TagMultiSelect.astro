@@ -618,4 +618,7 @@ const pickerId = `${name}-picker`;
 	};
 
 	document.querySelectorAll("[data-tag-picker]").forEach((root) => initializeTagPicker(root));
+	document.addEventListener("astro:page-load", () => {
+		document.querySelectorAll("[data-tag-picker]").forEach((root) => initializeTagPicker(root));
+	});
 </script>

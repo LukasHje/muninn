@@ -5,6 +5,7 @@ import { buildSidebarExperienceLinks } from "src/lib/experiences/sidebar";
 import { getFavoritesCount } from "src/lib/favorites";
 import { getScratchpadNotesCount } from "src/lib/scratchpad";
 import { getLibraryItems, getSidebarNavigation } from "src/lib/vault";
+import { ClientRouter } from "astro:transitions";
 import "src/styles/global.css";
 
 interface Props {
@@ -37,19 +38,31 @@ const navigation = getSidebarNavigation().map((item) => {
 ---
 
 <!doctype html>
-<html lang={getLanguage()}>
+<html lang={getLanguage()} transition:animate="none">
 		<head>
 			<meta charset="utf-8" />
-			<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-			<link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png" />
-			<link rel="icon" href="/favicon.ico" />
-			<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-			<link rel="manifest" href="/site.webmanifest" />
+			<link transition:persist="favicon-svg" rel="icon" type="image/svg+xml" href="/favicon.svg" />
+			<link
+				transition:persist="favicon-png"
+				rel="icon"
+				type="image/png"
+				sizes="96x96"
+				href="/favicon-96x96.png"
+			/>
+			<link transition:persist="favicon-ico" rel="icon" href="/favicon.ico" />
+			<link
+				transition:persist="apple-touch-icon"
+				rel="apple-touch-icon"
+				sizes="180x180"
+				href="/apple-touch-icon.png"
+			/>
+			<link transition:persist="web-manifest" rel="manifest" href="/site.webmanifest" />
 			<meta name="viewport" content="width=device-width" />
 			<meta name="generator" content={Astro.generator} />
 			<meta name="description" content={description} />
 			<meta name="theme-color" content="#faf7f2" />
 			<title>{title}</title>
+			<ClientRouter fallback="swap" />
 		</head>
 	<body>
 		<div class="min-h-screen bg-[linear-gradient(180deg,_#faf7f2_0%,_#f4efe8_100%)]">

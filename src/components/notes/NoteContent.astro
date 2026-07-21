@@ -309,6 +309,11 @@ function renderMarkdownHtml(raw: string) {
 
 		initImageLightbox();
 		initPdfViewers();
+
+		document.addEventListener("astro:page-load", () => {
+			initImageLightbox();
+			initPdfViewers();
+		});
 	</script>
 
 <script
