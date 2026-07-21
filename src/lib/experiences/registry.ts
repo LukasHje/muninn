@@ -59,7 +59,7 @@ const experienceDefinitionConfigs: ExperienceDefinitionConfig[] = [
 		title: "Gear",
 		description:
 			"Field equipment, outdoor tools, navigation, power, transport, and supporting kit.",
-		icon: "cpu",
+		icon: "gear",
 		tone: "emerald",
 		href: "/gear",
 		libraryHref: "/notes?category=gear",

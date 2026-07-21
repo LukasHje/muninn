@@ -14,6 +14,7 @@ interface Props {
 	filteredNotes: LibraryItem[];
 	selectedNote: LibraryItem | null;
 	filterState: ExperienceFilterState;
+	totalFilteredNotes: number;
 	metadataOptions: Record<string, ExperienceFilterOption[]>;
 	statistics: ExperienceStatistic[];
 }
@@ -23,6 +24,7 @@ const {
 	filteredNotes,
 	selectedNote,
 	filterState,
+	totalFilteredNotes,
 	metadataOptions,
 	statistics,
 } = Astro.props;
@@ -80,6 +82,7 @@ const initialInspector = initialInspectorNote
 	data-inspector-open={initialInspectorNote ? "true" : "false"}
 	data-initial-selected={initialInspectorNote?.id ?? ""}
 	data-inspector-endpoint={inspectorEndpoint}
+	data-experience-total-count={totalFilteredNotes}
 >
 	<div class="experience-canvas" data-experience-workspace>
 		<section class="experience-hero-shell overflow-hidden">
@@ -173,7 +176,11 @@ const initialInspector = initialInspectorNote
 							</p>
 						</div>
 					) : (
-						<div class="experience-browser-grid grid gap-5 pb-4 md:grid-cols-2 xl:grid-cols-3">
+						<div
+							class="experience-browser-grid grid gap-5 pb-4 md:grid-cols-2 xl:grid-cols-3"
+							data-experience-card-list
+							data-rendered-count={filteredNotes.length}
+						>
 							{
 								filteredNotes.map((note, index) => (
 									<ExperienceCardRenderer
@@ -239,7 +246,6 @@ const initialInspector = initialInspectorNote
 			const inspector = root.querySelector("[data-experience-inspector-root]");
 			const backdrop = root.querySelector("[data-experience-inspector-backdrop]");
 			const inspectorPanelsRoot = root.querySelector("[data-experience-inspector-panels]");
-			const cards = Array.from(root.querySelectorAll("[data-experience-card]"));
 			const filterShells = Array.from(root.querySelectorAll("[data-experience-filter-shell]"));
 
 		if (
@@ -254,12 +260,17 @@ const initialInspector = initialInspectorNote
 		const inspectorEndpoint = root.dataset.inspectorEndpoint ?? "";
 		const inspectorPanelRequests = new Map();
 
+		const getCards = () => Array.from(root.querySelectorAll("[data-experience-card]"));
 		const getInspectorPanels = () =>
 			Array.from(root.querySelectorAll("[data-experience-inspector-panel]"));
 		const getOpenNoteLinks = () =>
 			Array.from(root.querySelectorAll("[data-experience-open-note]"));
 		const getFavoriteRedirectInputs = () =>
 			Array.from(root.querySelectorAll("[data-experience-inspector-favorite] input[name='redirectTo']"));
+		const getFavoriteForms = (noteId) =>
+			Array.from(root.querySelectorAll("[data-favorite-toggle]")).filter(
+				(form) => form instanceof HTMLFormElement && form.dataset.favoriteNoteId === noteId
+			);
 
 		const buildReturnTo = () => {
 			const url = new URL(window.location.pathname + window.location.search, window.location.origin);
@@ -302,7 +313,7 @@ const initialInspector = initialInspectorNote
 		};
 
 		const syncSelectionState = () => {
-			for (const card of cards) {
+			for (const card of getCards()) {
 				if (!(card instanceof HTMLElement)) {
 					continue;
 				}
@@ -391,32 +402,109 @@ const initialInspector = initialInspectorNote
 			syncSelectionState();
 		};
 
-		for (const card of cards) {
-			if (!(card instanceof HTMLButtonElement)) {
-				continue;
+		const setFavoritePending = (noteId, pending) => {
+			for (const form of getFavoriteForms(noteId)) {
+				if (!(form instanceof HTMLFormElement)) {
+					continue;
+				}
+
+				form.dataset.favoritePending = pending ? "true" : "false";
+				const button = form.querySelector("button[type='submit']");
+				if (button instanceof HTMLButtonElement) {
+					button.disabled = pending;
+					button.setAttribute("aria-busy", pending ? "true" : "false");
+				}
+			}
+		};
+
+		const setFavoriteState = (noteId, isFavorite) => {
+			for (const form of getFavoriteForms(noteId)) {
+				if (!(form instanceof HTMLFormElement)) {
+					continue;
+				}
+
+				form.dataset.favoriteState = isFavorite ? "true" : "false";
+				const button = form.querySelector("button[type='submit']");
+				const label = isFavorite
+					? form.dataset.favoriteRemoveLabel ?? "Remove favorite"
+					: form.dataset.favoriteAddLabel ?? "Mark as favorite";
+
+				if (button instanceof HTMLButtonElement) {
+					button.setAttribute("aria-label", label);
+					button.setAttribute("aria-pressed", isFavorite ? "true" : "false");
+					button.title = label;
+					button.querySelector("svg")?.setAttribute("fill", isFavorite ? "currentColor" : "none");
+				}
+			}
+		};
+
+		root.addEventListener("submit", async (event) => {
+			const target = event.target;
+			if (!(target instanceof HTMLFormElement) || !target.matches("[data-favorite-toggle]")) {
+				return;
 			}
 
-			card.addEventListener("click", async () => {
-				selectedId = card.dataset.experienceCard ?? "";
-				syncSelectionState();
+			event.preventDefault();
+			const noteId = target.dataset.favoriteNoteId ?? "";
+			if (!noteId || target.dataset.favoritePending === "true") {
+				return;
+			}
 
-				try {
-					await ensureInspectorPanel(selectedId);
-					syncSelectionState();
-				} catch (error) {
-					console.error(error);
-					closeInspector();
+			setFavoritePending(noteId, true);
+
+			try {
+				const response = await fetch(target.action, {
+					method: "POST",
+					body: new FormData(target),
+					headers: {
+						Accept: "application/json",
+						"X-Requested-With": "MuninnFavoriteToggle",
+					},
+				});
+				const payload = await response.json();
+
+				if (
+					!response.ok ||
+					payload.noteId !== noteId ||
+					typeof payload.isFavorite !== "boolean" ||
+					typeof payload.favoritesCount !== "number"
+				) {
+					throw new Error(`Failed to update favorite (${response.status})`);
 				}
-			});
-		}
 
-		root.addEventListener("click", (event) => {
+				setFavoriteState(noteId, payload.isFavorite);
+				window.dispatchEvent(new CustomEvent("muninn:favorite-change", { detail: payload }));
+			} catch (error) {
+				console.error(error);
+			} finally {
+				setFavoritePending(noteId, false);
+			}
+		});
+
+		root.addEventListener("click", async (event) => {
 			const target = event.target;
 			if (!(target instanceof Element)) {
 				return;
 			}
 
 			if (target.closest("[data-experience-close]")) {
+				closeInspector();
+				return;
+			}
+
+			const card = target.closest("[data-experience-card]");
+			if (!(card instanceof HTMLButtonElement)) {
+				return;
+			}
+
+			selectedId = card.dataset.experienceCard ?? "";
+			syncSelectionState();
+
+			try {
+				await ensureInspectorPanel(selectedId);
+				syncSelectionState();
+			} catch (error) {
+				console.error(error);
 				closeInspector();
 			}
 		});

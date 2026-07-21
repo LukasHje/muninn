@@ -64,7 +64,10 @@ const currentPath = Astro.url.pathname;
 					<span class="min-w-0 flex-1">{item.label}</span>
 					{
 						typeof item.count === "number" && (
-							<span class="rounded-full bg-white/8 px-2 py-0.5 text-xs text-white/55">
+							<span
+								class="rounded-full bg-white/8 px-2 py-0.5 text-xs text-white/55"
+								data-sidebar-favorites-count={item.href === "/favorites" ? "true" : undefined}
+							>
 								{item.count}
 							</span>
 						)
@@ -113,3 +116,16 @@ const currentPath = Astro.url.pathname;
 		<Icon name="moon" class="h-4 w-4" />
 	</div>
 </aside>
+
+<script is:inline>
+	window.addEventListener("muninn:favorite-change", (event) => {
+		const count = event.detail?.favoritesCount;
+		if (typeof count !== "number") {
+			return;
+		}
+
+		document.querySelectorAll("[data-sidebar-favorites-count]").forEach((element) => {
+			element.textContent = String(count);
+		});
+	});
+</script>

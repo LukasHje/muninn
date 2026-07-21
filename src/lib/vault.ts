@@ -121,7 +121,7 @@ const domainMeta: Record<
 	resor: { icon: "map", tone: "emerald", href: "/notes?category=resor" },
 	teknik: { icon: "cpu", tone: "violet", href: "/notes?category=teknik" },
 	journal: { icon: "notebook-pen", tone: "rose", href: "/notes?category=journal" },
-	traning: { icon: "dumbbell", tone: "rose", href: "/notes?category=traning" },
+	traning: { icon: "weight", tone: "rose", href: "/notes?category=traning" },
 	ovrigt: { icon: "circle", tone: "slate", href: "/notes?category=ovrigt" },
 };
 

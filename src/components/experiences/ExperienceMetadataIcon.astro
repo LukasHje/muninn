@@ -1,10 +1,6 @@
 ---
 import Icon from "src/components/Icon.astro";
-import {
-	currentExperienceMetadataTheme,
-	getMetadataIcon,
-	getMetadataIconSrc,
-} from "src/lib/experiences/metadataIcons";
+import { getMetadataIcon } from "src/lib/experiences/metadataIcons";
 
 interface Props {
 	metadataKey: string;
@@ -14,26 +10,16 @@ interface Props {
 
 const { metadataKey, value = null, className = "" } = Astro.props;
 const icon = getMetadataIcon(metadataKey, value);
-const imageSrc = getMetadataIconSrc(metadataKey, value, currentExperienceMetadataTheme);
 ---
 
-{
-	icon.kind === "image" ? (
-		<span class:list={["experience-metadata-image block", className]}>
-			<img src={imageSrc ?? ""} alt="" class="block h-full w-full object-contain" loading="lazy" />
-		</span>
-	) : (
-		<div class:list={["experience-metadata-icon-fallback flex items-center justify-center", className]}>
-			<Icon name={icon.name} class="h-5 w-5" />
-		</div>
-	)
-}
+<div
+	class:list={["experience-metadata-icon-fallback flex items-center justify-center", className]}
+	style={icon.color ? `color:${icon.color};` : undefined}
+>
+	<Icon name={icon.name} class="h-5 w-5" />
+</div>
 
 <style>
-	.experience-metadata-image {
-		display: block;
-	}
-
 	.experience-metadata-icon-fallback {
 		color: #4B4F5B;
 	}

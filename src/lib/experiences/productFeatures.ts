@@ -16,6 +16,7 @@ interface ProductFeatureDefinition {
 	priority: number;
 	extractValue: (bullet: string) => string | null;
 	selectValue?: (bullets: string[]) => string | null;
+	resolveIconName?: (value: string) => string;
 }
 
 function stripMarkdownFormatting(value: string) {
@@ -141,7 +142,7 @@ function parseMarkdownBullets(content: string) {
 }
 
 function extractRuntimeFeature(bullet: string) {
-	const hourMatch = bullet.match(/\b(\d+(?:[.,]\d+)?)\s*(hours?|hrs?|h|timmar?|tim)\b/i);
+	const hourMatch = bullet.match(/\b(\d+(?:[.,]\d+)?)\s*(hours?|hrs?|h|timmars?|tim)\b/i);
 	if (hourMatch) {
 		return formatUnitValue(hourMatch[1], "h");
 	}
@@ -160,30 +161,48 @@ function extractRuntimeFeature(bullet: string) {
 
 function extractTemperatureFeature(bullet: string) {
 	const celsiusRangeMatch = bullet.match(
-		/([−–—-]?\d+(?:[.,]\d+)?)\s*°\s*C\b\s*(?:to|–|—|-|until|till)\s*([−–—-]?\d+(?:[.,]\d+)?)\s*°?\s*C\b/i
+		/([+−–—-]?\d+(?:[.,]\d+)?)\s*°\s*C\b\s*(?:to|–|—|-|until|till)\s*([+−–—-]?\d+(?:[.,]\d+)?)\s*°?\s*C\b/i
 	);
 	if (celsiusRangeMatch) {
-		return `${formatSignedUnitValue(celsiusRangeMatch[1], "°C")} to ${formatSignedUnitValue(celsiusRangeMatch[2], "°C")}`;
+		return `${formatSignedDecimalValue(celsiusRangeMatch[1])} – ${formatSignedDecimalValue(celsiusRangeMatch[2])}°C`;
 	}
 
-	const celsiusMatch = bullet.match(/([−–—-]?\d+(?:[.,]\d+)?)\s*°\s*C\b/i);
+	const celsiusMatch = bullet.match(/([+−–—-]?\d+(?:[.,]\d+)?)\s*°\s*C\b/i);
 	if (celsiusMatch) {
 		return formatSignedUnitValue(celsiusMatch[1], "°C");
 	}
 
-	const fahrenheitMatch = bullet.match(/([−–—-]?\d+(?:[.,]\d+)?)\s*°\s*F\b/i);
+	const fahrenheitMatch = bullet.match(/([+−–—-]?\d+(?:[.,]\d+)?)\s*°\s*F\b/i);
 	if (fahrenheitMatch) {
 		return formatSignedUnitValue(fahrenheitMatch[1], "°F");
 	}
 
 	const approximateCelsiusMatch = bullet.match(
-		/(?:cirka|ca\.?|approx(?:imately)?|about)\s*([−–—-]?\d+(?:[.,]\d+)?)\s*°?\s*C\b/i
+		/(?:cirka|ca\.?|approx(?:imately)?|about)\s*([+−–—-]?\d+(?:[.,]\d+)?)\s*°?\s*C\b/i
 	);
 	if (approximateCelsiusMatch) {
 		return formatSignedUnitValue(approximateCelsiusMatch[1], "°C");
 	}
 
 	return null;
+}
+
+function resolveTemperatureIconName(value: string) {
+	const temperatures = Array.from(value.matchAll(/([+−–—-]?\d+(?:[.,]\d+)?)/g))
+		.map((match) => Number.parseFloat(match[1].replace(/[−–—]/, "-").replace(",", ".")))
+		.filter(Number.isFinite);
+	const hasSubzeroTemperature = temperatures.some((temperature) => temperature < 0);
+	const hasAboveZeroTemperature = temperatures.some((temperature) => temperature > 0);
+
+	if (hasSubzeroTemperature && !hasAboveZeroTemperature) {
+		return "thermometer-snowflake";
+	}
+
+	if (hasAboveZeroTemperature && !hasSubzeroTemperature) {
+		return "thermometer-sun";
+	}
+
+	return "thermometer";
 }
 
 function selectTemperatureFeature(bullets: string[]) {
@@ -219,6 +238,12 @@ function selectTemperatureFeature(bullets: string[]) {
 }
 
 function extractBatteryFeature(bullet: string) {
+	if (/\bCR2(?:[- ]?(?:batter(?:y|ies)|batteri(?:et|er)?))?\b/i.test(bullet)) {
+		const numericCountMatch = bullet.match(/\b(\d+)\s*(?:x|×)?\s*(?:replaceable\s+|utbytbara?\s+)?CR2\b/i);
+		const count = numericCountMatch?.[1] ?? extractSpelledCount(bullet) ?? "1";
+		return `${count}x CR2`;
+	}
+
 	const aaMatch = bullet.match(/\b(\d+)\s*x\s*AA\b/i) ?? bullet.match(/\b(\d+)\s*AA-batter/i);
 	if (aaMatch) {
 		return `${aaMatch[1]}x AA`;
@@ -250,20 +275,37 @@ function extractBatteryFeature(bullet: string) {
 }
 
 function extractWaterproofFeature(bullet: string) {
+	const atmMatch = bullet.match(/\b(\d+(?:[.,]\d+)?)\s*ATM\b/i);
+	if (atmMatch) {
+		return `${formatDecimalValue(atmMatch[1])} ATM`;
+	}
+
 	const ratingMatch = bullet.match(/\b(IPX?\d+)\b/i) ?? bullet.match(/\b(IP\d+)\b/i);
 	if (ratingMatch) {
 		return ratingMatch[1].toUpperCase();
 	}
 
-	if (/\bwaterproof\b|\bvattentät\b/i.test(bullet)) {
-		return "Waterproof";
+	if (/\bwater resistant\b|\bvattenresistent\b/i.test(bullet)) {
+		return "Water resistant";
 	}
 
-	if (/\bwater resistant\b|\bvädertålig\b/i.test(bullet)) {
+	if (/\bvädertålig\b/i.test(bullet)) {
 		return "Weatherproof";
 	}
 
+	if (/\bwaterproof\b|\bvattentät(?:t|a)?\b/i.test(bullet)) {
+		return "Waterproof";
+	}
+
 	return null;
+}
+
+function resolveWaterproofIconName(value: string) {
+	if (/\bATM\b/i.test(value)) {
+		return "water-resistance-atm";
+	}
+
+	return value === "Waterproof" ? "waterproof" : "droplets";
 }
 
 function extractSolarFeature(bullet: string) {
@@ -320,6 +362,63 @@ function extractCapacityFeature(bullet: string) {
 	const milliliterMatch = bullet.match(/\b(\d+(?:[.,]\d+)?)\s*(ml)\b/i);
 	if (milliliterMatch) {
 		return formatUnitValue(milliliterMatch[1], "ml");
+	}
+
+	return null;
+}
+
+function extractSteelFeature(bullet: string) {
+	if (!/\b(blade steel|steel|stainless|stål|rosttrögt|böhler)\b/i.test(bullet)) {
+		return null;
+	}
+
+	const gradeMatch = bullet.match(
+		/\b(420HC|N690|VG-?10|14C28N|D2|1095|AUS-?8|CPM\s+(?:S30V|S35VN|S45VN|MAGNACUT))\b/i
+	);
+	if (!gradeMatch) {
+		return null;
+	}
+
+	return gradeMatch[1].toUpperCase().replace(/^CPM\s+/, "CPM ");
+}
+
+function extractBladeLengthFeature(bullet: string) {
+	if (
+		!/\b(blade length|bladlängd|blade|blad|sågblad)\b/i.test(bullet) ||
+		/\b(blade thickness|bladtjocklek|thickness|tjocklek)\b/i.test(bullet)
+	) {
+		return null;
+	}
+
+	const lengthMatch = bullet.match(/\b(\d+(?:[.,]\d+)?)\s*mm\b/i);
+	return lengthMatch ? formatUnitValue(lengthMatch[1], "mm") : null;
+}
+
+function extractPressCapacityFeature(bullet: string) {
+	if (!/\b(press capacity|presskapacitet|arbor press)\b/i.test(bullet)) {
+		return null;
+	}
+
+	const tonMatch = bullet.match(/\b(\d+(?:[.,]\d+)?)\s*(?:tons?|tonnes?)\b/i);
+	return tonMatch ? formatUnitValue(tonMatch[1], "ton") : null;
+}
+
+function extractGlassFeature(bullet: string) {
+	if (/\b(safirglas|sapphire(?: glass| crystal)?)\b/i.test(bullet)) {
+		return "Sapphire";
+	}
+
+	const gorillaGlassMatch = bullet.match(/\b(Gorilla Glass(?:\s+(?:Victus|\d+))?)\b/i);
+	if (gorillaGlassMatch) {
+		return toTitleCase(gorillaGlassMatch[1]);
+	}
+
+	if (/\b(ED[- ]glas|ED glass)\b/i.test(bullet)) {
+		return "ED glass";
+	}
+
+	if (/\b(mineralglas|mineral glass)\b/i.test(bullet)) {
+		return "Mineral glass";
 	}
 
 	return null;
@@ -437,9 +536,14 @@ function extractCaliberFeature(bullet: string) {
 		return `${formatDecimalValue(millimeterMatch[1])} mm`;
 	}
 
-	const caliberCodeMatch = bullet.match(/\b(5\.56|7\.62|9(?:[.,]0)?|.308|.223|30-06)\b/i);
+	const acpMatch = bullet.match(/(\.\d{2,3})\s*ACP\b/i);
+	if (acpMatch && /\b(caliber|kaliber)\b/i.test(bullet)) {
+		return `${acpMatch[1]} ACP`;
+	}
+
+	const caliberCodeMatch = bullet.match(/(?:\b(5\.56|7\.62|9(?:[.,]0)?|30-06)\b|(\.(?:308|223))\b)/i);
 	if (caliberCodeMatch && /\b(caliber|kaliber)\b/i.test(bullet)) {
-		return caliberCodeMatch[1];
+		return caliberCodeMatch[1] ?? caliberCodeMatch[2];
 	}
 
 	return null;
@@ -476,8 +580,7 @@ function extractStorageCapacityFeature(bullet: string) {
 	const riflesMatch = bullet.match(/\b(?:up to\s+)?(\d+)\s+(rifles?|gevär)\b/i);
 	if (riflesMatch) {
 		const count = riflesMatch[1];
-		const noun = /gevär/i.test(riflesMatch[2]) ? "gevär" : riflesMatch[2].toLocaleLowerCase("en");
-		return `${count} ${noun}`;
+		return `${count} ${count === "1" ? "rifle" : "rifles"}`;
 	}
 
 	const genericCountMatch =
@@ -488,6 +591,10 @@ function extractStorageCapacityFeature(bullet: string) {
 	}
 
 	return null;
+}
+
+function resolveStorageCapacityIconName(value: string) {
+	return /\brifles?\b/i.test(value) ? "rifle-capacity" : "package";
 }
 
 function extractFuelFeature(bullet: string) {
@@ -530,6 +637,7 @@ const productFeatureDefinitions: ProductFeatureDefinition[] = [
 		priority: 72,
 		extractValue: extractTemperatureFeature,
 		selectValue: selectTemperatureFeature,
+		resolveIconName: resolveTemperatureIconName,
 	},
 	{
 		id: "waterproof",
@@ -537,6 +645,7 @@ const productFeatureDefinitions: ProductFeatureDefinition[] = [
 		iconName: "droplets",
 		priority: 95,
 		extractValue: extractWaterproofFeature,
+		resolveIconName: resolveWaterproofIconName,
 	},
 	{
 		id: "solar",
@@ -562,7 +671,7 @@ const productFeatureDefinitions: ProductFeatureDefinition[] = [
 	{
 		id: "usb-c",
 		label: "USB-C",
-		iconName: "plug",
+		iconName: "usb",
 		priority: 88,
 		extractValue: extractUsbCFeature,
 	},
@@ -579,6 +688,34 @@ const productFeatureDefinitions: ProductFeatureDefinition[] = [
 		iconName: "zap",
 		priority: 84,
 		extractValue: extractChargingFeature,
+	},
+	{
+		id: "steel",
+		label: "Steel",
+		iconName: "steel",
+		priority: 88,
+		extractValue: extractSteelFeature,
+	},
+	{
+		id: "glass",
+		label: "Glass",
+		iconName: "glass",
+		priority: 85,
+		extractValue: extractGlassFeature,
+	},
+	{
+		id: "blade-length",
+		label: "Blade length",
+		iconName: "blade-length",
+		priority: 84,
+		extractValue: extractBladeLengthFeature,
+	},
+	{
+		id: "press-capacity",
+		label: "Press capacity",
+		iconName: "press-capacity",
+		priority: 83,
+		extractValue: extractPressCapacityFeature,
 	},
 	{
 		id: "capacity",
@@ -626,7 +763,7 @@ const productFeatureDefinitions: ProductFeatureDefinition[] = [
 	{
 		id: "weight",
 		label: "Weight",
-		iconName: "dumbbell",
+		iconName: "weight",
 		priority: 74,
 		extractValue: extractWeightFeature,
 	},
@@ -671,6 +808,7 @@ const productFeatureDefinitions: ProductFeatureDefinition[] = [
 		iconName: "package",
 		priority: 77,
 		extractValue: extractStorageCapacityFeature,
+		resolveIconName: resolveStorageCapacityIconName,
 	},
 	{
 		id: "fuel",
@@ -718,7 +856,7 @@ export function extractProductFeatures(note: LibraryItem, featureSections: strin
 				id: definition.id,
 				label: definition.label,
 				value,
-				iconName: definition.iconName,
+				iconName: definition.resolveIconName?.(value) ?? definition.iconName,
 				priority: definition.priority,
 			};
 		})

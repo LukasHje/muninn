@@ -26,6 +26,7 @@ export function buildExperienceViewModel(
 		notes,
 		filterState,
 		filteredNotes,
+		totalFilteredNotes: filteredNotes.length,
 		selectedNote,
 		statistics: buildExperienceStatistics(notes, definition),
 		metadataOptions: Object.fromEntries(

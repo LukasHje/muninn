@@ -67,5 +67,8 @@ export async function toggleFavoriteNote(noteId: string) {
 		noteIds: Array.from(ids).sort((a, b) => a.localeCompare(b, "sv")),
 	});
 
-	return !isFavorite;
+	return {
+		isFavorite: !isFavorite,
+		favoritesCount: ids.size,
+	};
 }

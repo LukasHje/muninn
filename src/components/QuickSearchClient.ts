@@ -348,11 +348,5 @@ export default function initQuickSearch() {
 		window.addEventListener("scroll", syncPopoverPosition, true);
 
 		root.dataset.quickSearchReady = "true";
-
-		if ("requestIdleCallback" in window) {
-			window.requestIdleCallback(() => prefetch());
-		} else {
-			globalThis.setTimeout(prefetch, 200);
-		}
 	}
 }

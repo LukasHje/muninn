@@ -1,6 +1,7 @@
 ---
 import ExperienceMetadataIcon from "src/components/experiences/ExperienceMetadataIcon.astro";
 import type { ExperienceMetadataIconDescriptor } from "src/lib/experiences/metadataIcons";
+import { getExperienceStatusColor } from "src/lib/experiences/status";
 
 interface Props {
 	metadataKey: string;
@@ -10,6 +11,8 @@ interface Props {
 }
 
 const { metadataKey, icon, label, value } = Astro.props;
+const isStatus = metadataKey === "status";
+const statusColor = isStatus ? getExperienceStatusColor(value) : undefined;
 ---
 
 <div class="flex items-start gap-4 py-3">
@@ -17,7 +20,19 @@ const { metadataKey, icon, label, value } = Astro.props;
 		<ExperienceMetadataIcon metadataKey={metadataKey} value={value} className="h-5 w-5 shrink-0" />
 		<div class="min-w-0 text-sm leading-6">
 			<span class="text-slate-500">{label.toLocaleLowerCase("en")}:</span>
-			<span class="ml-2 font-medium text-slate-800">{value}</span>
+			{
+				isStatus ? (
+					<span
+						class="ml-2 inline-flex items-center gap-2 font-semibold lowercase"
+						style={statusColor ? `color:${statusColor};` : undefined}
+					>
+						<span class="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true"></span>
+						{value.toLocaleLowerCase("en")}
+					</span>
+				) : (
+					<span class="ml-2 font-medium text-slate-800">{value}</span>
+				)
+			}
 		</div>
 	</div>
 </div>

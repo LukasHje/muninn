@@ -33,40 +33,35 @@ const sizeClasses =
 				? "h-9 w-9 rounded-[12px]"
 			: "h-9 w-9 rounded-xl";
 
-const buttonClasses =
-	variant === "chromeless"
-		? isFavorite
-			? "border-transparent bg-transparent text-amber-500 hover:text-amber-600"
-			: "border-transparent bg-transparent text-[#c8d0dd] hover:text-slate-600"
-		: variant === "floating"
-			? isFavorite
-				? "border-[#ebd9b0] bg-[rgba(255,251,243,0.96)] text-amber-500 hover:border-[#e3cf9d] hover:text-amber-600"
-				: "border-[#e8dfd2] bg-[rgba(255,255,255,0.94)] text-slate-300 hover:border-[#d7cbba] hover:text-amber-500"
-		: tone === "dark"
-			? isFavorite
-				? "border-white/18 bg-white/14 text-amber-300 hover:bg-white/18"
-				: "border-white/14 bg-slate-950/18 text-white/72 hover:bg-slate-950/28 hover:text-white"
-			: isFavorite
-				? "border-amber-200 bg-amber-50 text-amber-500 hover:bg-amber-100"
-				: "border-[#e6ddd0] bg-white text-slate-300 hover:border-[#d8cdbd] hover:text-amber-500";
 ---
 
-<form action="/favorites/toggle" method="post" class="shrink-0">
+<form
+	action="/favorites/toggle"
+	method="post"
+	class="favorite-toggle-form shrink-0"
+	data-favorite-toggle
+	data-favorite-note-id={noteId}
+	data-favorite-state={isFavorite ? "true" : "false"}
+	data-favorite-tone={tone}
+	data-favorite-variant={variant}
+	data-favorite-add-label={ui.favorites.add}
+	data-favorite-remove-label={ui.favorites.remove}
+>
 	<input type="hidden" name="noteId" value={noteId} />
 	<input type="hidden" name="redirectTo" value={redirectTo} />
 	<button
 		type="submit"
 		class:list={[
-			"inline-flex items-center justify-center transition",
+			"favorite-toggle-button inline-flex items-center justify-center transition",
 			variant === "surface"
 				? "border shadow-sm"
 				: variant === "floating"
 					? "border shadow-[0_12px_26px_rgba(15,23,42,0.10)]"
 					: "border-none shadow-none",
 			sizeClasses,
-			buttonClasses,
 		]}
 		aria-label={isFavorite ? ui.favorites.remove : ui.favorites.add}
+		aria-pressed={isFavorite ? "true" : "false"}
 		title={isFavorite ? ui.favorites.remove : ui.favorites.add}
 	>
 		<Icon
@@ -82,3 +77,90 @@ const buttonClasses =
 		/>
 	</button>
 </form>
+
+<style>
+	.favorite-toggle-form[data-favorite-variant="chromeless"] .favorite-toggle-button {
+		background: transparent;
+		color: #c8d0dd;
+	}
+
+	.favorite-toggle-form[data-favorite-variant="chromeless"] .favorite-toggle-button:hover {
+		color: #475569;
+	}
+
+	.favorite-toggle-form[data-favorite-variant="chromeless"][data-favorite-state="true"] .favorite-toggle-button {
+		color: #f59e0b;
+	}
+
+	.favorite-toggle-form[data-favorite-variant="chromeless"][data-favorite-state="true"] .favorite-toggle-button:hover {
+		color: #d97706;
+	}
+
+	.favorite-toggle-form[data-favorite-variant="floating"] .favorite-toggle-button {
+		border-color: #e8dfd2;
+		background: rgba(255, 255, 255, 0.94);
+		color: #cbd5e1;
+	}
+
+	.favorite-toggle-form[data-favorite-variant="floating"] .favorite-toggle-button:hover {
+		border-color: #d7cbba;
+		color: #f59e0b;
+	}
+
+	.favorite-toggle-form[data-favorite-variant="floating"][data-favorite-state="true"] .favorite-toggle-button {
+		border-color: #ebd9b0;
+		background: rgba(255, 251, 243, 0.96);
+		color: #f59e0b;
+	}
+
+	.favorite-toggle-form[data-favorite-variant="floating"][data-favorite-state="true"] .favorite-toggle-button:hover {
+		border-color: #e3cf9d;
+		color: #d97706;
+	}
+
+	.favorite-toggle-form[data-favorite-variant="surface"][data-favorite-tone="light"] .favorite-toggle-button {
+		border-color: #e6ddd0;
+		background: white;
+		color: #cbd5e1;
+	}
+
+	.favorite-toggle-form[data-favorite-variant="surface"][data-favorite-tone="light"] .favorite-toggle-button:hover {
+		border-color: #d8cdbd;
+		color: #f59e0b;
+	}
+
+	.favorite-toggle-form[data-favorite-variant="surface"][data-favorite-tone="light"][data-favorite-state="true"] .favorite-toggle-button {
+		border-color: #fde68a;
+		background: #fffbeb;
+		color: #f59e0b;
+	}
+
+	.favorite-toggle-form[data-favorite-variant="surface"][data-favorite-tone="light"][data-favorite-state="true"] .favorite-toggle-button:hover {
+		background: #fef3c7;
+	}
+
+	.favorite-toggle-form[data-favorite-variant="surface"][data-favorite-tone="dark"] .favorite-toggle-button {
+		border-color: rgba(255, 255, 255, 0.14);
+		background: rgba(2, 6, 23, 0.18);
+		color: rgba(255, 255, 255, 0.72);
+	}
+
+	.favorite-toggle-form[data-favorite-variant="surface"][data-favorite-tone="dark"] .favorite-toggle-button:hover {
+		background: rgba(2, 6, 23, 0.28);
+		color: white;
+	}
+
+	.favorite-toggle-form[data-favorite-variant="surface"][data-favorite-tone="dark"][data-favorite-state="true"] .favorite-toggle-button {
+		border-color: rgba(255, 255, 255, 0.18);
+		background: rgba(255, 255, 255, 0.14);
+		color: #fcd34d;
+	}
+
+	.favorite-toggle-form[data-favorite-variant="surface"][data-favorite-tone="dark"][data-favorite-state="true"] .favorite-toggle-button:hover {
+		background: rgba(255, 255, 255, 0.18);
+	}
+
+	.favorite-toggle-form[data-favorite-pending="true"] .favorite-toggle-button {
+		cursor: progress;
+	}
+</style>

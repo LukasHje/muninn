@@ -77,7 +77,7 @@ const remainingSectionCount = sections.filter(
 				aria-label="Close inspector"
 				title="Close inspector"
 			>
-				<Icon name="chevron-left" class="h-6 w-6" />
+				<Icon name="arrow-left" class="h-6 w-6" />
 			</button>
 		</Fragment>
 		<Fragment slot="actions">
@@ -153,55 +153,56 @@ const remainingSectionCount = sections.filter(
 		</div>
 	</div>
 
-	{
-		useCaseSection && (
-			<InspectorSection title="Use case" highlightKey="usecase">
-				<div>
+	<div class="my-6 w-full border-t border-[#d8d0c5]" aria-hidden="true"></div>
+
+	<div class="w-full min-w-0">
+		{
+			useCaseSection && (
+				<InspectorSection title="Use case" highlightKey="usecase">
 					<NoteContent note={note} content={useCaseSection.content} />
-				</div>
-			</InspectorSection>
-		)
-	}
+				</InspectorSection>
+			)
+		}
 
-	{
-		keyFeaturesSection && (
-			<InspectorSection title="Key features" highlightKey="keyfeatures" className="mt-8">
-				<ul class="list-outside list-disc space-y-2.5 pl-5 text-sm leading-7 text-slate-700 marker:text-slate-500">
-					{
-						keyFeatureItems.map((item) => (
-							<li>{item}</li>
-						))
-					}
-				</ul>
-			</InspectorSection>
-		)
-	}
+		{
+			keyFeaturesSection && (
+				<InspectorSection title="Key features" highlightKey="keyfeatures" className="mt-8">
+					<ul class="w-full list-outside list-disc space-y-2.5 pl-5 text-sm leading-7 text-slate-700 marker:text-slate-500">
+						{
+							keyFeatureItems.map((item) => (
+								<li>{item}</li>
+							))
+						}
+					</ul>
+				</InspectorSection>
+			)
+		}
 
-	{
-		limitationsSection && (
-			<InspectorSection title="Limitations" highlightKey="limitations" className="mt-8">
-				<ul class="list-outside list-disc space-y-2.5 pl-5 text-sm leading-7 text-slate-700 marker:text-slate-500">
-					{
-						limitationItems.map((item) => (
-							<li>{item}</li>
-						))
-					}
-				</ul>
-			</InspectorSection>
-		)
-	}
+		{
+			limitationsSection && (
+				<InspectorSection title="Limitations" highlightKey="limitations" className="mt-8">
+					<ul class="w-full list-outside list-disc space-y-2.5 pl-5 text-sm leading-7 text-slate-700 marker:text-slate-500">
+						{
+							limitationItems.map((item) => (
+								<li>{item}</li>
+							))
+						}
+					</ul>
+				</InspectorSection>
+			)
+		}
 
-	<InspectorSection title="Notes" highlightKey="notes" surface="panel" className="mt-10 experience-inspector-notes">
-		<p class="text-sm leading-8">
-			{notesExcerpt}
+		<InspectorSection title="Notes" highlightKey="notes" surface="panel" className="mt-10 experience-inspector-notes">
+			<p class="w-full text-sm leading-8">
+				{notesExcerpt}
 				{
 					notesIsTruncated && (
 						<a
-						href={notesSectionHref}
-						data-experience-open-note
-						data-note-href={notesSectionHref}
-						class="ml-2 inline text-slate-400 underline-offset-4 transition-colors hover:text-slate-500 hover:underline"
-					>
+							href={notesSectionHref}
+							data-experience-open-note
+							data-note-href={notesSectionHref}
+							class="ml-2 inline text-slate-400 underline-offset-4 transition-colors hover:text-slate-500 hover:underline"
+						>
 							<span aria-hidden="true">. . .</span>
 							<span class="ml-1">open note for full description</span>
 						</a>
@@ -210,13 +211,14 @@ const remainingSectionCount = sections.filter(
 			</p>
 		</InspectorSection>
 
-	{
-		remainingSectionCount > 0 && (
-			<p class="experience-inspector-section text-sm leading-7 text-slate-500">
-				{remainingSectionCount} more section{remainingSectionCount === 1 ? "" : "s"} available in the full note.
-			</p>
-		)
-	}
+		{
+			remainingSectionCount > 0 && (
+				<p class="experience-inspector-section w-full text-sm leading-7 text-slate-500">
+					{remainingSectionCount} more section{remainingSectionCount === 1 ? "" : "s"} available in the full note.
+				</p>
+			)
+		}
+	</div>
 </div>
 
 <style>

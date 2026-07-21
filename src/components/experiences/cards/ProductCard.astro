@@ -33,8 +33,6 @@ const statusValue = getNoteMetadataValue(note, "status");
 const contextTags = getExperienceContextTags(note, 4);
 const specificationEntries = extractProductFeatures(note, definition.featureSections, 4);
 const isPlaceholderImage = isPlaceholderExperienceImage(imageUrl, definition);
-const imageLoading = index < 6 ? "eager" : "lazy";
-const imageFetchPriority = index < 3 ? "high" : "auto";
 ---
 
 <article
@@ -62,19 +60,30 @@ const imageFetchPriority = index < 3 ? "high" : "auto";
 	>
 		<div class="experience-note-card__top grid grid-cols-[34%_minmax(0,1fr)] items-stretch gap-4 p-4.5">
 			<div
-				class="experience-note-card__image-column flex mt-8 self-stretch items-start justify-center overflow-hidden bg-transparent"
+				class="experience-note-card__image-column relative flex mt-8 self-stretch items-start justify-center overflow-visible bg-transparent"
 			>
 				<img
 					src={imageUrl}
 					alt=""
+					aria-hidden="true"
+					class="experience-note-card__image-spacer invisible block h-[90%] w-full max-w-full"
+					width="1000"
+					height="1000"
+					loading="lazy"
+					fetchpriority="low"
+					decoding="async"
+				/>
+				<img
+					src={imageUrl}
+					alt=""
 					class:list={[
-						"experience-note-card__image block h-[90%] w-full max-w-full bg-transparent object-top",
-						isPlaceholderImage
-							? "object-contain opacity-80"
-							: "object-contain transition duration-500 group-hover:scale-[1.03]",
+						"experience-note-card__image absolute block max-w-none bg-transparent object-contain",
+						isPlaceholderImage && "opacity-80",
 					]}
-					loading={imageLoading}
-					fetchpriority={imageFetchPriority}
+					width="1000"
+					height="1000"
+					loading="lazy"
+					fetchpriority="low"
 					decoding="async"
 				/>
 			</div>
@@ -114,32 +123,36 @@ const imageFetchPriority = index < 3 ? "high" : "auto";
 
 <style>
 	.experience-note-card {
-		transition:
-			transform 180ms ease,
-			box-shadow 180ms ease,
-			border-color 180ms ease,
-			background-color 180ms ease;
 		box-shadow:
 			0 18px 42px rgba(15, 23, 42, 0.05),
 			0 2px 8px rgba(15, 23, 42, 0.03);
 	}
 
-	.experience-note-card:hover {
-		transform: translateY(-3px);
-		border-color: #d9cebc;
-		background: linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(250, 246, 240, 1) 100%);
-		box-shadow:
-			0 22px 44px rgba(15, 23, 42, 0.08),
-			0 6px 18px rgba(15, 23, 42, 0.04);
+	.experience-note-card::after {
+		position: absolute;
+		z-index: 30;
+		inset: 0;
+		border: 1.25px solid transparent;
+		border-radius: inherit;
+		content: "";
+		pointer-events: none;
+		transition: border-color 180ms ease;
+	}
+
+	.experience-note-card:hover::after {
+		border-color: #C3A885;
 	}
 
 	.experience-note-card[data-selected="true"] {
-		transform: none;
-		border-color: #cdbfa9;
 		background: linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(248, 244, 238, 1) 100%);
 		box-shadow:
 			0 20px 40px rgba(15, 23, 42, 0.07),
 			inset 0 0 0 1px rgba(215, 203, 184, 0.26);
+	}
+
+	.experience-note-card[data-selected="true"]::after {
+		border-width: 1.5px;
+		border-color: #C3A885;
 	}
 
 	.experience-note-card__image-column,
@@ -148,9 +161,14 @@ const imageFetchPriority = index < 3 ? "high" : "auto";
 	}
 
 	.experience-note-card__image {
+		left: 50%;
+		top: -2.25rem;
+		height: calc(100% + 3.375rem);
+		width: 120%;
 		filter: none;
 		box-shadow: none;
 		mix-blend-mode: normal;
+		transform: translateX(-50%);
 	}
 
 	@media (max-width: 720px) {
@@ -167,6 +185,11 @@ const imageFetchPriority = index < 3 ? "high" : "auto";
 
 		.experience-note-card__image-column {
 			margin-top: 1.5rem;
+		}
+
+		.experience-note-card__image {
+			top: -1.375rem;
+			height: calc(100% + 2.125rem);
 		}
 
 		.experience-note-card__top > :global(div:last-child) {

@@ -198,6 +198,12 @@ The experience orchestration layer should stay relatively small.
 
 Its main responsibility is orchestration and composition, not feature ownership.
 
+## Browser Scaling
+
+The card grid exposes a stable `data-experience-card-list` boundary plus rendered and total counts. Card interaction uses event delegation from the Experience root, so cards added or recycled by future incremental rendering do not require new listeners.
+
+The current server render still emits the complete filtered collection. A future incremental or virtualized renderer should replace that behavior behind this boundary while keeping filtering, statistics, and inspector loading in their existing owners.
+
 ---
 
 ## Why This Minimizes Duplication
