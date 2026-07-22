@@ -14,6 +14,7 @@ import { parseObsidianAssetRef, resolveObsidianAsset } from "src/lib/resolveObsi
 import { getVaultAssetIndex } from "src/lib/vaultAssetIndex";
 import { RESOLVED_VAULT_PATH } from "src/lib/config";
 import { getFavoriteNoteIdSet } from "src/lib/favorites";
+import { replaceInlineDataviewExpressions } from "src/lib/inlineDataview";
 import { listVaultFilesRecursively } from "src/lib/vaultTraversal";
 
 export type DomainKey =
@@ -285,7 +286,14 @@ async function loadVaultNotes(): Promise<LibraryItem[]> {
 					domainLabel: getDomainLabel(domainKey),
 					domainIcon: domainMeta[domainKey].icon,
 					tone: domainMeta[domainKey].tone,
-					excerpt: buildExcerpt(body),
+					excerpt: buildExcerpt(
+						replaceInlineDataviewExpressions(body, {
+							title,
+							relativePath,
+							frontmatter,
+							normalized,
+						})
+					),
 					updatedLabel: formatUpdatedLabel(fileStat.mtimeMs),
 					imageUrl,
 					tags: normalized.tags,

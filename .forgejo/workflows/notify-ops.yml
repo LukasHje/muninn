@@ -19,7 +19,7 @@ jobs:
           FORGEJO_URL: http://192.168.0.42:30142
           OWNER: LukasHje
           REPOSITORY: muninn-ops
-          WORKFLOW: release.yml
+          WORKFLOW: release-pipeline.yml
 
           USERNAME: ${{ secrets.MUNINN_OPS_USERNAME }}
           TOKEN: ${{ secrets.MUNINN_OPS_TRIGGER_TOKEN }}
@@ -38,8 +38,6 @@ jobs:
             --data '{
               "ref": "main",
               "inputs": {
-                "source_repository": "${{ forge.repository }}",
-                "source_branch": "${{ forge.ref_name }}",
-                "trigger": "mirror-sync"
+                "mirror_ref": "${{ forgejo.sha }}"
               }
             }'

@@ -288,6 +288,8 @@ This avoids noisy matches while still making titles forgiving.
 
 The displayed snippet should come from the location that produced the highest-ranked match.
 
+Before body sections are indexed, inline Dataview expressions are resolved through `src/lib/inlineDataview.ts` using the note's normalized metadata. Matching and snippet generation therefore operate on the value a reader sees, not source placeholders such as `= this.usecase`. Quick Search and every Library Search surface inherit this behavior from `buildNoteSearchDocuments()`; UI components must not perform a second replacement.
+
 Examples:
 
 If a heading matched:
@@ -321,6 +323,26 @@ Highlighting should mirror the actual match.
 If the search engine matched using normalized text or fuzzy matching, the rendered highlight should represent that match whenever reasonably possible.
 
 Search logic and highlighting should never drift apart.
+
+---
+
+# Presentation-Only Tag Prioritization
+
+Library Browser cards may reorder a display-only copy of their tags so tags matching the active search remain visible inside a compact preview.
+
+This is not search ranking. The rule is:
+
+1. copy the note's source tag array
+2. use `tagMatchesNoteSearchQuery()` from `src/lib/noteSearch.ts`
+3. stably place matching tags before non-matching tags
+4. preserve relative source order inside both groups
+5. apply the visual preview limit only after promotion
+
+The component must not mutate normalized note tags, change result ranking, filter additional notes, or implement its own tokenization and normalization.
+
+Tag highlighting must continue to use the shared `highlightSearchText()` helper with the `tag` field. Promotion and highlighting therefore consume the same normalized query semantics, including multiple terms, case folding, Swedish characters, and literal regex-special characters.
+
+If search matching changes, update the shared matcher and its tests first. UI components should consume the revised contract rather than compensate locally.
 
 ---
 

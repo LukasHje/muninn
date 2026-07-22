@@ -1,4 +1,5 @@
 import { slugifySegment, stripMarkdown } from "src/lib/parser";
+import { replaceInlineDataviewExpressions } from "src/lib/inlineDataview";
 import type { LibraryItem } from "src/lib/vault";
 
 export interface NoteSearchHeading {
@@ -702,7 +703,13 @@ function getBestCandidateMatch(
 
 export function buildNoteSearchDocuments(items: LibraryItem[]): NoteSearchDocument[] {
 	return items.map((item) => {
-		const { headings, sections } = extractSearchSections(item.content);
+		const searchableContent = replaceInlineDataviewExpressions(item.content, {
+			title: item.title,
+			relativePath: item.relativePath,
+			frontmatter: item.frontmatter,
+			normalized: item.normalized,
+		});
+		const { headings, sections } = extractSearchSections(searchableContent);
 
 		return {
 			id: item.id,

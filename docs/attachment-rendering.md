@@ -1,221 +1,190 @@
 # Attachment Rendering Architecture
 
-**Status:** Proposed  
-**Owner:** Rendering System  
-**Related:** Markdown Rendering, Rendering Pipeline
+**Status:** Active, evolving
+**Owner:** Rendering System
+**Related:** `rendering-pipeline.md`, `rendering-philosophy.md`, `ui-boundaries.md`
 
----
+## Purpose
 
-# Purpose
+This document defines how Muninn presents embedded attachments and other rich rendered content inside a note.
 
-This document defines how embedded attachments are rendered within Muninn.
+The central rule is that Markdown and vault parsing identify content, while the rendering layer owns viewer selection, visual framing, responsive sizing, interaction, and detail views.
 
-The goal is to separate Markdown parsing from attachment rendering so that every embedded file type can be supported through a unified, extensible architecture.
+## Current rendering path
 
-This document describes architectural principles—not implementation details.
+The implemented path is currently pragmatic rather than a complete viewer registry:
 
----
-
-# Problem Statement
-
-Today, every embedded attachment (`![[...]]`) is treated as an image.
-
-This causes incorrect behavior such as:
-
-- PDFs appearing inside image galleries.
-- CSV files being interpreted as images.
-- No clear extension point for future file types.
-- Rendering logic leaking into the Markdown renderer.
-
-This architecture replaces that approach with a generic attachment rendering pipeline.
-
----
-
-# Design Goals
-
-The attachment system should:
-
-- Parse embedded attachments once.
-- Select viewers based on file type.
-- Keep Markdown rendering completely agnostic of presentation.
-- Support future attachment types without modifying the parser.
-- Reuse a consistent UI across all embedded documents.
-
----
-
-# Architectural Principles
-
-## 1. Markdown only describes content
-
-Markdown tells Muninn **what** is embedded.
-
-It never decides **how** the attachment should be rendered.
-
-Example
-
-```md
-![[Media-NAS parts list.pdf]]
+```text
+Markdown or Obsidian embed
+        ↓
+Markdown parsing and asset resolution
+        ↓
+NoteContent
+        ↓
+Image or PDF presentation
+        ↓
+Optional client viewer and lightbox
 ```
 
-The parser should emit an attachment node.
+Mermaid follows the same presentation principles but enters through the Markdown plugin pipeline:
 
-It should never instantiate a PDF viewer directly.
-
----
-
-## 2. Rendering is delegated
-
-Viewer selection belongs exclusively to the attachment rendering system.
-
-```
-Markdown
-
-↓
-
-AttachmentNode
-
-↓
-
-AttachmentResolver
-
-↓
-
-AttachmentRenderer
-
-↓
-
-Specific Viewer
+```text
+Mermaid code block
+        ↓
+Markdown plugin segment
+        ↓
+MermaidDiagram
+        ↓
+Inline preview and diagram lightbox
 ```
 
----
+The current implementation supports:
 
-## 3. One renderer per responsibility
+| Content | Inline presentation | Detail surface |
+| --- | --- | --- |
+| Images | Responsive image preview | Image lightbox and gallery |
+| PDF | Rendered page preview with page controls | PDF lightbox with navigation and zoom |
+| Mermaid | Rendered SVG preview | Mermaid lightbox with zoom |
 
-Each renderer owns a single document type.
+Mermaid is not a binary attachment, but it shares the attachment preview contract because it occupies the same visual role inside the reading flow.
 
-Examples:
+## Ownership boundaries
 
-- ImageViewer
-- PdfViewer
-- SpreadsheetViewer
-- DocumentViewer
-- AudioPlayer
-- VideoPlayer
-- DownloadCard
+### Parsing and resolution own content identity
 
-No renderer should know about Markdown.
+Parsing may determine:
 
----
+- that an embed exists;
+- its source reference;
+- resolved vault asset information;
+- explicit Obsidian image width;
+- whether a fenced block is Mermaid.
 
-## 4. Open for extension
+Parsing must not determine:
 
-Supporting a new file type should require:
+- viewport-relative size;
+- maximum preview height;
+- framing or shadows;
+- lightbox behavior;
+- responsive layout;
+- zoom behavior.
 
-1. Creating a renderer.
-2. Registering it.
+### Viewers own presentation
 
-Nothing else.
+`NoteContent`, the specific viewer component, and its client initializer own:
 
-No parser changes.
+- inline preview size and framing;
+- aspect-ratio preservation;
+- interaction and keyboard behavior;
+- lightbox initialization;
+- PDF rasterization dimensions;
+- viewer-specific loading and error states.
 
-No gallery changes.
+Application shell components must not reach into rendered Markdown to resize individual attachments.
 
-No rendering pipeline changes.
+## Inline preview contract
 
----
+An inline attachment is a reading-flow preview, not the primary inspection surface.
 
-# Viewer Matrix
+Every supported visual preview must follow these rules:
 
-| File Type | Viewer |
-|------------|--------|
-| Images | ImageViewer |
-| PDF | PdfViewer |
-| CSV | SpreadsheetViewer |
-| Excel | SpreadsheetViewer |
-| Word | DocumentViewer |
-| PowerPoint | PresentationViewer |
-| Audio | AudioPlayer |
-| Video | VideoPlayer |
-| Unknown | DownloadCard |
+- It must fit within the available note width.
+- It must not dominate the note vertically.
+- It must preserve its intrinsic aspect ratio.
+- It must be contained rather than cropped or distorted.
+- Tall or portrait content should become narrower and remain centered.
+- Wide content may use the available note width when it remains within the vertical budget.
+- Small content must not be enlarged merely to fill the note width.
+- The inline preview must not create a competing vertical scroll container.
+- Full-size inspection belongs in the viewer's lightbox.
 
----
+The shared inline preview budget is:
 
-# Image Gallery Rules
+- desktop: `min(68dvh, 44rem)`;
+- mobile and narrow viewports: `min(56dvh, 30rem)`.
 
-Image galleries are exclusively for images.
+These values are part of the NoteContent presentation contract. A viewer may render below the budget when its intrinsic dimensions are smaller, but it should not exceed the budget without a documented reason.
 
-Allowed:
+Explicit Obsidian image widths remain supported as preferred inline widths. They are still constrained by the available note width and the shared vertical preview budget.
 
-- image/*
+## Preview and detail separation
 
-Never include:
+Inline previews preserve document hierarchy and scanning rhythm. Lightboxes provide the space needed for detailed inspection.
 
-- pdf
-- csv
-- xlsx
-- docx
-- mp4
-- mp3
-- zip
+Lightboxes may therefore:
 
-Those should render inline using their dedicated viewers.
+- use the full viewport;
+- render at a higher resolution;
+- provide zoom and panning;
+- provide page or gallery navigation;
+- lock background scrolling while open.
 
----
+Inline preview limits must not be applied to lightbox content. Conversely, a lightbox must not be used to justify cropping or distorting the inline preview.
 
-# UI Principles
+## Viewer-specific rules
 
-Every embedded attachment should share a common visual language.
+### Images
 
-Each attachment block should contain:
+- Image previews use natural dimensions up to the available width and height budget.
+- Portrait images are centered rather than stretched to note width.
+- Image gallery membership is restricted to images.
+- PDF and future non-image attachments must never enter the image gallery.
 
-- File icon
-- Filename
-- Embedded preview (if supported)
-- Open externally
-- Download
+### PDF
 
-The attachment type determines the viewer—not the surrounding note layout.
+- The inline canvas is fitted against both the available width and the preview height budget.
+- PDF.js should rasterize close to the final inline display size instead of rendering a width-sized portrait page and relying on CSS to shrink it afterward.
+- Page controls remain available inline.
+- Full-page reading, zoom, and navigation belong in the PDF lightbox.
 
----
+### Mermaid
 
-# Performance
+- Mermaid SVGs must not be forced to fill the full note width.
+- The generated SVG is fitted within both width and height budgets without changing diagram semantics.
+- A large diagram may become less legible inline; the lightbox is the intended detailed inspection surface.
+- Mermaid generation options belong to the Mermaid renderer, not the Markdown parser.
 
-Heavy viewers should be lazy-loaded.
+## Performance
 
-Large documents should only initialize when entering the viewport.
+Heavy viewers should be loaded only when needed and should avoid blocking initial note rendering.
 
-Viewers should avoid blocking initial page rendering.
+Viewer implementations should:
 
----
+- render close to their final display dimensions;
+- avoid unnecessarily large canvases or decoded assets;
+- cache reusable documents where appropriate;
+- re-render only when a meaningful viewport dimension changes;
+- keep full-resolution work in the detail surface when possible.
 
-# Future Expansion
+## Future viewer architecture
 
-The architecture should allow support for additional file types without changing the rendering pipeline.
+The long-term extension model remains one renderer per responsibility:
 
-Potential future viewers include:
+- `ImageViewer`
+- `PdfViewer`
+- `SpreadsheetViewer`
+- `DocumentViewer`
+- `AudioPlayer`
+- `VideoPlayer`
+- `DownloadCard`
 
-- EPUB
-- Mermaid
-- Draw.io
-- Excalidraw
-- STL / GLTF
-- GeoJSON
-- GPX
-- ICS
-- Mind Maps
+Adding a future file type should eventually require registering a viewer rather than changing Markdown parsing. The current image/PDF branch in `NoteContent` is an implementation stage, not permission to scatter new extension checks through UI components.
 
----
+CSV, Excel, Word, PowerPoint, audio, video, archives, and unknown-file download cards are outside the currently implemented viewer set. When introduced, they must follow the same ownership and inline-preview principles where applicable.
 
-# Guiding Principle
+## Change checklist
 
-Muninn is a **knowledge vault**, not merely a Markdown renderer.
+Before changing attachment or rich-content rendering, verify:
 
-Users should be able to write:
+- Is this content identity or presentation logic?
+- Does the change preserve parser/viewer ownership?
+- Does the inline result stay within the preview budget?
+- Are intrinsic proportions preserved without cropping?
+- Is detailed inspection still available through an appropriate surface?
+- Does the change avoid adding a new page-level scroll container?
+- Are mobile, desktop, lightbox, and keyboard behavior still correct?
+- Does the documentation still describe the implementation honestly?
 
-```md
-![[filename.ext]]
-```
+## Guiding principle
 
-without needing to think about file types.
-
-Muninn should automatically select the most appropriate embedded experience based on the attachment itself.
+Rendered attachments should enrich a note without taking control of its hierarchy. The note remains the reading surface; the lightbox is the inspection surface.

@@ -66,7 +66,7 @@ Examples:
 
 The Product Feature Extractor then:
 
-1. finds bullet lists inside the configured feature sections
+1. finds bullet lists and Markdown table rows inside the configured feature sections
 2. recognizes supported product concepts
 3. derives short, comparable display values
 4. sorts by priority
@@ -75,6 +75,10 @@ The Product Feature Extractor then:
 If fewer exist, it renders fewer.
 
 It must never fill gaps with unrelated metadata.
+
+Recognized firearm specifications include caliber, barrel length and weight. Full metric cartridge names are retained, for example `7.62x51`; when the same rifle entry provides both `7.62x51` and `.308`, the more compact `.308` display value is preferred. Barrel length reuses the existing length icon used for knife blade length. Approximation markers on measurements, such as `~3.9 kg`, are preserved because they carry useful precision information.
+
+Product names that communicate a supported concept should normalize to its comparable display value. For example, Carhartt `Rain Defender`, `water resistant`, `vattenresistent` and `vattenavvisande` all produce the `Water resistant` feature with the droplets icon. This remains concept recognition rather than manufacturer-specific Card logic.
 
 ## Ownership
 

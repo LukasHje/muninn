@@ -1,6 +1,7 @@
 import path from "node:path";
 import { executeDataviewLite } from "src/lib/dataviewLite";
 import { executeDataviewJs } from "src/lib/dataviewJs";
+import { replaceInlineDataviewExpressions } from "src/lib/inlineDataview";
 import { parseObsidianAssetRef, resolveObsidianAsset } from "src/lib/resolveObsidianAsset";
 import type { MarkdownDocumentSegment, MarkdownParseContext } from "src/lib/markdown/types";
 
@@ -106,56 +107,6 @@ function parseMarkdownImageReference(reference: string) {
 	};
 }
 
-function readInlineDataviewValue(expression: string, context: MarkdownParseContext) {
-	const normalizedExpression = expression.trim();
-	if (normalizedExpression === "this.title") {
-		return context.note.title;
-	}
-
-	if (normalizedExpression === "this.file.name") {
-		return path.basename(context.note.relativePath, path.extname(context.note.relativePath));
-	}
-
-	const fieldMatch = normalizedExpression.match(/^this\.([A-Za-z0-9_-]+)$/);
-	if (!fieldMatch) {
-		return null;
-	}
-
-	const key = fieldMatch[1];
-	const normalizedValue = context.note.normalized.metadata[key];
-	if (Array.isArray(normalizedValue)) {
-		return normalizedValue.join(", ");
-	}
-	if (typeof normalizedValue === "string" && normalizedValue.trim()) {
-		return normalizedValue;
-	}
-
-	const frontmatterValue = context.note.frontmatter[key];
-	if (Array.isArray(frontmatterValue)) {
-		return frontmatterValue.join(", ");
-	}
-	if (typeof frontmatterValue === "string" && frontmatterValue.trim()) {
-		return frontmatterValue;
-	}
-
-	return null;
-}
-
-function replaceInlineDataviewExpressions(raw: string, context: MarkdownParseContext) {
-	const replaceExpression = (input: string) =>
-		input
-			.replace(/`=\s*(this\.[A-Za-z0-9_.-]+)`/g, (match, expression) => {
-				const resolved = readInlineDataviewValue(expression, context);
-				return resolved == null ? match : resolved;
-			})
-			.replace(/(^|[^\w`])=\s*(this\.[A-Za-z0-9_.-]+)/g, (match, prefix, expression) => {
-				const resolved = readInlineDataviewValue(expression, context);
-				return resolved == null ? match : `${prefix}${resolved}`;
-			});
-
-	return replaceExpression(raw);
-}
-
 function prettifyCalloutLabel(type: string) {
 	switch (type) {
 		case "abstract":
@@ -211,7 +162,7 @@ async function splitObsidianMarkdownSegments(
 
 		segments.push({
 			type: "markdown",
-			text: preprocessObsidianMarkdown(replaceInlineDataviewExpressions(text, context)),
+			text: preprocessObsidianMarkdown(replaceInlineDataviewExpressions(text, context.note)),
 			key: `${keyPrefix}-markdown-${segments.length}`,
 		});
 	};

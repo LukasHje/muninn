@@ -1,7 +1,12 @@
-const VAULT_RELOAD_COOLDOWN_SECONDS = 30;
+const VAULT_RELOAD_COOLDOWN_SECONDS = 120;
 const VAULT_RELOAD_COOLDOWN_STORAGE_KEY = "muninn:vault-reload-cooldown-until";
 
 let favoriteChangeListenerBound = false;
+
+export function formatVaultReloadCooldown(remainingSeconds: number) {
+	const remaining = Math.max(0, Math.ceil(remainingSeconds));
+	return remaining >= 60 ? `${Math.ceil(remaining / 60)}min` : `${remaining}s`;
+}
 
 function bindFavoriteChangeListener() {
 	if (favoriteChangeListenerBound) {
@@ -63,7 +68,7 @@ function initializeVaultReloadButton(button: HTMLElement) {
 		button.disabled = coolingDown;
 		button.dataset.cooldown = coolingDown ? "true" : "false";
 		countdown.hidden = !coolingDown;
-		countdown.textContent = `${remaining}s`;
+		countdown.textContent = formatVaultReloadCooldown(remaining);
 
 		if (!coolingDown) {
 			sessionStorage.removeItem(VAULT_RELOAD_COOLDOWN_STORAGE_KEY);

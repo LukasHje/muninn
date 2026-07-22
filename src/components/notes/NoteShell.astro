@@ -13,10 +13,9 @@ interface Props {
 	note: LibraryItem;
 	heroStyle?: "none" | "cover" | "travel";
 	summary?: string;
-	metadataImage?: boolean;
 }
 
-const { note, heroStyle = "none", summary = note.excerpt, metadataImage = false } = Astro.props;
+const { note, heroStyle = "none", summary = note.excerpt } = Astro.props;
 const breadcrumb = note.relativePath.split("/").slice(0, -1).join(" / ");
 const redirectTo = Astro.url.pathname + Astro.url.search;
 const returnToUrl = parseAppUrl(Astro.url.searchParams.get("returnTo"));
@@ -46,7 +45,7 @@ const updatedLabel = formatDate(note.normalized.updated) ?? note.updatedLabel;
 ---
 
 <div class="note-reader-shell" data-note-reader>
-	<NoteMetadataDrawer note={note} showImage={metadataImage} />
+	<NoteMetadataDrawer note={note} />
 	<div class="space-y-6 py-5 md:space-y-8 md:py-8" data-note-reader-content>
 	<section class="surface-panel overflow-hidden border-[#e8e0d4] shadow-[0_18px_44px_rgba(15,23,42,0.06)]">
 		{
