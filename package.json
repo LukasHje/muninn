@@ -10,11 +10,16 @@
     "dev": "astro dev",
     "prebuild": "node --import tsx src/scripts/copyVaultAssets.ts",
     "build": "astro build",
+    "typecheck": "astro check",
+    "test": "node --import tsx --test src/**/*.test.ts",
     "preview": "astro preview",
     "astro": "astro"
   },
   "devDependencies": {
-    "tsx": "^4.22.4"
+    "@astrojs/check": "^0.9.9",
+    "@types/node": "^22.20.1",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
   },
   "dependencies": {
     "@astrojs/node": "^11.0.0",

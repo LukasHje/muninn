@@ -1,7 +1,7 @@
-import { readdir } from "node:fs/promises";
 import path from "node:path";
 import { cleanImageReference } from "src/lib/parser";
 import { RESOLVED_VAULT_PATH } from "src/lib/config";
+import { listVaultFilesRecursively } from "src/lib/vaultTraversal";
 
 export interface VaultAssetIndex {
 	assetFiles: string[];
@@ -24,36 +24,13 @@ function formatRelativePath(value: string) {
 	return value.split(path.sep).join("/");
 }
 
-async function listFilesRecursively(directory: string): Promise<string[]> {
-	let entries;
-	try {
-		entries = await readdir(directory, { withFileTypes: true });
-	} catch (error) {
-		if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-			return [];
-		}
-		throw error;
-	}
-	const files = await Promise.all(
-		entries.map(async (entry) => {
-			const fullPath = path.join(directory, entry.name);
-			if (entry.isDirectory()) {
-				return listFilesRecursively(fullPath);
-			}
-			return fullPath;
-		})
-	);
-
-	return files.flat();
-}
-
 export async function getVaultAssetIndex(): Promise<VaultAssetIndex> {
 	if (assetIndexPromise) {
 		return assetIndexPromise;
 	}
 
 	assetIndexPromise = (async () => {
-		const allFiles = await listFilesRecursively(RESOLVED_VAULT_PATH);
+		const allFiles = await listVaultFilesRecursively(RESOLVED_VAULT_PATH);
 		const assetFiles = allFiles
 			.filter((file) => vaultAssetExtensions.has(path.extname(file).toLowerCase()))
 			.map((file) => formatRelativePath(path.relative(RESOLVED_VAULT_PATH, file)));

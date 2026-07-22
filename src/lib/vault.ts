@@ -1,4 +1,4 @@
-import { readdir, readFile, stat } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { ui } from "src/i18n";
 import { formatRelativeDateLabel, formatUiDate, formatUiNumber } from "src/i18n/format";
@@ -14,6 +14,7 @@ import { parseObsidianAssetRef, resolveObsidianAsset } from "src/lib/resolveObsi
 import { getVaultAssetIndex } from "src/lib/vaultAssetIndex";
 import { RESOLVED_VAULT_PATH } from "src/lib/config";
 import { getFavoriteNoteIdSet } from "src/lib/favorites";
+import { listVaultFilesRecursively } from "src/lib/vaultTraversal";
 
 export type DomainKey =
 	| "gear"
@@ -152,29 +153,6 @@ function formatRelativePath(value: string) {
 	return value.split(path.sep).join("/");
 }
 
-async function listFilesRecursively(directory: string): Promise<string[]> {
-	let entries;
-	try {
-		entries = await readdir(directory, { withFileTypes: true });
-	} catch (error) {
-		if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-			return [];
-		}
-		throw error;
-	}
-	const files = await Promise.all(
-		entries.map(async (entry) => {
-			const fullPath = path.join(directory, entry.name);
-			if (entry.isDirectory()) {
-				return listFilesRecursively(fullPath);
-			}
-			return fullPath;
-		})
-	);
-
-	return files.flat();
-}
-
 function formatUpdatedLabel(timestamp: number) {
 	return formatRelativeDateLabel(timestamp);
 }
@@ -246,7 +224,7 @@ async function loadVaultNotes(): Promise<LibraryItem[]> {
 	}
 
 	vaultNotesPromise = (async () => {
-		const allFiles = await listFilesRecursively(RESOLVED_VAULT_PATH);
+		const allFiles = await listVaultFilesRecursively(RESOLVED_VAULT_PATH);
 		const markdownFiles = allFiles.filter((file) => file.endsWith(".md"));
 		const assetIndex = await getVaultAssetIndex();
 
