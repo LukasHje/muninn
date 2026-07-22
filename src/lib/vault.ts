@@ -223,7 +223,7 @@ async function loadVaultNotes(): Promise<LibraryItem[]> {
 		return vaultNotesPromise;
 	}
 
-	vaultNotesPromise = (async () => {
+	const loadingPromise = (async () => {
 		const allFiles = await listVaultFilesRecursively(RESOLVED_VAULT_PATH);
 		const markdownFiles = allFiles.filter((file) => file.endsWith(".md"));
 		const assetIndex = await getVaultAssetIndex();
@@ -267,7 +267,9 @@ async function loadVaultNotes(): Promise<LibraryItem[]> {
 				);
 				const coverReference =
 					normalized.cover ? resolveObsidianAsset(normalized.cover, relativePath, assetIndex) : null;
-				const imageUrl = coverReference?.found ? coverReference.url : Object.values(resolvedImages)[0];
+				const imageUrl = (
+					coverReference?.found ? coverReference.url : Object.values(resolvedImages)[0]
+				) ?? undefined;
 
 				return {
 					id: relativePath,
@@ -296,8 +298,9 @@ async function loadVaultNotes(): Promise<LibraryItem[]> {
 
 		return notes.sort((a, b) => b.updatedAt - a.updatedAt);
 	})();
+	vaultNotesPromise = loadingPromise;
 
-	return vaultNotesPromise;
+	return loadingPromise;
 }
 
 export async function getLibraryItems() {

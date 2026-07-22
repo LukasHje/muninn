@@ -8,17 +8,18 @@ interface Props {
 
 const { metric } = Astro.props;
 
-const toneClasses = {
+const toneClasses: Partial<Record<DashboardMetric["tone"], string>> = {
 	slate: "bg-slate-100 text-slate-600",
 	amber: "bg-amber-100 text-amber-700",
 	sky: "bg-sky-100 text-sky-700",
 	emerald: "bg-emerald-100 text-emerald-700",
-}[metric.tone];
+};
+const toneClass = toneClasses[metric.tone];
 ---
 
 <article class="surface-card p-5">
 	<div class="flex items-center gap-3 text-slate-500">
-		<div class:list={["flex h-8 w-8 items-center justify-center rounded-xl", toneClasses]}>
+		<div class:list={["flex h-8 w-8 items-center justify-center rounded-xl", toneClass]}>
 			<Icon name={metric.icon} class="h-4 w-4" />
 		</div>
 		<p class="text-sm font-medium">{metric.label}</p>

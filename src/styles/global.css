@@ -25,7 +25,7 @@
 	}
 
 	.surface-card {
-		@apply rounded-[16px] border border-[#ece5dc] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.04)];
+		@apply rounded-2xl border border-[#ece5dc] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.04)];
 	}
 
 	.sidebar-shell {

@@ -117,13 +117,18 @@ class DataArray<T> extends Array<T> {
 		return DataArray.fromValues(Array.from(this).map(callback));
 	}
 
-	sort(compareFn?: ((left: T, right: T) => number) | ((value: T) => unknown), direction: "asc" | "desc" = "asc") {
+	sort(
+		compareFn?: ((left: T, right: T) => number) | ((value: T) => unknown),
+		direction: "asc" | "desc" = "asc"
+	): this {
 		if (!compareFn) {
-			return DataArray.fromValues(Array.from(this).sort());
+			return DataArray.fromValues(Array.from(this).sort()) as this;
 		}
 
 		if (compareFn.length >= 2) {
-			return DataArray.fromValues(Array.from(this).sort(compareFn as (left: T, right: T) => number));
+			return DataArray.fromValues(
+				Array.from(this).sort(compareFn as (left: T, right: T) => number)
+			) as this;
 		}
 
 		const selector = compareFn as (value: T) => unknown;
@@ -131,7 +136,7 @@ class DataArray<T> extends Array<T> {
 
 		return DataArray.fromValues(
 			Array.from(this).sort((left, right) => compareDataviewValues(selector(left), selector(right)) * multiplier)
-		);
+		) as this;
 	}
 }
 
