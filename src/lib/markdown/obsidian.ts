@@ -352,12 +352,12 @@ export function isFramedObsidianImage(extension?: string) {
 	return extension === ".svg" || extension === ".png";
 }
 
-export function applyObsidianSyntax(
+export async function applyObsidianSyntax(
 	segments: MarkdownDocumentSegment[],
 	context: MarkdownParseContext,
 	parseNested: ParseNestedSegments
 ): Promise<MarkdownDocumentSegment[]> {
-	return Promise.all(
+	const segmentsOrLists = await Promise.all(
 		segments.flatMap(async (segment) => {
 			if (segment.type === "markdown") {
 				return splitObsidianMarkdownSegments(segment.text, context, segment.key, parseNested);
@@ -369,7 +369,7 @@ export function applyObsidianSyntax(
 					result: executeDataviewLite(segment.code, context.allNotes, context.note),
 					query: segment.code,
 					key: segment.key.replace(/-code-/, "-dataview-"),
-				};
+				} satisfies MarkdownDocumentSegment;
 			}
 
 			if (segment.type === "code" && segment.language === "dataviewjs") {
@@ -378,12 +378,14 @@ export function applyObsidianSyntax(
 					result: await executeDataviewJs(segment.code, context.allNotes, context.note),
 					code: segment.code,
 					key: segment.key.replace(/-code-/, "-dataviewjs-"),
-				};
+				} satisfies MarkdownDocumentSegment;
 			}
 
 			return segment;
 		})
-	).then((segmentsOrLists) => segmentsOrLists.flat());
+	);
+
+	return segmentsOrLists.flat();
 }
 
 export { decodePseudoValue };

@@ -151,7 +151,7 @@ export function stripMarkdown(raw: string) {
 }
 
 export function extractImageReferences(
-	frontmatter: Record<string, string | string[]>,
+	frontmatter: Record<string, string | string[] | undefined>,
 	body: string
 ) {
 	const references: string[] = [];

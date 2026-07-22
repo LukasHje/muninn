@@ -1,38 +1,16 @@
-import { cp, mkdir, readdir } from "node:fs/promises";
+import { cp, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { RESOLVED_VAULT_PATH } from "src/lib/config";
 import { vaultAssetExtensions } from "src/lib/vaultAssetIndex";
+import { listVaultFilesRecursively } from "src/lib/vaultTraversal";
 
 const root = process.cwd();
 const sourceRoot = RESOLVED_VAULT_PATH;
 const targetRoot = path.join(root, "public", "vault-assets");
 
-async function listFilesRecursively(directory: string): Promise<string[]> {
-	let entries;
-	try {
-		entries = await readdir(directory, { withFileTypes: true });
-	} catch (error) {
-		if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-			return [];
-		}
-		throw error;
-	}
-	const files = await Promise.all(
-		entries.map(async (entry) => {
-			const fullPath = path.join(directory, entry.name);
-			if (entry.isDirectory()) {
-				return listFilesRecursively(fullPath);
-			}
-			return fullPath;
-		})
-	);
-
-	return files.flat();
-}
-
 async function copyVaultAssets() {
 	await mkdir(targetRoot, { recursive: true });
-	const files = await listFilesRecursively(sourceRoot);
+	const files = await listVaultFilesRecursively(sourceRoot);
 	const assetFiles = files.filter((file) => vaultAssetExtensions.has(path.extname(file).toLowerCase()));
 
 	await Promise.all(
