@@ -14,6 +14,18 @@ export const en = {
 		experiences: "Experiences",
 		poweredByAstro: "Powered by Astro",
 	},
+	applicationShell: {
+		openNavigation: "Open navigation",
+		closeNavigation: "Close navigation",
+		inspectorLabel: "Note inspector",
+	},
+	admin: {
+		reloadVault: "Reload Vault",
+		reloadingVault: "Reloading vault...",
+		vaultCacheInvalidated: "Vault cache invalidated. Changes will appear on the next page load.",
+		reloadVaultFailed: "Failed to reload vault.",
+		darkMode: "Dark Mode",
+	},
 	quickSearch: {
 		label: "Quick search",
 		placeholder: "Quick search notes...",
@@ -93,6 +105,7 @@ export const en = {
 		gridView: "Grid view",
 		results: "Results",
 		resultsSubtitle: (countLabel: string) => `${countLabel} notes`,
+		additionalTags: (count: number) => `${count} additional tags`,
 	},
 	pages: {
 		dashboardTitle: "Dashboard",
@@ -167,8 +180,10 @@ export const en = {
 			zoomIn: "Zoom in",
 			zoomOut: "Zoom out",
 		},
-		noteDetail: {
+	noteDetail: {
 		backToAllNotes: "Back to previous view",
+		openMetadata: "Open note metadata",
+		closeMetadata: "Close note metadata",
 		created: "Created",
 		updated: "Updated",
 		properties: "Properties",

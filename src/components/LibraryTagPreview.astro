@@ -1,0 +1,111 @@
+---
+import { ui } from "src/i18n";
+import { getLibraryTagPreview } from "src/lib/libraryTagPreview";
+import { highlightSearchText } from "src/lib/searchHighlight";
+
+interface Props {
+	tags: readonly string[];
+	selectedTags?: readonly string[];
+	searchQuery?: string;
+	class?: string;
+}
+
+const {
+	tags,
+	selectedTags = [],
+	searchQuery,
+	class: className = "",
+} = Astro.props;
+const selectedTagSet = new Set(selectedTags);
+const { orderedTags } = getLibraryTagPreview(tags, searchQuery);
+---
+
+{
+	orderedTags.length > 0 && (
+		<div
+			class:list={[
+				"flex max-h-[2.875rem] min-w-0 max-w-full flex-wrap gap-1.5 overflow-hidden",
+				className,
+			]}
+			data-library-tag-preview
+			data-additional-tags-template={ui.notesBrowser.additionalTags(-9999)}
+		>
+			{orderedTags.map((tag) => (
+				<span
+					class:list={[
+						"inline-flex max-w-full shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+						selectedTagSet.has(tag)
+							? "bg-sky-100 text-sky-700 ring-1 ring-sky-200"
+							: "bg-[#f4efe7] text-slate-500",
+					]}
+					data-library-tag
+				>
+					{searchQuery ? (
+						<span
+							class="block min-w-0 truncate"
+							set:html={`#${highlightSearchText(tag, searchQuery, { field: "tag" })}`}
+						></span>
+					) : (
+						<span class="block min-w-0 truncate">#{tag}</span>
+					)}
+				</span>
+			))}
+			<span
+				class="inline-flex shrink-0 items-center rounded-full bg-[#f4efe7] px-2 py-0.5 text-[11px] font-medium text-slate-400"
+				data-library-tag-overflow
+				hidden
+			></span>
+		</div>
+	)
+}
+
+<script>
+	const previewObservers = new WeakMap<Element, ResizeObserver>();
+
+	function countRows(elements: HTMLElement[]) {
+		return new Set(elements.filter((element) => !element.hidden).map((element) => element.offsetTop)).size;
+	}
+
+	function fitTagPreview(container: HTMLElement) {
+		const tags = Array.from(container.querySelectorAll<HTMLElement>("[data-library-tag]"));
+		const overflow = container.querySelector<HTMLElement>("[data-library-tag-overflow]");
+		if (!overflow || tags.length === 0) return;
+
+		for (const tag of tags) tag.hidden = false;
+		overflow.hidden = true;
+
+		if (countRows(tags) <= 2) return;
+
+		let visibleCount = tags.length;
+		while (visibleCount > 0) {
+			visibleCount -= 1;
+			tags[visibleCount].hidden = true;
+			const omittedCount = tags.length - visibleCount;
+			overflow.textContent = `+${omittedCount}`;
+			const labelTemplate = container.dataset.additionalTagsTemplate ?? "-9999 additional tags";
+			overflow.setAttribute("aria-label", labelTemplate.replace("-9999", String(omittedCount)));
+			overflow.hidden = false;
+
+			if (countRows([...tags.slice(0, visibleCount), overflow]) <= 2) break;
+		}
+	}
+
+	function initLibraryTagPreviews() {
+		for (const container of document.querySelectorAll<HTMLElement>("[data-library-tag-preview]")) {
+			fitTagPreview(container);
+			if (previewObservers.has(container)) continue;
+
+			let frame = 0;
+			const observer = new ResizeObserver(() => {
+				window.cancelAnimationFrame(frame);
+				frame = window.requestAnimationFrame(() => fitTagPreview(container));
+			});
+			observer.observe(container);
+			previewObservers.set(container, observer);
+		}
+	}
+
+	initLibraryTagPreviews();
+	document.fonts?.ready.then(initLibraryTagPreviews);
+	document.addEventListener("astro:page-load", initLibraryTagPreviews);
+</script>

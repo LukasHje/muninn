@@ -39,6 +39,14 @@ These documents define the separation between Application UI and Markdown UI, ow
 
 ---
 
+### Application shell
+
+- docs/application-shell-layout.md
+
+This document defines responsive viewport sizing, scroll ownership, and the fixed desktop workspace contract.
+
+---
+
 ### Search
 
 - docs/search-engine.md

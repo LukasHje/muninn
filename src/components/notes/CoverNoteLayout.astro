@@ -2,7 +2,6 @@
 import type { LibraryItem } from "src/lib/vault";
 import NoteContent from "src/components/notes/NoteContent.astro";
 import NoteShell from "src/components/notes/NoteShell.astro";
-import NoteProperties from "src/components/notes/NoteProperties.astro";
 
 interface Props {
 	note: LibraryItem;
@@ -11,26 +10,10 @@ interface Props {
 const { note } = Astro.props;
 ---
 
-<NoteShell note={note} heroStyle="none">
-	<section class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_336px] xl:items-start">
+<NoteShell note={note} heroStyle="none" metadataImage>
+	<section class="mx-auto max-w-[880px]">
 		<div class="surface-panel overflow-hidden px-5 py-7 md:px-10 md:py-10">
 			<NoteContent note={note} />
-		</div>
-		<div class="space-y-5 md:space-y-6 xl:sticky xl:top-6">
-			{
-				note.imageUrl && (
-					<div class="overflow-hidden rounded-[26px] border border-[#e8dfd3] bg-[#f8f4ed] shadow-[0_18px_40px_rgba(15,23,42,0.1)]">
-						<img
-							src={note.imageUrl}
-							alt=""
-							class="aspect-[4/5] h-full max-h-[520px] w-full object-cover"
-						/>
-					</div>
-				)
-			}
-			<div class="rounded-[26px] border border-[#ece4d8] bg-[linear-gradient(180deg,#fffdfa_0%,#fbf8f2_100%)] p-1 shadow-[0_12px_30px_rgba(15,23,42,0.04)]">
-				<NoteProperties note={note} />
-			</div>
 		</div>
 	</section>
 </NoteShell>

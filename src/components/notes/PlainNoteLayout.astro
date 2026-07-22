@@ -2,7 +2,6 @@
 import type { LibraryItem } from "src/lib/vault";
 import NoteContent from "src/components/notes/NoteContent.astro";
 import NoteShell from "src/components/notes/NoteShell.astro";
-import NoteProperties from "src/components/notes/NoteProperties.astro";
 
 interface Props {
 	note: LibraryItem;
@@ -12,8 +11,7 @@ const { note } = Astro.props;
 ---
 
 <NoteShell note={note} heroStyle="none">
-	<div class="mx-auto max-w-[880px] space-y-6 md:space-y-7">
-		<NoteProperties note={note} />
+	<div class="mx-auto max-w-[880px]">
 		<section class="surface-panel overflow-hidden px-5 py-7 md:px-10 md:py-10">
 			<NoteContent note={note} />
 		</section>

@@ -26,8 +26,8 @@ const { navigation, experiences } = Astro.props;
 const currentPath = Astro.url.pathname;
 ---
 
-<aside class="sidebar-shell h-fit p-5 md:p-6 xl:sticky xl:top-0">
-	<div class="flex items-center gap-3">
+<aside class="sidebar-shell flex h-full min-h-0 flex-col overflow-y-auto xl:overflow-hidden">
+	<div class="flex shrink-0 items-center gap-3">
 		<img
 			src="/branding/muninn-neg.svg"
 			alt="Muninn"
@@ -36,13 +36,21 @@ const currentPath = Astro.url.pathname;
 		<div>
 			<p class="text-[2rem] font-semibold tracking-[-0.04em] text-white">Muninn</p>
 		</div>
+		<button
+			type="button"
+			class="ml-auto inline-flex h-11 w-11 items-center justify-center rounded-xl text-white/65 transition hover:bg-white/8 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 xl:hidden"
+			data-sidebar-drawer-close
+			aria-label={ui.applicationShell.closeNavigation}
+		>
+			<Icon name="x" class="h-5 w-5" />
+		</button>
 	</div>
 
-	<div class="mt-6">
+	<div class="mt-6 shrink-0">
 		<QuickSearch />
 	</div>
 
-	<nav class="mt-5 space-y-1" aria-label={ui.navigation.primaryLabel}>
+	<nav class="mt-5 shrink-0 space-y-1" aria-label={ui.navigation.primaryLabel}>
 		{
 			navigation.map((item) => (
 				(() => {
@@ -79,11 +87,11 @@ const currentPath = Astro.url.pathname;
 		}
 	</nav>
 
-	<div class="mt-8 border-t border-white/10 pt-6">
+	<div class="mt-8 border-t border-white/10 pt-6 xl:flex xl:min-h-0 xl:flex-1 xl:flex-col">
 		<p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-white/30">
 			{ui.navigation.experiences}
 		</p>
-		<ul class="mt-4 space-y-1">
+		<ul class="sidebar-experience-list mt-4 space-y-1 xl:min-h-0 xl:max-h-[13.75rem] xl:flex-1 xl:overflow-y-auto xl:overscroll-contain xl:pr-5">
 			{
 				experiences.map((experience) => (
 					<li>
@@ -108,24 +116,58 @@ const currentPath = Astro.url.pathname;
 		</ul>
 	</div>
 
-	<div class="mt-10 flex items-center justify-between border-t border-white/10 pt-5 text-sm text-white/45">
-		<div class="flex items-center gap-2">
-			<Icon name="sparkles" class="h-4 w-4" />
-			<span>{ui.navigation.poweredByAstro}</span>
+	<div class="mt-10 shrink-0 xl:mt-6">
+		<div class="flex items-center justify-between gap-3 border-t border-white/10 pt-5 text-sm text-white/45">
+			<div class="flex items-center gap-2">
+				<Icon name="sparkles" class="h-4 w-4" />
+				<span>{ui.navigation.poweredByAstro}</span>
+			</div>
+			<div class="flex shrink-0 items-center gap-2">
+				<button
+					type="button"
+					title={ui.admin.reloadVault}
+					aria-label={ui.admin.reloadVault}
+					data-vault-reload
+					data-vault-reload-endpoint="/api/admin/reload-vault"
+					data-vault-reload-idle-label={ui.admin.reloadVault}
+					data-vault-reload-running-label={ui.admin.reloadingVault}
+					data-vault-reload-success-label={ui.admin.vaultCacheInvalidated}
+					data-vault-reload-error-label={ui.admin.reloadVaultFailed}
+					data-cooldown="false"
+					class="group inline-flex h-9 min-w-9 items-center justify-center gap-2 rounded-xl border border-transparent px-2 text-white transition hover:border-white/10 hover:bg-white/8 disabled:cursor-not-allowed data-[cooldown=true]:rounded-[5px] data-[cooldown=true]:border-sky-300/55 data-[cooldown=true]:bg-transparent data-[cooldown=true]:text-sky-200 data-[cooldown=true]:shadow-[0_0_0_1px_rgba(125,211,252,0.07),0_0_3px_rgba(125,211,252,0.10)] data-[cooldown=true]:hover:bg-transparent"
+				>
+					<span
+						hidden
+						data-vault-reload-countdown
+						class="text-[11px] font-semibold tabular-nums"
+					>30s</span>
+					<Icon
+						name="database-backup"
+						class="h-4 w-4 shrink-0 text-white opacity-[0.55] transition-opacity group-hover:opacity-100 group-data-[cooldown=true]:text-sky-200 group-data-[cooldown=true]:opacity-100"
+					/>
+				</button>
+				<span
+					class="inline-flex h-9 w-9 items-center justify-center rounded-xl text-white/55"
+					title={ui.admin.darkMode}
+					aria-label={ui.admin.darkMode}
+				>
+					<Icon name="moon" class="h-4 w-4" />
+				</span>
+			</div>
 		</div>
-		<Icon name="moon" class="h-4 w-4" />
+		<p
+			hidden
+			data-vault-reload-status
+			data-state="idle"
+			aria-live="polite"
+			class="mt-2 text-[11px] leading-4 text-white/50 data-[state=error]:text-rose-200 data-[state=success]:text-emerald-200"
+		></p>
 	</div>
 </aside>
 
-<script is:inline>
-	window.addEventListener("muninn:favorite-change", (event) => {
-		const count = event.detail?.favoritesCount;
-		if (typeof count !== "number") {
-			return;
-		}
+<script>
+	import initSidebarControls from "src/components/SidebarClient.ts";
 
-		document.querySelectorAll("[data-sidebar-favorites-count]").forEach((element) => {
-			element.textContent = String(count);
-		});
-	});
+	initSidebarControls();
+	document.addEventListener("astro:page-load", initSidebarControls);
 </script>

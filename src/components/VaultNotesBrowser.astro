@@ -93,12 +93,12 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 }
 ---
 
-<div class="space-y-6">
-	<section class="surface-panel p-4 md:p-5">
+<div class="flex h-full min-h-0 flex-col gap-3 md:gap-5 xl:gap-6">
+	<section class="surface-panel shrink-0 p-3 md:p-5">
 		<div class="flex items-center gap-3 border-b border-[#eee7de] px-1 pb-4">
 			<a
 				href="/"
-				class="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 transition hover:bg-[#f6f1ea] hover:text-slate-900"
+				class="inline-flex h-11 w-11 items-center justify-center rounded-xl text-slate-500 transition hover:bg-[#f6f1ea] hover:text-slate-900"
 				aria-label={ui.notesBrowser.backToDashboard}
 			>
 				<Icon name="chevron-left" class="h-4 w-4" />
@@ -106,7 +106,7 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 			<h1 class="text-lg font-semibold tracking-tight text-slate-900">{title}</h1>
 		</div>
 
-		<form method="get" class="space-y-4 pt-4">
+		<form method="get" class="space-y-3 pt-3 md:space-y-4 md:pt-4">
 			<input type="hidden" name="layout" value={layout} />
 			<label class="block">
 				<span class="sr-only">{ui.notesBrowser.searchNotes}</span>
@@ -134,13 +134,13 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 				</span>
 			</label>
 
-			<div class="pt-2 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-				<div class="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
-					<label class="relative">
+			<div class="flex flex-col gap-3 pt-1 lg:flex-row lg:items-center lg:justify-between lg:pt-2">
+				<div class="grid grid-cols-2 gap-2.5 md:flex md:flex-wrap md:items-center md:gap-3">
+					<label class="relative block min-w-0">
 						<span class="sr-only">{ui.notesBrowser.category}</span>
 						<select
 							name="category"
-							class="h-[46px] appearance-none rounded-[12px] border border-[#e7dfd5] bg-white py-2.5 pl-4 pr-10 text-sm font-medium text-slate-700 shadow-sm outline-none transition focus:border-slate-300"
+							class="h-[46px] w-full appearance-none rounded-[12px] border border-[#e7dfd5] bg-white py-2.5 pl-4 pr-10 text-sm font-medium text-slate-700 shadow-sm outline-none transition focus:border-slate-300"
 						>
 							<option value="all" selected={selectedCategory === "all"}>{ui.notesBrowser.allCategories}</option>
 							{
@@ -168,11 +168,11 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 						options={tagOptions}
 					/>
 
-					<label class="relative">
+					<label class="relative block min-w-0">
 						<span class="sr-only">{ui.notesBrowser.sort}</span>
 						<select
 							name="sort"
-							class="h-[46px] appearance-none rounded-[12px] border border-[#e7dfd5] bg-white py-2.5 pl-4 pr-10 text-sm font-medium text-slate-700 shadow-sm outline-none transition focus:border-slate-300"
+							class="h-[46px] w-full appearance-none rounded-[12px] border border-[#e7dfd5] bg-white py-2.5 pl-4 pr-10 text-sm font-medium text-slate-700 shadow-sm outline-none transition focus:border-slate-300"
 						>
 							<option value="updated" selected={sortBy === "updated"}>{ui.notesBrowser.sortByUpdated}</option>
 							<option value="title" selected={sortBy === "title"}>{ui.notesBrowser.sortByTitle}</option>
@@ -182,7 +182,7 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 
 					<button
 						type="submit"
-						class="rounded-[12px] bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
+						class="min-h-11 rounded-[12px] bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800"
 					>
 						{ui.notesBrowser.filter}
 					</button>
@@ -192,7 +192,7 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 					<a
 						href={buildLayoutHref("list")}
 						class:list={[
-							"inline-flex h-10 w-10 items-center justify-center rounded-[12px] border shadow-sm transition",
+							"inline-flex h-11 w-11 items-center justify-center rounded-[12px] border shadow-sm transition",
 							layout === "list"
 								? "border-[#ddd3c5] bg-[#f4efe7] text-slate-900"
 								: "border-[#e7dfd5] bg-white text-slate-500 hover:bg-[#faf6ef]",
@@ -204,7 +204,7 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 					<a
 						href={buildLayoutHref("grid")}
 						class:list={[
-							"inline-flex h-10 w-10 items-center justify-center rounded-[12px] border shadow-sm transition",
+							"inline-flex h-11 w-11 items-center justify-center rounded-[12px] border shadow-sm transition",
 							layout === "grid"
 								? "border-[#ddd3c5] bg-[#f4efe7] text-slate-900"
 								: "border-[#e7dfd5] bg-white text-slate-500 hover:bg-[#faf6ef]",
@@ -221,7 +221,11 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 	<SectionCard
 		title={ui.notesBrowser.results}
 		subtitle={ui.notesBrowser.resultsSubtitle(resultsCountLabel)}
-		bodyClass={layout === "grid" ? "" : "divide-y divide-[#efe8df]"}
+		sectionClass="flex min-h-0 flex-1 flex-col overflow-hidden"
+		bodyClass={[
+			"vault-notes-results min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1",
+			layout === "grid" ? "" : "divide-y divide-[#efe8df]",
+		].filter(Boolean).join(" ")}
 	>
 		{
 			filteredItems.length === 0 ? (
