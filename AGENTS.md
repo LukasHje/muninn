@@ -85,6 +85,16 @@ Every new vault-derived cache must participate in the central invalidation contr
 
 ---
 
+### Container runtime and releases
+
+- docs/container-runtime.md
+
+Read this before changing the Dockerfile, `.dockerignore`, container mounts, production startup command, Astro output adapter, runtime dependencies, or release-image flow.
+
+The production image must preserve the documented builder/runtime boundary. Vault content, source code, development dependencies, and build tools must not be copied into the runtime stage.
+
+---
+
 ### Domains and Experiences
 
 - docs/domain-language.md

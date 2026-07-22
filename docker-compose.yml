@@ -7,12 +7,13 @@ services:
     environment:
       NODE_ENV: production
       VAULT_PATH: /vault
-      DOCKER_CONFIG: /tmp/.docker
     volumes:
       - ${VAULT_HOST_PATH}:/vault:ro
-      - ${CACHE_HOST_PATH}:/app/public/vault-assets
-      - ${LOGS_HOST_PATH}:/logs
       - ${STATE_HOST_PATH}:/state
+    init: true
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
     tmpfs:
       - /tmp
     restart: unless-stopped
