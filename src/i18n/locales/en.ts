@@ -14,6 +14,13 @@ export const en = {
 		experiences: "Experiences",
 		poweredByAstro: "Powered by Astro",
 	},
+	admin: {
+		reloadVault: "Reload Vault",
+		reloadingVault: "Reloading vault...",
+		vaultCacheInvalidated: "Vault cache invalidated. Changes will appear on the next page load.",
+		reloadVaultFailed: "Failed to reload vault.",
+		darkMode: "Dark Mode",
+	},
 	quickSearch: {
 		label: "Quick search",
 		placeholder: "Quick search notes...",

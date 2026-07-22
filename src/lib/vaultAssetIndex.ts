@@ -30,6 +30,10 @@ export const vaultAssetExtensions = new Set([
 
 let assetIndexPromise: Promise<VaultAssetIndex> | null = null;
 
+export function invalidateVaultAssetIndexCache() {
+	assetIndexPromise = null;
+}
+
 function formatRelativePath(value: string) {
 	return value.split(path.sep).join("/");
 }

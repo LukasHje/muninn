@@ -100,6 +100,11 @@ export interface VaultNoteDetail {
 let vaultNotesPromise: Promise<LibraryItem[]> | null = null;
 let noteLookupPromise: Promise<Map<string, string>> | null = null;
 
+export function invalidateVaultDataCache() {
+	vaultNotesPromise = null;
+	noteLookupPromise = null;
+}
+
 export function getSidebarNavigation() {
 	return [
 		{ label: ui.navigation.home, href: "/", icon: "home" },

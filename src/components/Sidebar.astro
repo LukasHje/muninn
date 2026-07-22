@@ -108,24 +108,56 @@ const currentPath = Astro.url.pathname;
 		</ul>
 	</div>
 
-	<div class="mt-10 flex items-center justify-between border-t border-white/10 pt-5 text-sm text-white/45">
+	<div class="mt-10 flex items-center justify-between gap-3 border-t border-white/10 pt-5 text-sm text-white/45">
 		<div class="flex items-center gap-2">
 			<Icon name="sparkles" class="h-4 w-4" />
 			<span>{ui.navigation.poweredByAstro}</span>
 		</div>
-		<Icon name="moon" class="h-4 w-4" />
+		<div class="flex shrink-0 items-center gap-2">
+			<button
+				type="button"
+				title={ui.admin.reloadVault}
+				aria-label={ui.admin.reloadVault}
+				data-vault-reload
+				data-vault-reload-endpoint="/api/admin/reload-vault"
+				data-vault-reload-idle-label={ui.admin.reloadVault}
+				data-vault-reload-running-label={ui.admin.reloadingVault}
+				data-vault-reload-success-label={ui.admin.vaultCacheInvalidated}
+				data-vault-reload-error-label={ui.admin.reloadVaultFailed}
+				data-cooldown="false"
+				class="group inline-flex h-9 min-w-9 items-center justify-center gap-2 rounded-xl border border-transparent px-2 text-white transition hover:border-white/10 hover:bg-white/8 disabled:cursor-not-allowed data-[cooldown=true]:rounded-[5px] data-[cooldown=true]:border-sky-300/55 data-[cooldown=true]:bg-transparent data-[cooldown=true]:text-sky-200 data-[cooldown=true]:shadow-[0_0_0_1px_rgba(125,211,252,0.07),0_0_3px_rgba(125,211,252,0.10)] data-[cooldown=true]:hover:bg-transparent"
+			>
+				<span
+					hidden
+					data-vault-reload-countdown
+					class="text-[11px] font-semibold tabular-nums"
+				>30s</span>
+				<Icon
+					name="database-backup"
+					class="h-4 w-4 shrink-0 text-white opacity-[0.55] transition-opacity group-hover:opacity-100 group-data-[cooldown=true]:text-sky-200 group-data-[cooldown=true]:opacity-100"
+				/>
+			</button>
+			<span
+				class="inline-flex h-9 w-9 items-center justify-center rounded-xl text-white/55"
+				title={ui.admin.darkMode}
+				aria-label={ui.admin.darkMode}
+			>
+				<Icon name="moon" class="h-4 w-4" />
+			</span>
+		</div>
 	</div>
+	<p
+		hidden
+		data-vault-reload-status
+		data-state="idle"
+		aria-live="polite"
+		class="mt-2 text-[11px] leading-4 text-white/50 data-[state=error]:text-rose-200 data-[state=success]:text-emerald-200"
+	></p>
 </aside>
 
-<script is:inline>
-	window.addEventListener("muninn:favorite-change", (event) => {
-		const count = event.detail?.favoritesCount;
-		if (typeof count !== "number") {
-			return;
-		}
+<script type="module">
+	import initSidebarControls from "src/components/SidebarClient.ts";
 
-		document.querySelectorAll("[data-sidebar-favorites-count]").forEach((element) => {
-			element.textContent = String(count);
-		});
-	});
+	initSidebarControls();
+	document.addEventListener("astro:page-load", initSidebarControls);
 </script>
