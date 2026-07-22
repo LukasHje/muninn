@@ -130,5 +130,5 @@ function initializeVaultReloadButton(button: HTMLElement) {
 
 export default function initSidebarControls() {
 	bindFavoriteChangeListener();
-	document.querySelectorAll("[data-vault-reload]").forEach(initializeVaultReloadButton);
+	document.querySelectorAll<HTMLElement>("[data-vault-reload]").forEach(initializeVaultReloadButton);
 }
