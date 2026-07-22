@@ -10,7 +10,7 @@ interface Props {
 	value: string;
 }
 
-const { metadataKey, icon, label, value } = Astro.props;
+const { metadataKey, label, value } = Astro.props;
 const isStatus = metadataKey === "status";
 const statusColor = isStatus ? getExperienceStatusColor(value) : undefined;
 ---

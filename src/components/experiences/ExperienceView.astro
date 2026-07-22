@@ -239,7 +239,7 @@ const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
 	</aside>
 </div>
 
-<script type="module">
+<script>
 	function initExperienceViews() {
 	const roots = Array.from(document.querySelectorAll("[data-experience-root]"));
 
@@ -276,7 +276,7 @@ const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
 			Array.from(root.querySelectorAll("[data-experience-open-note]"));
 		const getFavoriteRedirectInputs = () =>
 			Array.from(root.querySelectorAll("[data-experience-inspector-favorite] input[name='redirectTo']"));
-		const getFavoriteForms = (noteId) =>
+		const getFavoriteForms = (noteId: string) =>
 			Array.from(root.querySelectorAll("[data-favorite-toggle]")).filter(
 				(form) => form instanceof HTMLFormElement && form.dataset.favoriteNoteId === noteId
 			);
@@ -348,7 +348,7 @@ const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
 			syncOpenNoteLinks();
 		};
 
-		const ensureInspectorPanel = async (noteId) => {
+		const ensureInspectorPanel = async (noteId: string) => {
 			if (!noteId || !inspectorEndpoint) {
 				return null;
 			}
@@ -411,7 +411,7 @@ const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
 			syncSelectionState();
 		};
 
-		const setFavoritePending = (noteId, pending) => {
+		const setFavoritePending = (noteId: string, pending: boolean) => {
 			for (const form of getFavoriteForms(noteId)) {
 				if (!(form instanceof HTMLFormElement)) {
 					continue;
@@ -426,7 +426,7 @@ const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
 			}
 		};
 
-		const setFavoriteState = (noteId, isFavorite) => {
+		const setFavoriteState = (noteId: string, isFavorite: boolean) => {
 			for (const form of getFavoriteForms(noteId)) {
 				if (!(form instanceof HTMLFormElement)) {
 					continue;

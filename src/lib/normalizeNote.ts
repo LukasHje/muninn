@@ -68,7 +68,7 @@ function normalizeTagToken(value: string) {
 		.toLowerCase();
 }
 
-function extractTagsFromValue(value: NormalizeableValue) {
+function extractTagsFromValue(value: NormalizeableValue): string[] {
 	if (Array.isArray(value)) {
 		return value.flatMap((entry) => extractTagsFromValue(entry));
 	}
