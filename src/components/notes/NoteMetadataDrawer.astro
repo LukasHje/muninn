@@ -6,10 +6,9 @@ import type { LibraryItem } from "src/lib/vault";
 
 interface Props {
 	note: LibraryItem;
-	showImage?: boolean;
 }
 
-const { note, showImage = false } = Astro.props;
+const { note } = Astro.props;
 ---
 
 <button
@@ -54,7 +53,7 @@ const { note, showImage = false } = Astro.props;
 
 		<div class="note-metadata-drawer__content" data-note-metadata-scroll>
 			{
-				showImage && note.imageUrl && (
+				note.imageUrl && (
 					<div class="overflow-hidden rounded-[5px] border border-[#e8dfd3] bg-[#f8f4ed] shadow-[0_14px_30px_rgba(15,23,42,0.08)]">
 						<img
 							src={note.imageUrl}

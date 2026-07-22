@@ -31,8 +31,10 @@ const { code } = Astro.props;
 <style>
 	.mermaid-diagram {
 		position: relative;
-		overflow-x: auto;
-		overflow-y: hidden;
+		display: grid;
+		max-width: 100%;
+		place-items: center;
+		overflow: hidden;
 		-webkit-overflow-scrolling: touch;
 	}
 
@@ -47,9 +49,10 @@ const { code } = Astro.props;
 
 	.mermaid-diagram :global(svg) {
 		display: block;
-		width: max-content;
-		min-width: 100%;
-		max-width: none;
+		width: auto;
+		min-width: 0;
+		max-width: 100%;
+		max-height: var(--muninn-attachment-preview-max-height, min(68dvh, 44rem));
 		height: auto;
 		margin: 0 auto;
 		overflow: visible;

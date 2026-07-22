@@ -5,10 +5,16 @@ const LIGHTBOX_ID = "muninn-pdf-lightbox";
 const MAX_ZOOM = 4;
 const MIN_ZOOM = 1;
 const ZOOM_STEP = 1.2;
+const INLINE_PREVIEW_DESKTOP_MAX_HEIGHT_REM = 44;
+const INLINE_PREVIEW_DESKTOP_VIEWPORT_RATIO = 0.68;
+const INLINE_PREVIEW_MOBILE_MAX_HEIGHT_REM = 30;
+const INLINE_PREVIEW_MOBILE_VIEWPORT_RATIO = 0.56;
+const INLINE_PREVIEW_MOBILE_BREAKPOINT = 768;
 
 interface InlinePdfState {
 	canvas: HTMLCanvasElement;
 	label: HTMLElement;
+	lastRenderedHeight: number;
 	lastRenderedWidth: number;
 	nextButton: HTMLButtonElement;
 	openButton: HTMLButtonElement;
@@ -143,6 +149,19 @@ function isRenderCancellation(error: unknown) {
 	return error instanceof Error && /RenderingCancelledException|cancelled/i.test(error.name + error.message);
 }
 
+function getInlinePreviewTargetHeight() {
+	const rootFontSize = Number.parseFloat(window.getComputedStyle(document.documentElement).fontSize) || 16;
+	const isMobile = window.innerWidth <= INLINE_PREVIEW_MOBILE_BREAKPOINT;
+	const viewportRatio = isMobile
+		? INLINE_PREVIEW_MOBILE_VIEWPORT_RATIO
+		: INLINE_PREVIEW_DESKTOP_VIEWPORT_RATIO;
+	const maxHeightRem = isMobile
+		? INLINE_PREVIEW_MOBILE_MAX_HEIGHT_REM
+		: INLINE_PREVIEW_DESKTOP_MAX_HEIGHT_REM;
+
+	return Math.max(240, Math.min(window.innerHeight * viewportRatio, rootFontSize * maxHeightRem));
+}
+
 async function renderPageToCanvas(
 	documentProxy: any,
 	pageNumber: number,
@@ -201,13 +220,15 @@ async function renderInlinePdf(state: InlinePdfState) {
 		state.pageNumber = Math.max(1, Math.min(state.pageNumber, state.totalPages));
 
 		const targetWidth = Math.max(state.openButton.clientWidth - 32, 240);
+		const targetHeight = getInlinePreviewTargetHeight();
 		state.lastRenderedWidth = targetWidth;
+		state.lastRenderedHeight = targetHeight;
 		await renderPageToCanvas(
 			documentProxy,
 			state.pageNumber,
 			state.canvas,
 			targetWidth,
-			undefined,
+			targetHeight,
 			1,
 			(task) => {
 				state.renderTask = task;
@@ -530,6 +551,7 @@ function bindInlinePdf(root: HTMLElement) {
 	const state: InlinePdfState = {
 		canvas,
 		label,
+		lastRenderedHeight: 0,
 		lastRenderedWidth: 0,
 		nextButton,
 		openButton,
@@ -579,7 +601,11 @@ export default function initPdfViewers() {
 			resizeTimeout = window.setTimeout(() => {
 				for (const state of inlineStateRegistry) {
 					const nextWidth = Math.max(state.openButton.clientWidth - 32, 240);
-					if (Math.abs(nextWidth - state.lastRenderedWidth) > 24) {
+					const nextHeight = getInlinePreviewTargetHeight();
+					if (
+						Math.abs(nextWidth - state.lastRenderedWidth) > 24 ||
+						Math.abs(nextHeight - state.lastRenderedHeight) > 24
+					) {
 						void renderInlinePdf(state);
 					}
 				}

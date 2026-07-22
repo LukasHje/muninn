@@ -1,6 +1,7 @@
 ---
 import { Marked } from "marked";
 import Icon from "src/components/Icon.astro";
+import { getCalloutAppearance } from "./calloutDefinitions";
 
 interface Props {
 	calloutType: string;
@@ -17,70 +18,17 @@ function renderInlineMarkdown(value: string) {
 	return typeof parsed === "string" ? parsed : value;
 }
 
-function getCalloutAppearance(type: string) {
-	switch (type) {
-		case "abstract":
-		case "summary":
-		case "tldr":
-			return {
-				icon: "clipboard-list",
-				tone: "obsidian-callout--info",
-			};
-		case "info":
-		case "todo":
-			return {
-				icon: "info",
-				tone: "obsidian-callout--info",
-			};
-		case "tip":
-		case "hint":
-			return {
-				icon: "lightbulb",
-				tone: "obsidian-callout--success",
-			};
-		case "success":
-		case "check":
-			return {
-				icon: "check-circle-2",
-				tone: "obsidian-callout--success",
-			};
-		case "warning":
-		case "caution":
-		case "attention":
-			return {
-				icon: "alert-triangle",
-				tone: "obsidian-callout--warning",
-			};
-		case "danger":
-		case "error":
-		case "bug":
-		case "failure":
-		case "fail":
-			return {
-				icon: "alert-octagon",
-				tone: "obsidian-callout--danger",
-			};
-		case "quote":
-		case "cite":
-			return {
-				icon: "quote",
-				tone: "obsidian-callout--quote",
-			};
-		default:
-			return {
-				icon: "file-text",
-				tone: "obsidian-callout--note",
-			};
-	}
-}
-
 const appearance = getCalloutAppearance(calloutType);
 const titleHtml = renderInlineMarkdown(title);
 ---
 
 {
 	collapsible ? (
-		<details class:list={["obsidian-callout", appearance.tone]} open={!collapsed}>
+		<details
+			class:list={["obsidian-callout", appearance.tone]}
+			data-callout={appearance.kind}
+			open={!collapsed}
+		>
 			<summary class="obsidian-callout__summary">
 				<span class="obsidian-callout__summary-main">
 					<Icon name={appearance.icon} class="obsidian-callout__icon" />
@@ -93,7 +41,10 @@ const titleHtml = renderInlineMarkdown(title);
 			</div>
 		</details>
 	) : (
-		<section class:list={["obsidian-callout", appearance.tone]}>
+		<section
+			class:list={["obsidian-callout", appearance.tone]}
+			data-callout={appearance.kind}
+		>
 			<div class="obsidian-callout__summary obsidian-callout__summary--static">
 				<span class="obsidian-callout__summary-main">
 					<Icon name={appearance.icon} class="obsidian-callout__icon" />
@@ -109,10 +60,11 @@ const titleHtml = renderInlineMarkdown(title);
 
 <style>
 	.obsidian-callout {
-		--callout-accent: #8ecae6;
-		--callout-bg: #f5fbff;
-		--callout-border: #d6edf8;
-		--callout-text: #15354b;
+		--callout-rgb: 68, 138, 255;
+		--callout-accent: rgb(var(--callout-rgb));
+		--callout-bg: rgba(var(--callout-rgb), 0.075);
+		--callout-border: rgba(var(--callout-rgb), 0.3);
+		--callout-text: #334155;
 		overflow: hidden;
 		border: 1px solid var(--callout-border);
 		border-top-width: 3px;
@@ -122,46 +74,50 @@ const titleHtml = renderInlineMarkdown(title);
 		color: var(--callout-text);
 	}
 
-	.obsidian-callout--info {
-		--callout-accent: #7dc4e5;
-		--callout-bg: #eef8fd;
-		--callout-border: #d2eefa;
-		--callout-text: #17384e;
+	.obsidian-callout--note {
+		--callout-rgb: 68, 138, 255;
 	}
 
-	.obsidian-callout--note {
-		--callout-accent: #94a3b8;
-		--callout-bg: #f7f9fc;
-		--callout-border: #e2e8f0;
-		--callout-text: #1f2937;
+	.obsidian-callout--abstract,
+	.obsidian-callout--tip {
+		--callout-rgb: 0, 191, 188;
+	}
+
+	.obsidian-callout--info,
+	.obsidian-callout--todo {
+		--callout-rgb: 0, 184, 212;
 	}
 
 	.obsidian-callout--success {
-		--callout-accent: #5fb992;
-		--callout-bg: #f1fbf5;
-		--callout-border: #d8f2e2;
-		--callout-text: #163a2a;
+		--callout-rgb: 0, 200, 83;
+	}
+
+	.obsidian-callout--question {
+		--callout-rgb: 100, 221, 23;
 	}
 
 	.obsidian-callout--warning {
-		--callout-accent: #e8aa4e;
-		--callout-bg: #fff9f0;
-		--callout-border: #f9e6c6;
-		--callout-text: #523515;
+		--callout-rgb: 255, 145, 0;
+	}
+
+	.obsidian-callout--failure {
+		--callout-rgb: 255, 82, 82;
 	}
 
 	.obsidian-callout--danger {
-		--callout-accent: #d66f7d;
-		--callout-bg: #fff5f6;
-		--callout-border: #f5d9de;
-		--callout-text: #51222c;
+		--callout-rgb: 255, 23, 68;
+	}
+
+	.obsidian-callout--bug {
+		--callout-rgb: 245, 0, 87;
+	}
+
+	.obsidian-callout--example {
+		--callout-rgb: 124, 77, 255;
 	}
 
 	.obsidian-callout--quote {
-		--callout-accent: #9b87dd;
-		--callout-bg: #f8f5ff;
-		--callout-border: #e8defc;
-		--callout-text: #35245c;
+		--callout-rgb: 158, 158, 158;
 	}
 
 	.obsidian-callout__summary {
@@ -189,8 +145,8 @@ const titleHtml = renderInlineMarkdown(title);
 
 	.obsidian-callout :global(.obsidian-callout__icon) {
 		flex-shrink: 0;
-		width: 0.98rem;
-		height: 0.98rem;
+		width: 1.08rem;
+		height: 1.08rem;
 		color: var(--callout-accent);
 		opacity: 0.95;
 	}

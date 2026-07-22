@@ -10,7 +10,7 @@ interface Props {
 const { note } = Astro.props;
 ---
 
-<NoteShell note={note} heroStyle="none" metadataImage>
+<NoteShell note={note} heroStyle="none">
 	<section class="mx-auto max-w-[880px]">
 		<div class="surface-panel overflow-hidden px-5 py-7 md:px-10 md:py-10">
 			<NoteContent note={note} />

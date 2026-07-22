@@ -84,3 +84,14 @@ This keeps the Experience layer declarative while allowing each family to evolve
 Product-oriented card families should consume a dedicated Product Feature Extraction system rather than arbitrary frontmatter fields.
 
 The Default Experience always has a viable fallback through `generic-note`. Registering an Experience does not require creating a new Card Family.
+
+## Generic Note Image Contract
+
+`generic-note` uses the same full-bleed preview behavior as ordinary Library and dashboard cards:
+
+- a real note image fills the complete fixed-height image frame with `object-fit: cover`
+- the frame clips overflow so cards keep a stable, scannable height
+- the image may receive a restrained hover scale inside the clipped frame
+- an Experience placeholder remains centered with internal spacing and `object-fit: contain`
+
+Do not apply placeholder treatment to note images. Conversely, do not crop an Experience illustration or logo merely to make it full bleed. Image candidate selection remains owned by the shared Experience selectors; the Card Family owns only presentation.

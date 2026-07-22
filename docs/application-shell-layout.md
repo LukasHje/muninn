@@ -4,6 +4,8 @@ Muninn uses an application-style viewport at every supported screen size. The in
 
 This document defines viewport sizing and scroll ownership for Application UI. It complements `docs/ui-boundaries.md`, which defines the separation between Application UI and Markdown UI.
 
+Standard note hero and metadata presentation rules live in `docs/note-reader-ui.md`. This document owns only their relationship to the application shell.
+
 ## Design Goal
 
 Muninn should behave like a fixed workspace rather than a long document:
@@ -92,6 +94,27 @@ Avoid accidental chains where the document, main workspace, panel, and list can 
 
 The shell owns only the browser-sized frame. Individual features still own the layout and scrolling inside their workspace.
 
+## Shell Implementation Ownership
+
+`src/layouts/MainLayout.astro` provides the shell structure and overlay mounting layer. `src/components/ApplicationShellClient.ts` is the single client-side controller for global shell overlays.
+
+The controller owns:
+
+- the mutually exclusive overlay state (`none`, `sidebar`, `inspector`, or `metadata`)
+- backdrop ownership
+- focus movement, trapping, and restoration
+- background `inert` state
+- workspace scroll capture and restoration
+- Escape and pointer gesture handling
+- breakpoint cleanup
+- shell-level mounting of note metadata overlay UI
+
+Feature components report their state and provide content or triggers. They must not create parallel global modal controllers, additional body scroll locks, independent safe-area systems, or competing overlay backdrops.
+
+The note reader authors its metadata trigger and drawer content, but the shell mounts them into its overlay layer. This prevents note layout, workspace padding, and scroll containers from becoming positioning contexts or reserving reader width.
+
+Astro client navigation reinitializes the shell on `astro:page-load` and clears transient overlay state on `astro:before-swap`. New shell interactions must remain safe across client-side route changes rather than relying only on an initial document load.
+
 ## Mobile Header Contract
 
 Below `xl`, the shell provides a compact header that:
@@ -155,6 +178,8 @@ The browser is a full-height flex column at every size:
 List and grid layouts must share the same scroll container. Filtering, sorting, and search must not change scroll ownership.
 
 Library Browser tag previews are presentation-only and use the available card width for at most two visual rows. Tags retain their natural width and flow across each row; a compact `+N` indicator replaces tags that do not fit and is itself included in the two-row fit. In list layout, the preview spans beneath the title/update row so the update label does not reserve empty space beside the tags. During search, tags matching the full query or any normalized query term are stably promoted before fitting. Source tag arrays and search ranking remain unchanged.
+
+Tag promotion must use the shared matcher documented in `docs/search-engine.md`; Library components may not introduce their own query normalization.
 
 ## Experience Contract
 
@@ -250,6 +275,13 @@ When building or changing a desktop feature screen:
 9. Use the shared `xl` shell breakpoint rather than scattering alternative shell thresholds.
 
 Do not solve viewport layout with JavaScript measurements when CSS grid, flexbox, `dvh`, and overflow ownership are sufficient.
+
+Muninn currently permits two narrow measurement exceptions:
+
+- count-aware tag previews measure natural-width items so a correct `+N` control fits without cutting a tag
+- the shell measures the workspace scrollbar rail so the fixed metadata trigger sits beside it rather than covering it
+
+These measurements refine presentation after CSS has established ownership and dimensions. They must not determine shell height, invent breakpoints, resize the main workspace, or become a general layout engine. On platforms with overlay scrollbars, the desktop metadata trigger uses a small fallback inset only while vertical overflow exists.
 
 ## Common Failure Modes
 

@@ -94,7 +94,10 @@ function extractFeatureBullets(note: LibraryItem, featureSections: string[]) {
 		allowedSections.has(section.normalizedTitle ?? normalizeHeadingTitle(section.title))
 	);
 
-	return sections.flatMap((section) => parseMarkdownBullets(section.content));
+	return sections.flatMap((section) => [
+		...parseMarkdownBullets(section.content),
+		...parseMarkdownTableRows(section.content),
+	]);
 }
 
 function parseMarkdownBullets(content: string) {
@@ -139,6 +142,24 @@ function parseMarkdownBullets(content: string) {
 
 	flushBullet();
 	return bullets;
+}
+
+function parseMarkdownTableRows(content: string) {
+	return content
+		.split(/\r?\n/g)
+		.map((line) => line.trim())
+		.filter((line) => line.startsWith("|") && line.endsWith("|"))
+		.map((line) =>
+			line
+				.slice(1, -1)
+				.split("|")
+				.map((cell) => normalizeBulletValue(cell))
+		)
+		.filter((cells) =>
+			cells.length >= 2 && !cells.every((cell) => /^:?-{3,}:?$/.test(cell))
+		)
+		.map((cells) => normalizeBulletValue(cells.join(" ")))
+		.filter(Boolean);
 }
 
 function extractRuntimeFeature(bullet: string) {
@@ -285,7 +306,11 @@ function extractWaterproofFeature(bullet: string) {
 		return ratingMatch[1].toUpperCase();
 	}
 
-	if (/\bwater resistant\b|\bvattenresistent\b/i.test(bullet)) {
+	if (
+		/\bwater resistant\b|\bvattenresistent\b|\bvattenavvisande\b|\brain defender\b/i.test(
+			bullet
+		)
+	) {
 		return "Water resistant";
 	}
 
@@ -392,6 +417,22 @@ function extractBladeLengthFeature(bullet: string) {
 
 	const lengthMatch = bullet.match(/\b(\d+(?:[.,]\d+)?)\s*mm\b/i);
 	return lengthMatch ? formatUnitValue(lengthMatch[1], "mm") : null;
+}
+
+function extractBarrelLengthFeature(bullet: string) {
+	if (!/\b(barrel length|barrel|pipa)\b/i.test(bullet)) {
+		return null;
+	}
+
+	const inchMatch = bullet.match(
+		/\b(\d+(?:[.,]\d+)?)\s*(?:-|\s)?\s*(?:"|″|inches?|in\b|tum(?:s)?\b)/i
+	);
+	if (inchMatch) {
+		return `${formatDecimalValue(inchMatch[1])}"`;
+	}
+
+	const millimeterMatch = bullet.match(/\b(\d+(?:[.,]\d+)?)\s*mm\b/i);
+	return millimeterMatch ? formatUnitValue(millimeterMatch[1], "mm") : null;
 }
 
 function extractPressCapacityFeature(bullet: string) {
@@ -502,8 +543,15 @@ function extractWaypointFeature(bullet: string) {
 }
 
 function extractWeightFeature(bullet: string) {
-	const weightMatch = bullet.match(/\b(\d+(?:[.,]\d+)?)\s*(kg|g)\b/i);
-	return weightMatch ? formatUnitValue(weightMatch[1], weightMatch[2].toLowerCase()) : null;
+	const weightMatch = bullet.match(
+		/(?:(~|≈)|\b(ca\.?|cirka|approx(?:imately)?|about)\b)?\s*(\d+(?:[.,]\d+)?)\s*(kg|g)\b/i
+	);
+	if (!weightMatch) {
+		return null;
+	}
+
+	const approximation = weightMatch[1] || weightMatch[2] ? "~" : "";
+	return `${approximation}${formatUnitValue(weightMatch[3], weightMatch[4].toLowerCase())}`;
 }
 
 function extractCountryOfOriginFeature(bullet: string) {
@@ -519,30 +567,39 @@ function extractMadeInUsaFeature(bullet: string) {
 }
 
 function extractCaliberFeature(bullet: string) {
+	if (!/\b(caliber|kaliber)\b/i.test(bullet)) {
+		return null;
+	}
+
 	const gaugeMatch = bullet.match(/\b(\d+(?:[.,]\d+)?)\s*gauge\b/i);
 	if (gaugeMatch) {
 		return `${formatDecimalValue(gaugeMatch[1])} gauge`;
 	}
 
+	const decimalRifleCaliberMatch = bullet.match(/\.(308|223)\b/i);
+	if (decimalRifleCaliberMatch) {
+		return `.${decimalRifleCaliberMatch[1]}`;
+	}
+
 	const cartridgeMillimeterMatch = bullet.match(
-		/\b(\d+(?:[.,]\d+)?)\s*[x×]\s*\d+(?:[.,]\d+)?\s*mm\b/i
+		/\b(\d+(?:[.,]\d+)?)\s*[x×]\s*(\d+(?:[.,]\d+)?)\s*(?:mm\b)?/i
 	);
-	if (cartridgeMillimeterMatch && /\b(caliber|kaliber)\b/i.test(bullet)) {
-		return `${formatDecimalValue(cartridgeMillimeterMatch[1])} mm`;
+	if (cartridgeMillimeterMatch) {
+		return `${formatDecimalValue(cartridgeMillimeterMatch[1])}x${formatDecimalValue(cartridgeMillimeterMatch[2])}`;
 	}
 
 	const millimeterMatch = bullet.match(/\b(\d+(?:[.,]\d+)?)\s*mm\b/i);
-	if (millimeterMatch && /\b(caliber|kaliber)\b/i.test(bullet)) {
+	if (millimeterMatch) {
 		return `${formatDecimalValue(millimeterMatch[1])} mm`;
 	}
 
 	const acpMatch = bullet.match(/(\.\d{2,3})\s*ACP\b/i);
-	if (acpMatch && /\b(caliber|kaliber)\b/i.test(bullet)) {
+	if (acpMatch) {
 		return `${acpMatch[1]} ACP`;
 	}
 
 	const caliberCodeMatch = bullet.match(/(?:\b(5\.56|7\.62|9(?:[.,]0)?|30-06)\b|(\.(?:308|223))\b)/i);
-	if (caliberCodeMatch && /\b(caliber|kaliber)\b/i.test(bullet)) {
+	if (caliberCodeMatch) {
 		return caliberCodeMatch[1] ?? caliberCodeMatch[2];
 	}
 
@@ -709,6 +766,13 @@ const productFeatureDefinitions: ProductFeatureDefinition[] = [
 		iconName: "blade-length",
 		priority: 84,
 		extractValue: extractBladeLengthFeature,
+	},
+	{
+		id: "barrel-length",
+		label: "Barrel length",
+		iconName: "blade-length",
+		priority: 88,
+		extractValue: extractBarrelLengthFeature,
 	},
 	{
 		id: "press-capacity",

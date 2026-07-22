@@ -125,6 +125,10 @@ Today the layers are primarily represented like this:
 
 Supporting helpers still exist outside the `markdown/` folder when they are shared by multiple features, for example vault asset resolution and Dataview execution.
 
+Inline Dataview expressions are resolved by `src/lib/inlineDataview.ts`. Both the Obsidian Markdown stage and vault excerpt generation use this helper so rendered note content, Library excerpts, and note-reader hero summaries do not disagree about values such as `= this.title` or `= this.usecase`. UI components must consume the resolved excerpt rather than implementing Dataview replacement themselves.
+
+Obsidian callout syntax is identified in the Obsidian stage, but its alias, Lucide icon and color mapping belong to Markdown UI. The detailed ownership and extension contract lives in `docs/callout-rendering.md`.
+
 ## Practical Rule
 
 When adding a new feature, ask:
