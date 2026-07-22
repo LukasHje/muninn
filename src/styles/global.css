@@ -32,6 +32,50 @@
 		@apply min-h-screen rounded-none border-r border-white/8 bg-[linear-gradient(180deg,#0a1018_0%,#101722_100%)] text-white shadow-[0_20px_40px_rgba(2,6,23,0.22)];
 	}
 
+	.sidebar-experience-list {
+		scrollbar-width: thin;
+		scrollbar-color: rgba(148, 163, 184, 0.28) transparent;
+	}
+
+	.sidebar-experience-list::-webkit-scrollbar {
+		width: 0.5px;
+	}
+
+	.sidebar-experience-list::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	.sidebar-experience-list::-webkit-scrollbar-thumb {
+		border-radius: 9999px;
+		background: rgba(148, 163, 184, 0.28);
+	}
+
+	.sidebar-experience-list::-webkit-scrollbar-thumb:hover {
+		background: rgba(186, 230, 253, 0.42);
+	}
+
+	.vault-notes-results {
+		scrollbar-width: thin;
+		scrollbar-color: rgba(148, 163, 184, 0.38) transparent;
+	}
+
+	.vault-notes-results::-webkit-scrollbar {
+		width: 5px;
+	}
+
+	.vault-notes-results::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	.vault-notes-results::-webkit-scrollbar-thumb {
+		border-radius: 9999px;
+		background: rgba(148, 163, 184, 0.38);
+	}
+
+	.vault-notes-results::-webkit-scrollbar-thumb:hover {
+		background: rgba(100, 116, 139, 0.52);
+	}
+
 	.muted-eyebrow {
 		@apply text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400;
 	}

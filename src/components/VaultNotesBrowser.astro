@@ -93,8 +93,8 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 }
 ---
 
-<div class="space-y-6">
-	<section class="surface-panel p-4 md:p-5">
+<div class="space-y-6 xl:flex xl:h-full xl:min-h-0 xl:flex-col xl:gap-6 xl:space-y-0">
+	<section class="surface-panel shrink-0 p-4 md:p-5">
 		<div class="flex items-center gap-3 border-b border-[#eee7de] px-1 pb-4">
 			<a
 				href="/"
@@ -221,7 +221,11 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 	<SectionCard
 		title={ui.notesBrowser.results}
 		subtitle={ui.notesBrowser.resultsSubtitle(resultsCountLabel)}
-		bodyClass={layout === "grid" ? "" : "divide-y divide-[#efe8df]"}
+		sectionClass="xl:flex xl:min-h-0 xl:flex-1 xl:flex-col xl:overflow-hidden"
+		bodyClass={[
+			"vault-notes-results xl:min-h-0 xl:flex-1 xl:overflow-y-auto xl:overscroll-contain xl:pr-1",
+			layout === "grid" ? "" : "divide-y divide-[#efe8df]",
+		].filter(Boolean).join(" ")}
 	>
 		{
 			filteredItems.length === 0 ? (

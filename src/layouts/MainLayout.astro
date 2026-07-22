@@ -64,12 +64,12 @@ const navigation = getSidebarNavigation().map((item) => {
 			<title>{title}</title>
 			<ClientRouter fallback="swap" />
 		</head>
-	<body>
-		<div class="min-h-screen bg-[linear-gradient(180deg,_#faf7f2_0%,_#f4efe8_100%)]">
-			<div class="w-full">
-				<div class="grid min-h-screen grid-cols-1 xl:grid-cols-[308px_minmax(0,1fr)]">
+	<body class="xl:overflow-hidden">
+		<div class="min-h-screen bg-[linear-gradient(180deg,_#faf7f2_0%,_#f4efe8_100%)] xl:h-dvh xl:min-h-0 xl:overflow-hidden">
+			<div class="w-full xl:h-full">
+				<div class="grid min-h-screen grid-cols-1 xl:h-full xl:min-h-0 xl:grid-cols-[308px_minmax(0,1fr)]">
 					<Sidebar navigation={navigation} experiences={sidebarExperiences} />
-					<main class="min-w-0 p-4 md:p-5 xl:px-6 xl:py-6">
+					<main class="min-w-0 p-4 md:p-5 xl:h-full xl:overflow-y-auto xl:overscroll-contain xl:px-6 xl:py-6">
 						<slot />
 					</main>
 				</div>
