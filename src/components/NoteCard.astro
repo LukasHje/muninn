@@ -5,6 +5,7 @@ import type { LibraryItem } from "src/lib/vault";
 import FavoriteToggleButton from "src/components/FavoriteToggleButton.astro";
 import Icon from "src/components/Icon.astro";
 import TagChip from "src/components/TagChip.astro";
+import LibraryTagPreview from "src/components/LibraryTagPreview.astro";
 
 interface Props {
 	item: LibraryItem;
@@ -25,13 +26,6 @@ function buildNoteHref(href: string) {
 }
 
 const noteHref = buildNoteHref(hrefOverride ?? item.href);
-const selectedTagSet = new Set(selectedTags);
-const prioritizedTags = [
-	...item.tags.filter((tag) => selectedTagSet.has(tag)),
-	...item.tags.filter((tag) => !selectedTagSet.has(tag)),
-];
-const visibleTags = prioritizedTags.slice(0, 4);
-const hiddenTagCount = Math.max(prioritizedTags.length - visibleTags.length, 0);
 
 function getLeadingGlyph(value: string) {
 	const trimmed = value.trim();
@@ -178,39 +172,11 @@ const snippetHtml = searchQuery && searchSnippet && searchField
 						)
 					}
 			</div>
-			{
-				visibleTags.length > 0 && (
-					<div class="flex flex-wrap gap-2">
-						{
-							visibleTags.map((tag) => (
-								<span
-									class:list={[
-										"rounded-full px-2.5 py-0.5 text-xs font-medium",
-										selectedTagSet.has(tag)
-											? "bg-sky-100 text-sky-700 ring-1 ring-sky-200"
-											: "bg-[#f4efe7] text-slate-500",
-									]}
-								>
-									{
-										searchQuery ? (
-											<span set:html={`#${highlightSearchText(tag, searchQuery, { field: "tag" })}`}></span>
-										) : (
-											`#${tag}`
-										)
-									}
-								</span>
-							))
-						}
-						{
-							hiddenTagCount > 0 && (
-								<span class="rounded-full bg-[#f4efe7] px-2.5 py-0.5 text-xs font-medium text-slate-400">
-									+{hiddenTagCount}
-								</span>
-							)
-						}
-					</div>
-				)
-			}
+			<LibraryTagPreview
+				tags={item.tags}
+				selectedTags={selectedTags}
+				searchQuery={searchQuery}
+			/>
 		</div>
 	</a>
 </article>

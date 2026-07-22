@@ -539,6 +539,32 @@ const viewBox = specialViewBoxes[name] ?? "0 0 24 24";
 			</>
 		)}
 	{name === "chevron-down" && <path d="m6 9 6 6 6-6"></path>}
+	{name === "menu" && (
+		<>
+			<path d="M4 6h16"></path>
+			<path d="M4 12h16"></path>
+			<path d="M4 18h16"></path>
+		</>
+	)}
+	{name === "x" && (
+		<>
+			<path d="M18 6 6 18"></path>
+			<path d="m6 6 12 12"></path>
+		</>
+	)}
+	{name === "sliders-horizontal" && (
+		<>
+			<path d="M21 4H14"></path>
+			<path d="M10 4H3"></path>
+			<path d="M21 12H12"></path>
+			<path d="M8 12H3"></path>
+			<path d="M21 20H16"></path>
+			<path d="M12 20H3"></path>
+			<path d="M14 2v4"></path>
+			<path d="M8 10v4"></path>
+			<path d="M16 18v4"></path>
+		</>
+	)}
 	{name === "layout-list" && (
 		<>
 			<path d="M8 6h13"></path>

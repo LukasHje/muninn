@@ -44,7 +44,9 @@ const toneClasses = {
 		: "border-violet-200 bg-violet-50/85 text-violet-700 hover:border-violet-300 hover:bg-violet-50",
 }[tone];
 
-const sizeClasses = size === "sm" ? "px-2.5 py-1 text-xs" : "px-3.5 py-1.5 text-sm";
+const sizeClasses = size === "sm"
+	? "min-h-11 px-2.5 py-1 text-xs md:min-h-0"
+	: "min-h-11 px-3.5 py-1.5 text-sm md:min-h-0";
 const shapeClasses = shape === "squircle" ? "rounded-[12px]" : "rounded-full";
 const classes = [
 	"inline-flex items-center gap-2 border font-medium transition",

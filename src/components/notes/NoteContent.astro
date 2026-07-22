@@ -381,9 +381,20 @@ function renderMarkdownHtml(raw: string) {
 
 <style>
 	.note-content {
+		min-width: 0;
+		max-width: 100%;
 		color: #334155;
 		font-size: 1rem;
 		line-height: 1.9;
+		overflow-wrap: anywhere;
+	}
+
+	.note-content :global(img),
+	.note-content :global(video),
+	.note-content :global(iframe),
+	.note-content :global(embed),
+	.note-content :global(object) {
+		max-width: 100%;
 	}
 
 	.note-content :global(.note-content__segment + .note-content__segment) {
@@ -1425,7 +1436,12 @@ function renderMarkdownHtml(raw: string) {
 		}
 
 		.note-content :global(.code-copy-button) {
+			min-height: 2.75rem;
 			padding: 0.42rem 0.78rem;
+		}
+
+		.note-content :global(blockquote) {
+			padding: 0.85rem 0.9rem 0.85rem 0.8rem;
 		}
 
 		.note-content :global(div[style*="text-align:center"][style*="margin-top:20px"]) {

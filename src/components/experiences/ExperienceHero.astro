@@ -36,7 +36,7 @@ const heroArtwork = definition.assets.heroArtwork;
 	</div>
 
 		<div class="relative z-10 grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-4">
-			<div class="space-y-4 p-4 md:p-5 xl:p-5 xl:pr-6">
+			<div class="space-y-3 p-4 md:space-y-4 md:p-5 xl:p-5 xl:pr-6">
 				<div class="flex items-center gap-3 text-sm font-medium text-slate-400">
 					<span>Experiences</span>
 					<span aria-hidden="true">/</span>
@@ -44,15 +44,15 @@ const heroArtwork = definition.assets.heroArtwork;
 			</div>
 
 				<div class="flex items-start gap-3.5 md:gap-4">
-					<div class="flex h-[4rem] w-[4rem] shrink-0 items-center justify-center rounded-[22px] border border-[#e7dfd3] bg-[#fbf7f1] shadow-[0_8px_18px_rgba(15,23,42,0.04)]">
-						<Icon name={definition.icons.hero} class="h-7 w-7 text-slate-700" />
+					<div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] border border-[#e7dfd3] bg-[#fbf7f1] shadow-[0_8px_18px_rgba(15,23,42,0.04)] md:h-[4rem] md:w-[4rem] md:rounded-[22px]">
+						<Icon name={definition.icons.hero} class="h-6 w-6 text-slate-700 md:h-7 md:w-7" />
 					</div>
 
 					<div class="min-w-0 space-y-2.5">
-						<h1 class="text-[3.25rem] font-semibold tracking-[-0.07em] text-slate-900 md:text-[3.8rem] xl:text-[4.1rem] xl:leading-[0.92]">
+						<h1 class="text-[2rem] font-semibold leading-none tracking-[-0.06em] text-slate-900 md:text-[3.8rem] xl:text-[4.1rem] xl:leading-[0.92]">
 							{definition.title}
 						</h1>
-					<p class="max-w-2xl text-[0.98rem] leading-7 text-slate-600 md:text-[1rem]">
+					<p class="line-clamp-2 max-w-2xl text-[0.95rem] leading-6 text-slate-600 md:line-clamp-none md:text-[1rem] md:leading-7">
 						{definition.description}
 					</p>
 					<ExperienceStatistics items={statistics} />

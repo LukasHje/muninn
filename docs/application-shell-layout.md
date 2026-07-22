@@ -1,12 +1,12 @@
 # Muninn Application Shell Layout
 
-Muninn uses an application-style viewport on desktop. The interface should feel anchored to the browser while users interact with independently scrollable content regions.
+Muninn uses an application-style viewport at every supported screen size. The interface stays anchored to the browser while users interact with independently scrollable content regions. Desktop and mobile use different shell compositions; mobile is not a compressed desktop grid.
 
 This document defines viewport sizing and scroll ownership for Application UI. It complements `docs/ui-boundaries.md`, which defines the separation between Application UI and Markdown UI.
 
 ## Design Goal
 
-Desktop Muninn should behave like a fixed workspace rather than a long document:
+Muninn should behave like a fixed workspace rather than a long document:
 
 ```text
 Browser viewport
@@ -37,17 +37,32 @@ At the `xl` breakpoint and above:
 
 `dvh` is used instead of `vh` so the shell follows the browser's dynamic viewport height.
 
-### Mobile and narrow-screen document mode
+### Mobile and narrow-screen application mode
 
 Below the `xl` breakpoint:
 
-- normal document flow is preserved
-- the sidebar and main content stack naturally
-- page height is content-driven
-- the browser document remains the primary scroll container
-- desktop-only fixed heights and nested scroll constraints must not be imposed
+- the application shell remains exactly `100dvh` high
+- the document body does not scroll
+- the main workspace is the only permanently visible region and uses the full available width
+- a compact shell-owned header exposes navigation and the current page title
+- the sidebar becomes an off-canvas drawer instead of occupying a column
+- the Experience inspector becomes a full-screen overlay instead of reducing workspace width
+- shell overlays lock background interaction and retain the workspace's scroll position
+- shell edges and overlays include all relevant safe-area insets
 
-This distinction avoids forcing an app-shell interaction model onto screens where stacked document flow is more usable.
+The `xl` breakpoint (`1280px`) is the single shell breakpoint. Components may use the project's existing narrower content breakpoints for card columns or typography, but must not invent independent shell modes.
+
+The mobile shell is conceptually composed as:
+
+```text
+Application shell (100dvh)
+├── Mobile header
+├── Sidebar drawer (conditional)
+├── Main workspace
+├── Inspector overlay (conditional)
+├── Note metadata drawer (conditional)
+└── Overlay backdrop
+```
 
 ## Scroll Ownership
 
@@ -55,7 +70,7 @@ Every desktop region must have one clear vertical scroll owner.
 
 | Region | Fixed content | Scroll owner |
 | --- | --- | --- |
-| Application shell | Browser-sized grid | None; shell overflow is hidden |
+| Application shell | Browser-sized frame | None; shell overflow is hidden |
 | Sidebar | Brand, Quick Search, primary navigation, footer | Experiences list |
 | General main content | Main column | Main workspace |
 | Library Browser | Page heading, search, filters, result heading | Result list or grid |
@@ -65,16 +80,29 @@ Avoid accidental chains where the document, main workspace, panel, and list can 
 
 ## Application Shell Contract
 
-`src/layouts/MainLayout.astro` owns the desktop viewport contract:
+`src/layouts/MainLayout.astro` owns the viewport contract:
 
-- `body` prevents document-level overflow at `xl`
-- the outer shell uses `h-dvh` and hides overflow
+- `body` never acts as the primary scroll container
+- the outer shell uses exactly `100dvh` and hides overflow
 - the two-column grid inherits the full available height
 - the sidebar column has a fixed width
 - the main column uses `minmax(0, 1fr)` so content can shrink without forcing horizontal overflow
-- the main workspace uses internal vertical scrolling for ordinary pages
+- the main workspace uses internal vertical scrolling for ordinary pages at every size
+- the mobile header, overlay state, background interaction lock, focus management, gestures, and safe-area padding are shell responsibilities
 
 The shell owns only the browser-sized frame. Individual features still own the layout and scrolling inside their workspace.
+
+## Mobile Header Contract
+
+Below `xl`, the shell provides a compact header that:
+
+- includes a semantic menu button with `aria-controls` and `aria-expanded`
+- displays the current view or note title when available
+- truncates its title on one line instead of increasing the header height
+- respects the top, left, and right safe-area insets
+- keeps a minimum 44 by 44 pixel menu target
+
+Experiences must not render substitute shell headers.
 
 ## Sidebar Contract
 
@@ -97,6 +125,18 @@ The Experiences section consumes the remaining flexible space. Its list:
 
 Adding Experiences must never push the sidebar footer below the viewport.
 
+On mobile and narrow screens, the same Sidebar component is hosted inside a shell-owned drawer:
+
+- it opens from the left at `88vw`, capped at `22rem`
+- the drawer scrolls internally without resetting its scroll position when toggled
+- a scrim, close button, or Escape closes it
+- a horizontal swipe left closes it
+- an optional edge swipe beginning within 24 pixels of the left edge opens it
+- swipe recognition waits for a directional movement threshold and does not attach to ordinary horizontal content away from the edge
+- focus moves into the drawer, remains trapped while modal, and returns to the opening control
+
+Navigation remains available through the menu button; gestures are never the only mechanism.
+
 ## Library Browser Contract
 
 `src/components/VaultNotesBrowser.astro` is shared by:
@@ -105,7 +145,7 @@ Adding Experiences must never push the sidebar footer below the viewport.
 - Favorites
 - Recently Updated
 
-On desktop, the browser is a full-height flex column:
+The browser is a full-height flex column at every size:
 
 - the page heading, search, and filter controls are fixed within the workspace
 - the Results panel fills the remaining height
@@ -113,6 +153,8 @@ On desktop, the browser is a full-height flex column:
 - only the result list or grid scrolls
 
 List and grid layouts must share the same scroll container. Filtering, sorting, and search must not change scroll ownership.
+
+Library Browser tag previews are presentation-only and use the available card width for at most two visual rows. Tags retain their natural width and flow across each row; a compact `+N` indicator replaces tags that do not fit and is itself included in the two-row fit. In list layout, the preview spans beneath the title/update row so the update label does not reserve empty space beside the tags. During search, tags matching the full query or any normalized query term are stably promoted before fitting. Source tag arrays and search ranking remain unchanged.
 
 ## Experience Contract
 
@@ -128,6 +170,71 @@ Its height accounts for the vertical padding applied by `MainLayout`. Within the
 
 Opening the inspector must not transfer scrolling to the document or displace the surrounding application shell.
 
+Below `xl`, the same inspector content is presented by the shell as a full-screen modal overlay:
+
+- it fills `100dvh` and respects every safe-area inset
+- its content is the overlay's only vertical scroll owner
+- it has a visible close action; Escape is an additional mechanism
+- background content is inert and cannot be scrolled or focused
+- focus moves into the inspector, is trapped there, and returns to the selected card on close
+- opening and closing retains both main-workspace and Experience-list scroll positions
+
+Experience code continues to own selected-note and inspector-content state. It reports whether the inspector is open to the shell; the shell owns modal presentation and coordination.
+
+## Note Metadata Drawer Contract
+
+The Note Metadata Drawer is distinct from the Experience Inspector:
+
+- the Experience Inspector examines a selected item while the user remains in a browse or Experience view
+- the Note Metadata Drawer shows properties for the note currently open in the reader
+- the Sidebar Drawer provides global navigation
+
+The note reader provides a semantic trigger and reusable metadata content. The application shell mounts both into its overlay layer and owns the drawer's modal presentation, positioning, backdrop, focus handling, inert state, scroll lock, safe areas, and gestures. Shell-level mounting prevents workspace padding and note layout from offsetting the trigger or reserving content width on mobile and desktop. When the workspace has a vertical scrollbar, the shell offsets the trigger only by the measured scrollbar rail so the control remains edge-bound without covering scrolling UI.
+
+The Note Metadata Drawer:
+
+- enters from the right on mobile and desktop
+- uses up to `92vw` on narrow screens and a fixed `26rem` width on desktop
+- has a visible close button and an independently scrolling content region
+- can optionally open from a 24-pixel right-edge swipe and close with a rightward swipe
+- excludes code, tables, galleries, media, and other horizontal controls from gesture capture
+- preserves the main workspace's exact scroll position while open
+- reuses `NoteProperties` and, for cover layouts, the existing note image presentation
+- can also be opened from the note hero's `+N` tag-overflow button; closing restores focus to that button
+
+The note hero keeps a compact four-tag preview below the desktop breakpoint. At desktop width, tags use one measured row capped to the same `max-w-3xl` width as the hero description. Any tags that do not fit are represented by the interactive `+N` metadata trigger.
+
+Normal note layouts no longer append or reserve a column for the full properties/image metadata panel. Metadata remains available to parsing, search, Experiences, and other consumers; only its standard reader presentation changes.
+
+## Overlay Coordination
+
+Only one modal shell overlay may be active:
+
+- opening the inspector closes the drawer first
+- opening the drawer requests that an active inspector close
+- opening note metadata closes the mobile sidebar drawer and requests that an active inspector close
+- opening either the sidebar or inspector closes note metadata
+- selecting a sidebar link closes the drawer before client navigation
+- route changes clear all transient shell overlay state
+- breakpoint changes clear modal metadata state and remove stale inert or transform state
+- backdrop presses close whichever drawer currently owns the backdrop
+
+Muninn does not add synthetic history entries solely for overlays. Browser Back therefore follows the existing route state. Close controls, Escape, and the drawer backdrop are deterministic; history interception should only be added later if overlay selection becomes part of a centralized route-state model.
+
+Background locking uses the fixed shell plus `inert` on regions outside the active modal. Scroll positions are recorded before an overlay opens and restored without scrolling focused controls into view.
+
+## Safe Areas and Motion
+
+The viewport metadata enables `viewport-fit=cover`. The shell applies `env(safe-area-inset-*)` to:
+
+- the mobile header
+- main workspace edges
+- sidebar drawer edges
+- the full-screen inspector
+- note metadata drawer edges and scroll content
+
+Animations and gesture access must respect `prefers-reduced-motion`. Reduced motion shortens visual transitions without removing semantic controls.
+
 ## Implementation Rules
 
 When building or changing a desktop feature screen:
@@ -139,7 +246,8 @@ When building or changing a desktop feature screen:
 5. Use `overflow-y-auto` only on the intended scroll owner.
 6. Use `overscroll-contain` where scrolling should remain within the region.
 7. Keep headers and persistent controls outside the scroll owner with `shrink-0` where necessary.
-8. Apply fixed-height behavior only at the desktop breakpoint unless the mobile interaction is explicitly designed for it.
+8. Keep viewport, safe-area, drawer, overlay, and background-lock behavior in the application shell rather than Experiences.
+9. Use the shared `xl` shell breakpoint rather than scattering alternative shell thresholds.
 
 Do not solve viewport layout with JavaScript measurements when CSS grid, flexbox, `dvh`, and overflow ownership are sufficient.
 
@@ -171,9 +279,9 @@ Fix: add `min-h-0` to the appropriate flexible ancestor or child.
 
 ### Mobile content is clipped
 
-Cause: desktop viewport constraints were applied without a responsive breakpoint.
+Cause: a content region expands inside the fixed shell instead of assigning overflow to its intended internal owner.
 
-Fix: preserve content-driven height and normal document scrolling below `xl`.
+Fix: propagate `min-h-0`, retain the fixed shell, and assign scrolling to the workspace, result list, drawer, or inspector content as appropriate.
 
 ## Verification Checklist
 
@@ -185,6 +293,15 @@ Viewport-related changes should be checked at minimum in these states:
 - Favorites with empty and overflowing result sets
 - Recently Updated with overflowing results
 - Experience view with the inspector closed and open
-- mobile or narrow layout using normal document scrolling
+- `393 × 852` mobile portrait with drawer and inspector closed/open
+- `430 × 932` larger mobile portrait
+- `852 × 393` landscape phone
+- a narrow tablet width
+- drawer close by button, scrim, Escape, and swipe
+- metadata drawer open from the trigger and close by button, scrim, Escape, and swipe
+- focus containment and restoration for drawer, inspector, and note metadata
+- note-reader scroll preservation while metadata is open
+- safe-area top and bottom spacing
+- no horizontal viewport overflow
 
-The expected desktop result is always the same: the shell stays anchored, persistent controls remain visible, and only the region containing excess content scrolls.
+The expected result at every size is the same: the shell stays anchored, persistent controls remain visible, and only the region containing excess content scrolls. Experiences provide content and actions; they do not create independent viewport, drawer, overlay, safe-area, or gesture systems.

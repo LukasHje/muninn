@@ -14,6 +14,11 @@ export const en = {
 		experiences: "Experiences",
 		poweredByAstro: "Powered by Astro",
 	},
+	applicationShell: {
+		openNavigation: "Open navigation",
+		closeNavigation: "Close navigation",
+		inspectorLabel: "Note inspector",
+	},
 	admin: {
 		reloadVault: "Reload Vault",
 		reloadingVault: "Reloading vault...",
@@ -100,6 +105,7 @@ export const en = {
 		gridView: "Grid view",
 		results: "Results",
 		resultsSubtitle: (countLabel: string) => `${countLabel} notes`,
+		additionalTags: (count: number) => `${count} additional tags`,
 	},
 	pages: {
 		dashboardTitle: "Dashboard",
@@ -174,8 +180,10 @@ export const en = {
 			zoomIn: "Zoom in",
 			zoomOut: "Zoom out",
 		},
-		noteDetail: {
+	noteDetail: {
 		backToAllNotes: "Back to previous view",
+		openMetadata: "Open note metadata",
+		closeMetadata: "Close note metadata",
 		created: "Created",
 		updated: "Updated",
 		properties: "Properties",

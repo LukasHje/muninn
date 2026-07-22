@@ -1,5 +1,6 @@
 ---
 import Sidebar from "src/components/Sidebar.astro";
+import Icon from "src/components/Icon.astro";
 import { getLanguage, ui } from "src/i18n";
 import { buildSidebarExperienceLinks } from "src/lib/experiences/sidebar";
 import { getFavoritesCount } from "src/lib/favorites";
@@ -17,6 +18,7 @@ const {
 	title,
 	description = ui.meta.defaultDescription,
 } = Astro.props;
+const mobileTitle = title.replace(/\s+[|–—-]\s+Muninn$/i, "");
 
 const [favoritesCount, scratchpadNotesCount, libraryItems] = await Promise.all([
 	getFavoritesCount(),
@@ -57,23 +59,69 @@ const navigation = getSidebarNavigation().map((item) => {
 				href="/apple-touch-icon.png"
 			/>
 			<link transition:persist="web-manifest" rel="manifest" href="/site.webmanifest" />
-			<meta name="viewport" content="width=device-width" />
+			<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 			<meta name="generator" content={Astro.generator} />
 			<meta name="description" content={description} />
 			<meta name="theme-color" content="#faf7f2" />
 			<title>{title}</title>
 			<ClientRouter fallback="swap" />
 		</head>
-	<body class="xl:overflow-hidden">
-		<div class="min-h-screen bg-[linear-gradient(180deg,_#faf7f2_0%,_#f4efe8_100%)] xl:h-dvh xl:min-h-0 xl:overflow-hidden">
-			<div class="w-full xl:h-full">
-				<div class="grid min-h-screen grid-cols-1 xl:h-full xl:min-h-0 xl:grid-cols-[308px_minmax(0,1fr)]">
+	<body class="overflow-hidden">
+		<div
+			class="application-shell"
+			data-application-shell
+			data-overlay="none"
+		>
+			<header class="mobile-header xl:hidden" data-mobile-header>
+				<button
+					type="button"
+					class="mobile-shell-button"
+					data-sidebar-drawer-open
+					aria-label={ui.applicationShell.openNavigation}
+					aria-controls="application-sidebar-drawer"
+					aria-expanded="false"
+				>
+					<Icon name="menu" class="h-5 w-5" />
+				</button>
+				<p class="min-w-0 flex-1 truncate px-2 text-center text-sm font-semibold text-slate-800">
+					{mobileTitle}
+				</p>
+				<span class="h-11 w-11 shrink-0" aria-hidden="true"></span>
+			</header>
+
+			<div class="application-shell__workspace">
+				<button
+					type="button"
+					class="application-overlay-backdrop"
+					data-sidebar-drawer-backdrop
+					aria-label={ui.applicationShell.closeNavigation}
+					tabindex="-1"
+				></button>
+
+				<div
+					id="application-sidebar-drawer"
+					class="application-sidebar-drawer"
+					data-sidebar-drawer
+				>
 					<Sidebar navigation={navigation} experiences={sidebarExperiences} />
-					<main class="min-w-0 p-4 md:p-5 xl:h-full xl:overflow-y-auto xl:overscroll-contain xl:px-6 xl:py-6">
-						<slot />
-					</main>
 				</div>
+
+				<main
+					class="application-main-workspace min-w-0"
+					data-main-workspace
+				>
+					<slot />
+				</main>
 			</div>
+
+			<div class="application-shell__overlay-layer" data-shell-overlay-layer></div>
 		</div>
+
+		<script>
+			import initApplicationShell from "src/components/ApplicationShellClient.ts";
+
+			initApplicationShell();
+			document.addEventListener("astro:page-load", initApplicationShell);
+		</script>
 	</body>
 </html>

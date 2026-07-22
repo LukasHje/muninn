@@ -1,0 +1,70 @@
+---
+import Icon from "src/components/Icon.astro";
+import NoteProperties from "src/components/notes/NoteProperties.astro";
+import { ui } from "src/i18n";
+import type { LibraryItem } from "src/lib/vault";
+
+interface Props {
+	note: LibraryItem;
+	showImage?: boolean;
+}
+
+const { note, showImage = false } = Astro.props;
+---
+
+<button
+	type="button"
+	class="note-metadata-trigger"
+	data-note-metadata-open
+	aria-label={ui.noteDetail.openMetadata}
+	aria-controls="note-metadata-drawer"
+	aria-expanded="false"
+>
+	<Icon name="sliders-horizontal" class="h-5 w-5" />
+	<span class="sr-only">{ui.noteDetail.openMetadata}</span>
+</button>
+
+<aside
+	id="note-metadata-drawer"
+	class="note-metadata-drawer"
+	data-note-metadata-drawer
+	aria-hidden="true"
+	aria-labelledby="note-metadata-heading"
+	tabindex="-1"
+>
+	<div class="note-metadata-drawer__shell">
+		<header class="note-metadata-drawer__header">
+			<div class="min-w-0">
+				<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+					{ui.noteDetail.metadata}
+				</p>
+				<h2 id="note-metadata-heading" class="mt-1 truncate text-lg font-semibold tracking-tight text-slate-900">
+					{note.title}
+				</h2>
+			</div>
+			<button
+				type="button"
+				class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#e4dacd] bg-white/75 text-slate-500 transition hover:bg-white hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+				data-note-metadata-close
+				aria-label={ui.noteDetail.closeMetadata}
+			>
+				<Icon name="x" class="h-5 w-5" />
+			</button>
+		</header>
+
+		<div class="note-metadata-drawer__content" data-note-metadata-scroll>
+			{
+				showImage && note.imageUrl && (
+					<div class="overflow-hidden rounded-[5px] border border-[#e8dfd3] bg-[#f8f4ed] shadow-[0_14px_30px_rgba(15,23,42,0.08)]">
+						<img
+							src={note.imageUrl}
+							alt=""
+							class="max-h-[26rem] w-full object-cover"
+						/>
+					</div>
+				)
+			}
+			<NoteProperties note={note} />
+		</div>
+	</div>
+</aside>

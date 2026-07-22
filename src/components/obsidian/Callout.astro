@@ -250,4 +250,15 @@ const titleHtml = renderInlineMarkdown(title);
 	.obsidian-callout summary::marker {
 		display: none;
 	}
+
+	@media (max-width: 768px) {
+		.obsidian-callout__summary {
+			min-height: 2.75rem;
+			padding: 0.7rem 0.8rem;
+		}
+
+		.obsidian-callout__content {
+			padding: 0 0.8rem 0.8rem;
+		}
+	}
 </style>

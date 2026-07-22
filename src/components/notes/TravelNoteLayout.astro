@@ -4,7 +4,6 @@ import LeafletMap from "src/components/maps/LeafletMap.astro";
 import { extractMapBlock } from "src/lib/parseMapBlock";
 import NoteContent from "src/components/notes/NoteContent.astro";
 import NoteShell from "src/components/notes/NoteShell.astro";
-import NoteProperties from "src/components/notes/NoteProperties.astro";
 
 interface Props {
 	note: LibraryItem;
@@ -30,7 +29,6 @@ const hasCoordinates =
 			</div>
 		</div>
 		<div class="space-y-5 md:space-y-6 xl:sticky xl:top-6">
-			<NoteProperties note={note} />
 			{
 				parsedMap ? (
 					<section class="space-y-3">

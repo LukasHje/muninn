@@ -775,3 +775,19 @@ export function getNoteSearchTextMatch(
 
 	return matchFieldText(field, text, normalizedQuery, queryTokens);
 }
+
+export function getNoteSearchTagQueryCandidates(query: string) {
+	const normalizedQuery = normalizeSearchText(query);
+	const queryTokens = tokenizeSearchQuery(query);
+	if (!normalizedQuery || queryTokens.length === 0) {
+		return [] as string[];
+	}
+
+	return [normalizedQuery, ...queryTokens]
+		.filter((candidate, index, candidates) => candidates.indexOf(candidate) === index);
+}
+
+export function tagMatchesNoteSearchQuery(tag: string, query: string) {
+	return getNoteSearchTagQueryCandidates(query)
+		.some((candidate) => Boolean(getNoteSearchTextMatch("tag", tag, candidate)));
+}

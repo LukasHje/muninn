@@ -1,5 +1,6 @@
 import {
 	getNoteSearchTextMatch,
+	getNoteSearchTagQueryCandidates,
 	normalizeSearchText,
 	tokenizeSearchQuery,
 	type NoteSearchMatchField,
@@ -249,21 +250,28 @@ function resolveHighlightRanges(
 	}
 
 	const effectiveField = field ?? "body";
-	const match = getNoteSearchTextMatch(effectiveField, value, query);
-	if (!match) {
-		return [] as HighlightRange[];
-	}
+	const candidateQueries = effectiveField === "tag"
+		? getNoteSearchTagQueryCandidates(query)
+		: [query];
+	const ranges = candidateQueries.flatMap((candidateQuery) => {
+		const match = getNoteSearchTextMatch(effectiveField, value, candidateQuery);
+		if (!match) {
+			return [] as HighlightRange[];
+		}
 
-	if (match.type === "fuzzy") {
-		return mergeRanges(findFuzzyRanges(normalizedCharacters, normalizedValue, query, match.index));
-	}
+		if (match.type === "fuzzy") {
+			return findFuzzyRanges(normalizedCharacters, normalizedValue, candidateQuery, match.index);
+		}
 
-	const tokenRanges = findAllTokenRanges(normalizedCharacters, normalizedValue, query);
-	if (tokenRanges.length > 0) {
-		return mergeRanges(tokenRanges);
-	}
+		const tokenRanges = findAllTokenRanges(normalizedCharacters, normalizedValue, candidateQuery);
+		if (tokenRanges.length > 0) {
+			return tokenRanges;
+		}
 
-	return mergeRanges(findTokenRangeAtIndex(normalizedCharacters, normalizedValue, match.index));
+		return findTokenRangeAtIndex(normalizedCharacters, normalizedValue, match.index);
+	});
+
+	return mergeRanges(ranges);
 }
 
 export function highlightSearchText(value: string, query: string, optionsOrClass?: HighlightOptions | string) {

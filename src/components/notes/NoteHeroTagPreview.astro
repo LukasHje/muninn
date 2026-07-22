@@ -1,0 +1,119 @@
+---
+import { ui } from "src/i18n";
+
+interface Props {
+	values: string[];
+	variant?: "light" | "dark";
+}
+
+const { values, variant = "light" } = Astro.props;
+const mobileValues = values.slice(0, 4);
+const mobileOmittedCount = Math.max(values.length - mobileValues.length, 0);
+const tagClasses = variant === "dark"
+	? "border border-sky-200/30 bg-white/10 text-white/88 shadow-[0_6px_16px_rgba(15,23,42,0.12)] backdrop-blur-sm"
+	: "border border-amber-200/80 bg-amber-50 text-amber-700 shadow-[0_6px_16px_rgba(217,119,6,0.08)]";
+const overflowClasses = variant === "dark"
+	? "border border-white/14 bg-white/8 text-white/72 backdrop-blur-sm"
+	: "border border-[#ece3d7] bg-[#fbf8f3] text-slate-400";
+
+function overflowLabel(count: number) {
+	return `${ui.noteDetail.openMetadata}. ${ui.notesBrowser.additionalTags(count)}`;
+}
+---
+
+{
+	values.length > 0 && (
+		<>
+			<div class="flex max-w-full flex-wrap gap-2.5 xl:hidden">
+				{mobileValues.map((value) => (
+					<span class:list={["max-w-full break-all rounded-[5px] px-3.5 py-1.5 text-[0.76rem] font-medium leading-none tracking-[0.01em]", tagClasses]}>
+						{value}
+					</span>
+				))}
+				{mobileOmittedCount > 0 && (
+					<button
+						type="button"
+						class:list={["rounded-[5px] px-3 py-1.5 text-xs font-medium transition hover:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400", overflowClasses]}
+						data-note-metadata-open-secondary
+						aria-label={overflowLabel(mobileOmittedCount)}
+						aria-controls="note-metadata-drawer"
+						aria-expanded="false"
+					>
+						+{mobileOmittedCount}
+					</button>
+				)}
+			</div>
+
+			<div
+				class="hidden w-full max-w-3xl flex-nowrap gap-2.5 overflow-hidden xl:flex"
+				data-note-hero-tag-preview
+				data-additional-tags-template={ui.notesBrowser.additionalTags(-9999)}
+				data-open-metadata-label={ui.noteDetail.openMetadata}
+			>
+				{values.map((value) => (
+					<span
+						class:list={["max-w-full shrink-0 break-all rounded-[5px] px-3.5 py-1.5 text-[0.76rem] font-medium leading-none tracking-[0.01em]", tagClasses]}
+						data-note-hero-tag
+					>
+						{value}
+					</span>
+				))}
+				<button
+					type="button"
+					class:list={["shrink-0 rounded-[5px] px-3 py-1.5 text-xs font-medium transition hover:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400", overflowClasses]}
+					data-note-hero-tag-overflow
+					data-note-metadata-open-secondary
+					aria-controls="note-metadata-drawer"
+					aria-expanded="false"
+					hidden
+				></button>
+			</div>
+		</>
+	)
+}
+
+<script>
+	const heroPreviewObservers = new WeakMap<Element, ResizeObserver>();
+
+	function fitHeroTagPreview(container: HTMLElement) {
+		if (container.clientWidth === 0) return;
+		const tags = Array.from(container.querySelectorAll<HTMLElement>("[data-note-hero-tag]"));
+		const overflow = container.querySelector<HTMLButtonElement>("[data-note-hero-tag-overflow]");
+		if (!overflow || tags.length === 0) return;
+
+		for (const tag of tags) tag.hidden = false;
+		overflow.hidden = true;
+		if (container.scrollWidth <= container.clientWidth + 1) return;
+
+		let visibleCount = tags.length;
+		while (visibleCount > 0) {
+			visibleCount -= 1;
+			tags[visibleCount].hidden = true;
+			const omittedCount = tags.length - visibleCount;
+			const labelTemplate = container.dataset.additionalTagsTemplate ?? "-9999 additional tags";
+			const openMetadataLabel = container.dataset.openMetadataLabel ?? "Open note metadata";
+			overflow.textContent = `+${omittedCount}`;
+			overflow.setAttribute(
+				"aria-label",
+				`${openMetadataLabel}. ${labelTemplate.replace("-9999", String(omittedCount))}`
+			);
+			overflow.hidden = false;
+			if (container.scrollWidth <= container.clientWidth + 1) break;
+		}
+	}
+
+	function initHeroTagPreviews() {
+		for (const container of document.querySelectorAll<HTMLElement>("[data-note-hero-tag-preview]")) {
+			fitHeroTagPreview(container);
+			if (heroPreviewObservers.has(container)) continue;
+
+			const observer = new ResizeObserver(() => fitHeroTagPreview(container));
+			observer.observe(container);
+			heroPreviewObservers.set(container, observer);
+		}
+	}
+
+	initHeroTagPreviews();
+	document.fonts?.ready.then(initHeroTagPreviews);
+	document.addEventListener("astro:page-load", initHeroTagPreviews);
+</script>

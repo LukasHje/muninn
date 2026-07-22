@@ -4,6 +4,7 @@ import DefaultExperienceHero from "src/components/experiences/DefaultExperienceH
 import ExperienceCardRenderer from "src/components/experiences/ExperienceCardRenderer.astro";
 import ExperienceInspectorRenderer from "src/components/experiences/ExperienceInspectorRenderer.astro";
 import Icon from "src/components/Icon.astro";
+import { ui } from "src/i18n";
 import type { ExperienceDefinition } from "src/lib/experiences/registry";
 import type { ExperienceFilterOption, ExperienceFilterState } from "src/lib/experiences/filters";
 import { buildExperienceInspectorModel } from "src/lib/experiences/inspector";
@@ -217,7 +218,9 @@ const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
 		id="experience-inspector-panel"
 		class="experience-inspector-panel"
 		data-experience-inspector-root
+		aria-label={ui.applicationShell.inspectorLabel}
 		aria-hidden={initialInspectorNote ? "false" : "true"}
+		tabindex="-1"
 	>
 		<div class="experience-inspector-shell flex h-full min-h-0 flex-col overflow-hidden">
 			<div class="min-h-0 flex-1 overflow-y-auto" data-experience-inspector-panels>
@@ -266,6 +269,11 @@ const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
 		}
 
 		let selectedId = root.dataset.initialSelected ?? "";
+		let lastAnnouncedInspectorState: boolean | null = null;
+		let inspectorTrigger = selectedId
+			? root.querySelector(`[data-experience-card="${CSS.escape(selectedId)}"]`)
+			: null;
+		let preservedNotesScrollTop = notesScroll instanceof HTMLElement ? notesScroll.scrollTop : 0;
 		const inspectorEndpoint = root.dataset.inspectorEndpoint ?? "";
 		const inspectorPanelRequests = new Map();
 
@@ -346,6 +354,17 @@ const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
 			inspector.setAttribute("aria-hidden", isOpen ? "false" : "true");
 			backdrop?.setAttribute("aria-hidden", isOpen ? "false" : "true");
 			syncOpenNoteLinks();
+
+			if (lastAnnouncedInspectorState !== isOpen) {
+				lastAnnouncedInspectorState = isOpen;
+				window.dispatchEvent(new CustomEvent("muninn:inspector-state-change", {
+					detail: {
+						open: isOpen,
+						inspector,
+						trigger: inspectorTrigger instanceof HTMLElement ? inspectorTrigger : undefined,
+					},
+				}));
+			}
 		};
 
 		const ensureInspectorPanel = async (noteId: string) => {
@@ -409,6 +428,11 @@ const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
 		const closeInspector = () => {
 			selectedId = "";
 			syncSelectionState();
+			if (notesScroll instanceof HTMLElement) {
+				requestAnimationFrame(() => {
+					notesScroll.scrollTop = preservedNotesScrollTop;
+				});
+			}
 		};
 
 		const setFavoritePending = (noteId: string, pending: boolean) => {
@@ -506,6 +530,10 @@ const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
 				return;
 			}
 
+			inspectorTrigger = card;
+			if (notesScroll instanceof HTMLElement) {
+				preservedNotesScrollTop = notesScroll.scrollTop;
+			}
 			selectedId = card.dataset.experienceCard ?? "";
 			syncSelectionState();
 
@@ -519,6 +547,11 @@ const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
 		});
 
 		backdrop?.addEventListener("click", closeInspector);
+		const handleInspectorCloseRequest = () => closeInspector();
+		window.addEventListener("muninn:request-inspector-close", handleInspectorCloseRequest);
+		document.addEventListener("astro:before-swap", () => {
+			window.removeEventListener("muninn:request-inspector-close", handleInspectorCloseRequest);
+		}, { once: true });
 
 		root.addEventListener("keydown", (event) => {
 			if (event.key === "Escape" && selectedId) {
@@ -570,14 +603,14 @@ const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
 				prevButton?.addEventListener("click", () => {
 					viewport.scrollBy({
 						left: -Math.max(viewport.clientWidth * 0.7, 220),
-						behavior: "smooth",
+						behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
 					});
 				});
 
 				nextButton?.addEventListener("click", () => {
 					viewport.scrollBy({
 						left: Math.max(viewport.clientWidth * 0.7, 220),
-						behavior: "smooth",
+						behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
 					});
 				});
 
@@ -598,7 +631,7 @@ const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
 	.experience-page {
 		position: relative;
 		display: flex;
-		height: calc(100dvh - 2rem);
+		height: 100%;
 		min-height: 0;
 		flex-direction: column;
 		overflow: hidden;
@@ -765,12 +798,16 @@ const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
 
 	.experience-inspector-panel {
 		position: fixed;
-		top: 0;
-		right: 0;
-		bottom: 0;
+		inset: 0;
 		z-index: 40;
-		width: min(100%, 34rem);
+		height: 100dvh;
+		width: 100%;
 		max-width: 100%;
+		padding-top: env(safe-area-inset-top);
+		padding-right: env(safe-area-inset-right);
+		padding-bottom: env(safe-area-inset-bottom);
+		padding-left: env(safe-area-inset-left);
+		background: linear-gradient(180deg, #f6f1e8 0%, #f1ebe2 100%);
 		transform: translateX(100%);
 		opacity: 0;
 		pointer-events: none;
@@ -781,7 +818,7 @@ const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
 
 	.experience-inspector-shell {
 		height: 100%;
-		border-left: 1px solid #ddd4c8;
+		border: 0;
 		background: linear-gradient(180deg, #f6f1e8 0%, #f1ebe2 100%);
 		box-shadow: -10px 0 28px rgba(15, 23, 42, 0.05);
 	}
@@ -803,19 +840,57 @@ const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
 		pointer-events: auto;
 	}
 
-	@media (min-width: 768px) {
-		.experience-page {
-			height: calc(100dvh - 2.5rem);
-		}
-	}
-
 	@media (max-width: 767px) {
 		.experience-filter-row {
 			gap: 0.7rem;
+			overflow-x: auto;
+			overscroll-behavior-x: contain;
+			padding-bottom: 0.3rem;
+			scrollbar-width: thin;
+			scrollbar-color: rgba(100, 116, 139, 0.42) transparent;
+		}
+
+		.experience-filter-row::-webkit-scrollbar {
+			height: 3px;
+		}
+
+		.experience-filter-row::-webkit-scrollbar-thumb {
+			border-radius: 999px;
+			background: rgba(100, 116, 139, 0.42);
 		}
 
 		.experience-filter-divider {
 			display: none;
+		}
+
+		.experience-filter-viewport {
+			flex: none;
+			overflow: visible;
+		}
+
+		.experience-filter-viewport::-webkit-scrollbar {
+			display: none;
+		}
+
+		.experience-filter-scroller {
+			flex: none;
+		}
+
+		.experience-filter-track {
+			padding-left: 0;
+			padding-right: 1rem;
+		}
+
+		.experience-filter-arrow {
+			display: none;
+		}
+
+		.experience-filter-scroller::before {
+			display: none;
+		}
+
+		.experience-filter-scroller::after {
+			width: 2rem;
 		}
 	}
 
@@ -825,7 +900,17 @@ const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
 		}
 
 		.experience-inspector-panel {
+			top: 0;
+			right: 0;
+			bottom: 0;
+			left: auto;
+			height: auto;
 			width: clamp(29rem, 36vw, 34rem);
+			padding: 0;
+		}
+
+		.experience-inspector-shell {
+			border-left: 1px solid #ddd4c8;
 		}
 
 		.experience-page[data-inspector-open="true"] .experience-canvas {
@@ -838,6 +923,18 @@ const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
 
 		.experience-inspector-backdrop {
 			display: none;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.experience-canvas,
+		.experience-inspector-backdrop,
+		.experience-inspector-panel,
+		.experience-filter-scroller::before,
+		.experience-filter-scroller::after,
+		.experience-filter-arrow {
+			transition-duration: 0.01ms;
+			scroll-behavior: auto;
 		}
 	}
 </style>

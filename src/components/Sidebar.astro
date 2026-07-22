@@ -26,7 +26,7 @@ const { navigation, experiences } = Astro.props;
 const currentPath = Astro.url.pathname;
 ---
 
-<aside class="sidebar-shell h-fit p-5 md:p-6 xl:flex xl:h-dvh xl:min-h-0 xl:flex-col xl:overflow-hidden">
+<aside class="sidebar-shell flex h-full min-h-0 flex-col overflow-y-auto xl:overflow-hidden">
 	<div class="flex shrink-0 items-center gap-3">
 		<img
 			src="/branding/muninn-neg.svg"
@@ -36,6 +36,14 @@ const currentPath = Astro.url.pathname;
 		<div>
 			<p class="text-[2rem] font-semibold tracking-[-0.04em] text-white">Muninn</p>
 		</div>
+		<button
+			type="button"
+			class="ml-auto inline-flex h-11 w-11 items-center justify-center rounded-xl text-white/65 transition hover:bg-white/8 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-300 xl:hidden"
+			data-sidebar-drawer-close
+			aria-label={ui.applicationShell.closeNavigation}
+		>
+			<Icon name="x" class="h-5 w-5" />
+		</button>
 	</div>
 
 	<div class="mt-6 shrink-0">
