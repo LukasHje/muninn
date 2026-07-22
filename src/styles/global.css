@@ -37,10 +37,6 @@
 		scrollbar-color: rgba(148, 163, 184, 0.28) transparent;
 	}
 
-	.sidebar-experience-list::-webkit-scrollbar {
-		width: 0.5px;
-	}
-
 	.sidebar-experience-list::-webkit-scrollbar-track {
 		background: transparent;
 	}
