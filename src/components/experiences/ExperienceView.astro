@@ -20,6 +20,8 @@ interface Props {
 	metadataOptions: Record<string, ExperienceFilterOption[]>;
 	statistics: ExperienceStatistic[];
 	heroComponent?: typeof DefaultExperienceHero;
+	sortBy?: "updated" | "title";
+	layout?: "grid" | "list";
 }
 
 const {
@@ -31,6 +33,7 @@ const {
 	metadataOptions,
 	statistics,
 	heroComponent: HeroComponent = DefaultExperienceHero,
+	layout = "grid",
 } = Astro.props;
 
 const currentPath = Astro.url.pathname;
@@ -78,7 +81,7 @@ const initialInspector = initialInspectorNote
 			buildInspectorRedirectHref(initialInspectorNote)
 		)
 	: null;
-const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
+const [primaryFilterKey, secondaryFilterKey] = definition.showMetadataFilters === false ? [] : definition.metadataFilters;
 ---
 
 <div
@@ -174,7 +177,15 @@ const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
 			</HeroComponent>
 		</section>
 
-		<div class="experience-workspace">
+		{
+			Astro.slots.has("dashboard") && (
+				<section class="experience-dashboard-shell shrink-0">
+					<slot name="dashboard" />
+				</section>
+			)
+		}
+
+		<div id="experience-library" class="experience-workspace">
 			<section class="experience-notes-scroll min-w-0">
 				{
 					filteredNotes.length === 0 ? (
@@ -186,7 +197,11 @@ const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
 						</div>
 					) : (
 						<div
-							class="experience-browser-grid grid gap-5 pb-4 md:grid-cols-2 xl:grid-cols-3"
+							class:list={[
+								"experience-browser-grid grid pb-4",
+								layout === "list" ? "grid-cols-1 gap-2.5" : "gap-5 md:grid-cols-2 xl:grid-cols-3",
+							]}
+							data-experience-layout={layout}
 							data-experience-card-list
 							data-rendered-count={filteredNotes.length}
 						>
@@ -774,9 +789,18 @@ const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
 	}
 
 	.experience-workspace {
+		position: relative;
+		z-index: 1;
 		min-height: 0;
 		flex: 1;
 		overflow: hidden;
+	}
+
+	.experience-dashboard-shell {
+		position: relative;
+		z-index: 20;
+		min-width: 0;
+		overflow: visible;
 	}
 
 	.experience-notes-scroll {
@@ -891,6 +915,12 @@ const [primaryFilterKey, secondaryFilterKey] = definition.metadataFilters;
 
 		.experience-filter-scroller::after {
 			width: 2rem;
+		}
+	}
+
+	@media (min-width: 640px) and (max-width: 1279px) and (max-height: 500px) {
+		.experience-dashboard-shell {
+			display: none;
 		}
 	}
 

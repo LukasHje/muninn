@@ -1,0 +1,118 @@
+---
+import type { ExperienceDefinition } from "src/lib/experiences/registry";
+
+interface Props {
+	artwork: string | null;
+	theme: ExperienceDefinition["theme"];
+}
+
+const { artwork, theme } = Astro.props;
+---
+
+<div
+	class="experience-artwork-workspace"
+	data-has-artwork={artwork ? "true" : "false"}
+	data-theme={theme}
+	style={artwork ? `--experience-hero-artwork:url("${artwork}")` : undefined}
+>
+	<div class="experience-artwork-workspace__art" aria-hidden="true"></div>
+	<div class="experience-artwork-workspace__content">
+		<slot />
+	</div>
+</div>
+
+<style>
+	.experience-artwork-workspace {
+		--experience-main-gutter: 0.75rem;
+		--experience-hero-height: clamp(15rem, 28dvh, 20rem);
+		--experience-artwork-tail: 9.5rem;
+		--experience-artwork-start: #111b18;
+		--experience-artwork-end: #3f4c45;
+		position: relative;
+		isolation: isolate;
+		height: 100%;
+		min-height: 0;
+	}
+
+	.experience-artwork-workspace[data-theme="amber"] {
+		--experience-artwork-start: #261a12;
+		--experience-artwork-end: #765737;
+	}
+
+	.experience-artwork-workspace[data-theme="sky"] {
+		--experience-artwork-start: #101b29;
+		--experience-artwork-end: #3d6072;
+	}
+
+	.experience-artwork-workspace[data-theme="slate"] {
+		--experience-artwork-start: #101820;
+		--experience-artwork-end: #46515a;
+	}
+
+	.experience-artwork-workspace[data-theme="violet"] {
+		--experience-artwork-start: #191526;
+		--experience-artwork-end: #574b70;
+	}
+
+	.experience-artwork-workspace__art {
+		position: absolute;
+		z-index: 0;
+		top: calc(-1 * var(--experience-main-gutter));
+		right: calc(-1 * var(--experience-main-gutter));
+		left: calc(-1 * var(--experience-main-gutter));
+		height: calc(
+			var(--experience-main-gutter)
+			+ var(--experience-hero-height)
+			+ var(--experience-artwork-tail)
+		);
+		background:
+			linear-gradient(
+				180deg,
+				rgba(242, 234, 223, 0) 0,
+				rgba(242, 234, 223, 0) calc(
+					var(--experience-main-gutter)
+					+ var(--experience-hero-height)
+					+ 0.85rem
+				),
+				#f2eadf 100%
+			),
+			linear-gradient(90deg, rgba(9, 15, 14, 0.9) 0%, rgba(16, 25, 22, 0.57) 40%, rgba(16, 25, 22, 0.08) 80%),
+			linear-gradient(135deg, var(--experience-artwork-start), var(--experience-artwork-end));
+		pointer-events: none;
+	}
+
+	.experience-artwork-workspace[data-has-artwork="true"] .experience-artwork-workspace__art {
+		background:
+			linear-gradient(
+				180deg,
+				rgba(242, 234, 223, 0) 0,
+				rgba(242, 234, 223, 0) calc(
+					var(--experience-main-gutter)
+					+ var(--experience-hero-height)
+					+ 0.85rem
+				),
+				#f2eadf 100%
+			),
+			linear-gradient(90deg, rgba(9, 15, 14, 0.9) 0%, rgba(16, 25, 22, 0.57) 40%, rgba(16, 25, 22, 0.08) 80%),
+			var(--experience-hero-artwork) center top / cover no-repeat;
+	}
+
+	.experience-artwork-workspace__content {
+		position: relative;
+		z-index: 1;
+		height: 100%;
+		min-height: 0;
+	}
+
+	@media (min-width: 768px) {
+		.experience-artwork-workspace {
+			--experience-main-gutter: 1.25rem;
+		}
+	}
+
+	@media (min-width: 1280px) {
+		.experience-artwork-workspace {
+			--experience-main-gutter: 1.5rem;
+		}
+	}
+</style>

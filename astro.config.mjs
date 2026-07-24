@@ -5,6 +5,7 @@ import node from '@astrojs/node';
 import tailwindcss from '@tailwindcss/vite';
 
 const srcRoot = fileURLToPath(new URL('./src', import.meta.url));
+const bundleServerDependencies = process.env.NODE_ENV !== 'development';
 
 // https://astro.build/config
 export default defineConfig({
@@ -16,9 +17,13 @@ export default defineConfig({
 		mode: 'standalone',
 	}),
 	vite: {
-		ssr: {
-			noExternal: true,
-		},
+		...(bundleServerDependencies
+			? {
+					ssr: {
+						noExternal: true,
+					},
+				}
+			: {}),
 		resolve: {
 			alias: {
 				src: srcRoot,

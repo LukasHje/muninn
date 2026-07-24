@@ -1,0 +1,168 @@
+---
+import FavoriteToggleButton from "src/components/FavoriteToggleButton.astro";
+import Icon from "src/components/Icon.astro";
+import InspectorHeader from "src/components/experiences/InspectorHeader.astro";
+import InspectorSection from "src/components/experiences/InspectorSection.astro";
+import MetadataRow from "src/components/experiences/MetadataRow.astro";
+import NoteContent from "src/components/notes/NoteContent.astro";
+import { getInspectorFirstParagraph, type InspectorSection as InspectorSectionData } from "src/lib/experiences/inspector";
+import { getRecipeMetadata } from "src/lib/experiences/recipes";
+import type { ExperienceDefinition } from "src/lib/experiences/registry";
+import {
+	getExperienceMetadataEntries,
+	getInspectorImage,
+	getNoteSummary,
+	isPlaceholderExperienceImage,
+} from "src/lib/experiences/selectors";
+import type { LibraryItem } from "src/lib/vault";
+
+interface Props {
+	definition: ExperienceDefinition;
+	note: LibraryItem;
+	sections: InspectorSectionData[];
+	noteHref: string;
+	redirectTo: string;
+}
+
+const { definition, note, sections, noteHref, redirectTo } = Astro.props;
+const recipe = getRecipeMetadata(note);
+const metadataEntries = getExperienceMetadataEntries(note, definition.inspectorMetadata);
+const imageUrl = getInspectorImage(note, definition);
+const isPlaceholderImage = isPlaceholderExperienceImage(imageUrl, definition);
+const summary = getNoteSummary(note);
+
+function findSection(...titles: string[]) {
+	const normalizedTitles = titles.map((title) => title.toLocaleLowerCase("en"));
+	return sections.find((section) => normalizedTitles.includes(section.title.trim().toLocaleLowerCase("en"))) ?? null;
+}
+
+const instructionSection = findSection("Instructions", "Method", "Directions");
+const notesSection = findSection("Notes", "Review");
+const instructionPreview = instructionSection ? getInspectorFirstParagraph(instructionSection.content) : null;
+const notesPreview = notesSection ? getInspectorFirstParagraph(notesSection.content) : null;
+---
+
+<div class="px-5 pb-9 md:px-6">
+	<InspectorHeader title={note.title}>
+		<Fragment slot="leading">
+			<button type="button" data-experience-close class="recipe-inspector-action" aria-label="Close inspector" title="Close inspector">
+				<Icon name="arrow-left" class="h-6 w-6" />
+			</button>
+		</Fragment>
+		<Fragment slot="actions">
+			<div class="flex items-center gap-2">
+				<div data-experience-inspector-favorite>
+					<FavoriteToggleButton
+						noteId={note.id}
+						isFavorite={Boolean(note.favorite)}
+						redirectTo={redirectTo}
+						size="md"
+						variant="chromeless"
+					/>
+				</div>
+				<a
+					href={noteHref}
+					data-experience-open-note
+					data-note-href={noteHref}
+					class="recipe-inspector-action"
+					aria-label="Open full recipe"
+					title="Open full recipe"
+				>
+					<Icon name="square-arrow-up-right" class="h-6 w-6" />
+				</a>
+			</div>
+		</Fragment>
+	</InspectorHeader>
+
+	<div class="relative mt-3 overflow-hidden rounded-[10px] border border-[#dfcfbc] bg-[#eee0cf]">
+		<div class="aspect-[16/9]">
+			{
+				imageUrl ? (
+					<img
+						src={imageUrl}
+						alt=""
+						class:list={[
+							"h-full w-full",
+							isPlaceholderImage ? "object-contain p-8 opacity-70" : "object-cover",
+						]}
+					/>
+				) : (
+					<div class="flex h-full items-center justify-center">
+						<Icon name="chef-hat" class="h-16 w-16 text-amber-700/35" />
+					</div>
+				)
+			}
+		</div>
+		{
+			recipe.rating !== null && (
+				<div class="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-[6px] bg-slate-950/62 px-2.5 py-1.5 text-xs font-semibold text-white backdrop-blur-sm">
+					<Icon name="star" class="h-3.5 w-3.5 text-amber-300" filled />
+					<span>{recipe.rating.toFixed(recipe.rating % 1 === 0 ? 0 : 1)}</span>
+				</div>
+			)
+		}
+	</div>
+
+	{summary && <p class="mt-5 text-sm leading-7 text-slate-600">{summary}</p>}
+
+	{
+		metadataEntries.length > 0 && (
+			<div class="mt-6 overflow-hidden rounded-[10px] border border-[#e2d4c3] bg-white/58">
+				<dl class="grid md:grid-cols-2">
+					{metadataEntries.map((entry) => (
+						<div class="border-b border-[#eadfd2] px-4 last:border-b-0 md:odd:border-r">
+							<MetadataRow metadataKey={entry.key} icon={entry.icon} label={entry.label} value={entry.value} />
+						</div>
+					))}
+				</dl>
+			</div>
+		)
+	}
+
+	{
+		recipe.ingredients.length > 0 && (
+			<InspectorSection title="Ingredients" highlightKey="ingredients" iconColor="#b45309" surface="panel" className="mt-7">
+				<ul class="grid gap-x-5 gap-y-2 text-sm leading-6 text-slate-700 sm:grid-cols-2">
+					{recipe.ingredients.map((ingredient) => (
+						<li class="flex items-start gap-2">
+							<span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" aria-hidden="true"></span>
+							<span>{ingredient}</span>
+						</li>
+					))}
+				</ul>
+			</InspectorSection>
+		)
+	}
+
+	{
+		instructionPreview && instructionSection && (
+			<InspectorSection title={instructionSection.title} highlightKey="instructions" iconColor="#b45309" className="mt-7">
+				<NoteContent note={note} content={instructionPreview} />
+			</InspectorSection>
+		)
+	}
+
+	{
+		notesPreview && notesSection && (
+			<InspectorSection title={notesSection.title} highlightKey="notes" iconColor="#b45309" className="mt-7">
+				<NoteContent note={note} content={notesPreview} />
+			</InspectorSection>
+		)
+	}
+</div>
+
+<style>
+	.recipe-inspector-action {
+		display: inline-flex;
+		height: 3rem;
+		width: 3rem;
+		align-items: center;
+		justify-content: center;
+		color: rgb(71 85 105);
+		transition: color 180ms ease;
+	}
+
+	.recipe-inspector-action:hover {
+		color: rgb(180 83 9);
+	}
+</style>

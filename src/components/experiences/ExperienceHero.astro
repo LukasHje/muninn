@@ -10,60 +10,34 @@ interface Props {
 }
 
 const { definition, statistics } = Astro.props;
-const heroArtwork = definition.assets.heroArtwork;
 ---
 
-<div class="relative overflow-hidden">
-	<div class="absolute inset-y-0 right-0 hidden w-[320px] xl:block" aria-hidden="true">
-		<div class="absolute inset-0 bg-[radial-gradient(circle_at_right_center,rgba(255,255,255,0.18),rgba(247,242,235,0.04)_52%,transparent_76%)]"></div>
-		{
-			heroArtwork && (
-				<picture>
-					<source media="(min-width: 1280px)" srcset={heroArtwork} />
-					<img
-						src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
-						alt=""
-						class="pointer-events-none absolute inset-0 h-full w-full object-contain px-6 py-4 opacity-[0.08] mix-blend-multiply"
-						width="1000"
-						height="1000"
-						loading="eager"
-						fetchpriority="high"
-						decoding="async"
-					/>
-				</picture>
-			)
-		}
-	</div>
-
-		<div class="relative z-10 grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px] xl:gap-4">
-			<div class="space-y-3 p-4 md:space-y-4 md:p-5 xl:p-5 xl:pr-6">
-				<div class="flex items-center gap-3 text-sm font-medium text-slate-400">
-					<span>Experiences</span>
-					<span aria-hidden="true">/</span>
-					<span class="text-slate-600">{definition.title}</span>
-			</div>
-
-				<div class="flex items-start gap-3.5 md:gap-4">
-					<div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] border border-[#e7dfd3] bg-[#fbf7f1] shadow-[0_8px_18px_rgba(15,23,42,0.04)] md:h-[4rem] md:w-[4rem] md:rounded-[22px]">
-						<Icon name={definition.icons.hero} class="h-6 w-6 text-slate-700 md:h-7 md:w-7" />
-					</div>
-
-					<div class="min-w-0 space-y-2.5">
-						<h1 class="text-[2rem] font-semibold leading-none tracking-[-0.06em] text-slate-900 md:text-[3.8rem] xl:text-[4.1rem] xl:leading-[0.92]">
-							{definition.title}
-						</h1>
-					<p class="line-clamp-2 max-w-2xl text-[0.95rem] leading-6 text-slate-600 md:line-clamp-none md:text-[1rem] md:leading-7">
-						{definition.description}
-					</p>
-					<ExperienceStatistics items={statistics} />
-				</div>
-			</div>
+<div class="relative flex min-h-[clamp(15rem,28dvh,20rem)] items-center">
+	<div class="relative z-10 w-full max-w-3xl space-y-3 px-1 py-8 md:space-y-4 md:px-2">
+		<div class="flex items-center gap-3 text-sm font-medium text-white/56">
+			<span>Experiences</span>
+			<span aria-hidden="true">/</span>
+			<span class="text-white/78">{definition.title}</span>
 		</div>
 
-		<div class="hidden xl:block" aria-hidden="true"></div>
+		<div class="flex items-start gap-3.5 md:gap-4">
+			<div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] border border-white/24 bg-black/12 shadow-[0_8px_18px_rgba(0,0,0,0.08)] backdrop-blur-[2px] md:h-[4rem] md:w-[4rem] md:rounded-[22px]">
+				<Icon name={definition.icons.hero} class="h-6 w-6 text-white/88 md:h-7 md:w-7" />
+			</div>
+
+			<div class="min-w-0 space-y-2.5">
+				<h1 class="text-[2rem] font-semibold leading-none tracking-[-0.06em] text-white drop-shadow-sm md:text-[3.8rem] xl:text-[4.1rem] xl:leading-[0.92]">
+					{definition.title}
+				</h1>
+				<p class="line-clamp-2 max-w-2xl text-[0.95rem] leading-6 text-white/78 md:line-clamp-none md:text-[1rem] md:leading-7">
+					{definition.description}
+				</p>
+				<ExperienceStatistics items={statistics} tone="dark" />
+			</div>
+		</div>
 	</div>
 </div>
 
-<div class="px-4 py-3 md:px-5 xl:px-5 xl:py-3">
+<div class="rounded-[10px] border border-white/18 bg-[#f7f2eb]/92 px-4 py-3 shadow-sm backdrop-blur-md md:px-5 xl:py-3">
 	<slot />
 </div>

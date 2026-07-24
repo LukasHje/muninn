@@ -177,6 +177,10 @@ The browser is a full-height flex column at every size:
 
 List and grid layouts must share the same scroll container. Filtering, sorting, and search must not change scroll ownership.
 
+Below the `xl` shell breakpoint, the search and filter panel may be collapsed into its persistent one-row header. The collapsed row keeps the Library title, a truncated summary of the active query/category/tags, and a semantic toggle with `aria-expanded`. Collapse state is a session-scoped presentation preference shared by All Notes, Favorites, and Recently Updated; it is not search state and must not be added to the URL or the shared search engine.
+
+Desktop always presents the complete controls regardless of the stored mobile preference. Collapsing the panel must only release vertical space to the existing Results panel; it must not introduce another scroll owner, reset the results list, or change filtering and ranking behavior.
+
 Library Browser tag previews are presentation-only and use the available card width for at most two visual rows. Tags retain their natural width and flow across each row; a compact `+N` indicator replaces tags that do not fit and is itself included in the two-row fit. In list layout, the preview spans beneath the title/update row so the update label does not reserve empty space beside the tags. During search, tags matching the full query or any normalized query term are stably promoted before fitting. Source tag arrays and search ranking remain unchanged.
 
 Tag promotion must use the shared matcher documented in `docs/search-engine.md`; Library components may not introduce their own query normalization.
@@ -192,6 +196,10 @@ Its height accounts for the vertical padding applied by `MainLayout`. Within the
 - the inspector frame remains fixed
 - inspector content scrolls independently
 - the outer Experience canvas hides overflow
+
+Every Experience landing page is hosted by the shared `ExperienceArtworkWorkspace`. The workspace renders registered hero artwork from the main workspace edge, beneath the transparent Experience content, and lets the image fade through the fixed discovery chrome before the note browser. The artwork layer must not be implemented inside an individual hero, as a pseudo-element on `experience-page`, or in a way that alters scroll ownership.
+
+Experiences without registered artwork use the same layer structure with a theme-derived fallback background. Custom landing pages may change their text and dashboard composition, but they must not create a second artwork workspace or own the registered hero image.
 
 Opening the inspector must not transfer scrolling to the document or displace the surrounding application shell.
 

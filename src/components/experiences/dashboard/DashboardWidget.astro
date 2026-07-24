@@ -1,0 +1,70 @@
+---
+import Icon from "src/components/Icon.astro";
+
+interface Props {
+	title: string;
+	icon: string;
+	kicker?: string;
+	className?: string;
+}
+
+const { title, icon, kicker = "Discover", className = "" } = Astro.props;
+---
+
+<section class:list={["dashboard-widget", className]}>
+	<header class="dashboard-widget__header">
+		<div class="dashboard-widget__icon" aria-hidden="true">
+			<Icon name={icon} class="h-4 w-4" />
+		</div>
+		<div class="min-w-0">
+			<p class="dashboard-widget__kicker">{kicker}</p>
+			<h2 class="truncate text-sm font-semibold tracking-[-0.025em] text-slate-900">{title}</h2>
+		</div>
+	</header>
+	<div class="min-h-0 flex-1">
+		<slot />
+	</div>
+</section>
+
+<style>
+	.dashboard-widget {
+		display: flex;
+		height: 11.25rem;
+		scroll-snap-align: start;
+		flex-direction: column;
+		overflow: hidden;
+		border: 1px solid rgba(220, 201, 179, 0.88);
+		border-radius: 10px;
+		background: linear-gradient(145deg, rgba(255, 253, 249, 0.98), rgba(248, 239, 227, 0.94));
+		box-shadow: 0 8px 22px rgba(87, 55, 30, 0.055);
+	}
+
+	.dashboard-widget__header {
+		display: flex;
+		align-items: center;
+		gap: 0.65rem;
+		border-bottom: 1px solid rgba(224, 208, 188, 0.72);
+		padding: 0.65rem 0.75rem;
+	}
+
+	.dashboard-widget__icon {
+		display: flex;
+		height: 2rem;
+		width: 2rem;
+		flex-shrink: 0;
+		align-items: center;
+		justify-content: center;
+		border-radius: 7px;
+		background: rgba(217, 139, 63, 0.12);
+		color: rgb(174 100 36);
+	}
+
+	.dashboard-widget__kicker {
+		font-size: 0.6rem;
+		font-weight: 700;
+		letter-spacing: 0.14em;
+		line-height: 1;
+		text-transform: uppercase;
+		color: rgb(180 130 80);
+	}
+</style>

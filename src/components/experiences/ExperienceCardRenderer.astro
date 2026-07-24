@@ -1,6 +1,8 @@
 ---
 import GenericNoteCard from "src/components/experiences/cards/GenericNoteCard.astro";
 import ProductCard from "src/components/experiences/cards/ProductCard.astro";
+import RecipeCard from "src/components/experiences/cards/RecipeCard.astro";
+import VehicleCard from "src/components/experiences/cards/VehicleCard.astro";
 import type { ExperienceDefinition } from "src/lib/experiences/registry";
 import type { LibraryItem } from "src/lib/vault";
 
@@ -22,6 +24,8 @@ const {
 
 const cardFamilyComponents = {
 	product: ProductCard,
+	recipe: RecipeCard,
+	vehicle: VehicleCard,
 	"generic-note": GenericNoteCard,
 };
 

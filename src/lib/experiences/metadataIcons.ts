@@ -16,10 +16,30 @@ const metadataSvgFallbacks: Record<string, string> = {
 	variant: "layers-3",
 	updated: "metadata-calendar",
 	tags: "metadata-tags",
+	prep_time: "clock-3",
+	cook_time: "clock-3",
+	total_time: "clock-3",
+	difficulty: "chef-hat",
+	servings: "users",
+	cuisine: "utensils",
+	collection: "layers-3",
+	rating: "star",
+	ingredients: "shopping-basket",
+	vehicle_status: "status",
+	body_style: "car-front",
+	drivetrain: "gauge",
+	fuel: "fuel",
+	transmission: "sliders-horizontal",
+	model: "car-front",
+	generation: "layers-3",
+	year: "metadata-calendar",
+	mileage: "gauge",
+	owner: "users",
+	location: "map",
 };
 
 export function getMetadataIcon(key: string, value?: string | null): ExperienceMetadataIconDescriptor {
-	if (key === "status") {
+	if (key === "status" || key === "vehicle_status") {
 		return {
 			kind: "svg",
 			name: metadataSvgFallbacks.status,

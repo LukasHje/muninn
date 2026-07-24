@@ -1,6 +1,6 @@
 import type { LibraryItem } from "src/lib/vault";
 import type { ExperienceDefinition } from "src/lib/experiences/registry";
-import { getNoteMetadataValue } from "src/lib/experiences/selectors";
+import { getNoteMetadataValues } from "src/lib/experiences/selectors";
 import {
 	experienceStatusOrder,
 	getCanonicalExperienceStatus,
@@ -63,7 +63,7 @@ export function getMetadataFilterParamName(key: string) {
 export function filterExperienceNotes(notes: LibraryItem[], filterState: ExperienceFilterState) {
 	return notes.filter((note) => {
 		for (const [key, expectedValue] of Object.entries(filterState.metadata)) {
-			if (getNoteMetadataValue(note, key) !== expectedValue) {
+			if (!getNoteMetadataValues(note, key).includes(expectedValue)) {
 				return false;
 			}
 		}
@@ -86,12 +86,9 @@ export function buildMetadataFilterOptions(notes: LibraryItem[], key: string): E
 	}
 
 	for (const note of notes) {
-		const value = getNoteMetadataValue(note, key);
-		if (!value) {
-			continue;
+		for (const value of new Set(getNoteMetadataValues(note, key))) {
+			counts.set(value, (counts.get(value) ?? 0) + 1);
 		}
-
-		counts.set(value, (counts.get(value) ?? 0) + 1);
 	}
 
 	return Array.from(counts.entries())

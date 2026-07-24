@@ -1,0 +1,307 @@
+---
+import FavoriteToggleButton from "src/components/FavoriteToggleButton.astro";
+import Icon from "src/components/Icon.astro";
+import StatusBadge from "src/components/experiences/StatusBadge.astro";
+import type { ExperienceDefinition } from "src/lib/experiences/registry";
+import {
+	getCardImage,
+	isPlaceholderExperienceImage,
+} from "src/lib/experiences/selectors";
+import {
+	formatVehicleStatus,
+	getVehicleCategoryIcon,
+	getVehicleMetadata,
+	getVehicleTitleParts,
+	resolveVehiclePlaceholderThumbnail,
+} from "src/lib/experiences/vehicles";
+import type { LibraryItem } from "src/lib/vault";
+
+interface Props {
+	definition: ExperienceDefinition;
+	note: LibraryItem;
+	selected?: boolean;
+	redirectTo?: string;
+}
+
+const {
+	definition,
+	note,
+	selected = false,
+	redirectTo = Astro.url.pathname + Astro.url.search,
+} = Astro.props;
+
+const metadata = getVehicleMetadata(note);
+const placeholderThumbnail = resolveVehiclePlaceholderThumbnail(definition, metadata.bodyStyle);
+const imageUrl = getCardImage(note, definition, placeholderThumbnail);
+const isPlaceholderImage = isPlaceholderExperienceImage(imageUrl, definition);
+const isCategoryPlaceholderImage = Boolean(
+	imageUrl
+	&& imageUrl === placeholderThumbnail
+	&& placeholderThumbnail !== definition.assets.placeholderThumbnail
+);
+const titleParts = getVehicleTitleParts(note);
+const statusLabel = formatVehicleStatus(metadata.status);
+
+type VehicleFact = { iconName: string; value: string; label: string };
+const isVehicleFact = (fact: VehicleFact | null): fact is VehicleFact => fact !== null;
+function hasUsefulValue(value: string | null | undefined) {
+	const normalized = value?.trim().toLocaleLowerCase("en");
+	return Boolean(normalized && !["n/a", "na", "none", "not applicable", "-"].includes(normalized));
+}
+
+const vehicleFacts = [
+	metadata.drivetrain ? { iconName: "gauge", value: metadata.drivetrain, label: "Drivetrain" } : null,
+	hasUsefulValue(metadata.fuel) ? { iconName: "fuel", value: metadata.fuel!, label: "Fuel" } : null,
+	metadata.year ? { iconName: "metadata-calendar", value: metadata.year, label: "Year" } : null,
+	metadata.bodyStyle
+		? { iconName: getVehicleCategoryIcon(metadata.bodyStyle), value: metadata.bodyStyle, label: "Body" }
+		: null,
+	metadata.transmission ? { iconName: "sliders-horizontal", value: metadata.transmission, label: "Transmission" } : null,
+].filter(isVehicleFact).slice(0, 4);
+---
+
+<article
+	data-selected={selected ? "true" : "false"}
+	class="vehicle-card group relative overflow-hidden rounded-[12px] border"
+>
+	<div class="vehicle-card__favorite absolute right-2.5 top-2.5 z-40 text-amber-300">
+		<FavoriteToggleButton
+			noteId={note.id}
+			isFavorite={Boolean(note.favorite)}
+			redirectTo={redirectTo}
+			variant="chromeless"
+			size="sm"
+		/>
+	</div>
+	<button
+		type="button"
+		class="vehicle-card__trigger block h-full w-full text-left"
+		data-experience-card={note.id}
+		aria-controls="experience-inspector-panel"
+		aria-label={`Inspect ${note.title}`}
+		aria-pressed={selected ? "true" : "false"}
+	>
+		<div
+			class:list={[
+				"vehicle-card__image relative aspect-[16/9] overflow-hidden border-b",
+				(!imageUrl || (isPlaceholderImage && !isCategoryPlaceholderImage))
+					&& "vehicle-card__image--placeholder",
+				(!imageUrl || (isPlaceholderImage && !isCategoryPlaceholderImage))
+					&& "flex items-center justify-center p-6",
+			]}
+		>
+			{
+				imageUrl ? (
+					<img
+						src={imageUrl}
+						alt=""
+						class:list={[
+							"h-full w-full",
+							isPlaceholderImage && !isCategoryPlaceholderImage
+								? "object-contain opacity-70 mix-blend-multiply"
+								: "object-cover",
+						]}
+						loading="lazy"
+					/>
+				) : (
+					<Icon
+						name={metadata.bodyStyle ? getVehicleCategoryIcon(metadata.bodyStyle) : "car-front"}
+						class="h-14 w-14 text-[#9a6b35]/42"
+					/>
+				)
+			}
+			<div class="vehicle-card__fade absolute inset-x-0 bottom-0 h-28" aria-hidden="true"></div>
+			<div class="vehicle-card__image-copy absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 px-4 pb-3">
+				<div class="min-w-0">
+					<h2 class="vehicle-card__title truncate text-base font-semibold tracking-[-0.035em]">{titleParts.title}</h2>
+					{titleParts.subtitle && <p class="vehicle-card__subtitle mt-0.5 truncate text-xs font-medium">{titleParts.subtitle}</p>}
+				</div>
+				{statusLabel && <StatusBadge value={statusLabel} tone={definition.theme} />}
+			</div>
+		</div>
+
+		<div class="vehicle-card__compact-copy hidden min-w-0 items-center px-4">
+			<h2 class="vehicle-card__title truncate text-sm font-semibold tracking-[-0.025em]">{titleParts.title}</h2>
+		</div>
+
+		<div class="vehicle-card__body flex flex-col">
+			{
+				vehicleFacts.length > 0 && (
+					<div
+						class="vehicle-card__facts grid border-b"
+						style={`grid-template-columns:repeat(${vehicleFacts.length},minmax(0,1fr))`}
+					>
+						{vehicleFacts.map((fact, index) => (
+							<div
+								class="relative flex min-w-0 flex-col items-center justify-center gap-1.5 px-2 py-3 text-center"
+								title={`${fact.label}: ${fact.value}`}
+								aria-label={`${fact.label}: ${fact.value}`}
+							>
+								{index > 0 && <span class="vehicle-card__fact-divider absolute left-0 top-1/2 h-8 w-px -translate-y-1/2" aria-hidden="true"></span>}
+								<div class="flex max-w-full items-center gap-1.5">
+									<Icon
+										name={fact.iconName}
+										class="vehicle-card__fact-icon h-3.5 w-3.5 shrink-0"
+										style="color:var(--vehicle-card-icon)"
+									/>
+									<p class="vehicle-card__fact-value truncate text-[11px] font-semibold">{fact.value}</p>
+								</div>
+								<p class="vehicle-card__fact-label max-w-full truncate text-[9px] font-medium">{fact.label}</p>
+							</div>
+						))}
+					</div>
+				)
+			}
+
+			<div class="flex items-center justify-between px-4 py-3">
+				<p class="vehicle-card__updated text-[11px] font-medium">Updated {note.updatedLabel.toLocaleLowerCase("en")}</p>
+				<Icon name="ellipsis" class="vehicle-card__ellipsis h-4 w-4" />
+			</div>
+		</div>
+	</button>
+</article>
+
+<style>
+	.vehicle-card {
+		--vehicle-card-surface: #f7f2ea;
+		--vehicle-card-border: #d7c4a8;
+		--vehicle-card-divider: #ddd3c5;
+		--vehicle-card-title: #172017;
+		--vehicle-card-subtitle: #5f685f;
+		--vehicle-card-value: #273127;
+		--vehicle-card-label: #7a8178;
+		--vehicle-card-updated: #6f776f;
+		--vehicle-card-icon: #9b7444;
+		--vehicle-card-fade: linear-gradient(to top, rgba(247, 242, 234, 1), rgba(247, 242, 234, 0.78), transparent);
+		border-color: var(--vehicle-card-border);
+		background: var(--vehicle-card-surface);
+		box-shadow: 0 14px 34px rgba(77, 48, 25, 0.065);
+		transition: border-color 180ms ease;
+	}
+
+	.vehicle-card__image,
+	.vehicle-card__facts {
+		border-color: var(--vehicle-card-divider);
+	}
+
+	.vehicle-card__image {
+		background: #efe4d5;
+	}
+
+	.vehicle-card__fade {
+		background: var(--vehicle-card-fade);
+	}
+
+	.vehicle-card__body {
+		background: var(--vehicle-card-surface);
+	}
+
+	.vehicle-card__title {
+		color: var(--vehicle-card-title);
+	}
+
+	.vehicle-card__subtitle {
+		color: var(--vehicle-card-subtitle);
+	}
+
+	.vehicle-card__fact-divider {
+		background: var(--vehicle-card-divider);
+	}
+
+	.vehicle-card__fact-icon {
+		color: var(--vehicle-card-icon);
+	}
+
+	.vehicle-card__fact-value {
+		color: var(--vehicle-card-value);
+	}
+
+	.vehicle-card__fact-label {
+		color: var(--vehicle-card-label);
+	}
+
+	.vehicle-card__updated {
+		color: var(--vehicle-card-updated);
+	}
+
+	.vehicle-card__ellipsis {
+		color: var(--vehicle-card-label);
+	}
+
+	.vehicle-card__favorite :global(.favorite-toggle-button svg) {
+		width: 1.5rem;
+		height: 1.5rem;
+	}
+
+	.vehicle-card:hover,
+	.vehicle-card[data-selected="true"] {
+		border-color: rgba(213, 156, 74, 0.78);
+	}
+
+	:global([data-experience-layout="list"]) .vehicle-card {
+		min-height: 4.5rem;
+		overflow: hidden;
+		border-radius: 8px;
+		box-shadow: 0 5px 16px rgba(77, 48, 25, 0.045);
+	}
+
+	:global([data-experience-layout="list"]) .vehicle-card__trigger {
+		display: grid;
+		min-height: 4.5rem;
+		grid-template-columns: 6.25rem minmax(0, 1fr);
+		padding-right: 3.25rem;
+	}
+
+	:global([data-experience-layout="list"]) .vehicle-card__image {
+		height: 4.5rem;
+		aspect-ratio: auto;
+		border-right: 1px solid var(--vehicle-card-divider);
+		border-bottom: 0;
+	}
+
+	:global([data-experience-layout="list"]) .vehicle-card__image--placeholder {
+		padding: 0.35rem;
+	}
+
+	:global([data-experience-layout="list"]) .vehicle-card__image--placeholder img {
+		opacity: 0.82;
+	}
+
+	:global([data-experience-layout="list"]) .vehicle-card__fade,
+	:global([data-experience-layout="list"]) .vehicle-card__image-copy,
+	:global([data-experience-layout="list"]) .vehicle-card__body {
+		display: none;
+	}
+
+	:global([data-experience-layout="list"]) .vehicle-card__compact-copy {
+		display: flex;
+	}
+
+	:global([data-experience-layout="list"]) .vehicle-card__favorite {
+		top: 50%;
+		right: 0.75rem;
+		transform: translateY(-50%);
+	}
+
+	@media (prefers-color-scheme: dark) {
+		.vehicle-card {
+			--vehicle-card-surface: #151a15;
+			--vehicle-card-border: #394136;
+			--vehicle-card-divider: #293025;
+			--vehicle-card-title: #f4eadb;
+			--vehicle-card-subtitle: #c1bca9;
+			--vehicle-card-value: #f4eadb;
+			--vehicle-card-label: #a9a894;
+			--vehicle-card-updated: #b7b29f;
+			--vehicle-card-icon: #c59a5f;
+			--vehicle-card-fade: linear-gradient(to top, rgba(21, 26, 21, 1), rgba(21, 26, 21, 0.72), transparent);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.vehicle-card,
+		.vehicle-card img {
+			transition-duration: 0.01ms;
+		}
+	}
+</style>

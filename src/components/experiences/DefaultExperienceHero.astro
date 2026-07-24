@@ -10,44 +10,26 @@ interface Props {
 }
 
 const { definition, statistics } = Astro.props;
-const heroArtwork = definition.assets.heroArtwork;
 ---
 
-<div class="relative -mx-4 -mt-4 overflow-hidden md:-mx-5 md:-mt-5 xl:-mx-6 xl:-mt-6">
-	{
-		heroArtwork && (
-			<div class="pointer-events-none absolute inset-y-0 right-0 hidden w-[42%] md:block" aria-hidden="true">
-				<img
-					src={heroArtwork}
-					alt=""
-					class="h-full w-full object-contain p-5 opacity-[0.12] mix-blend-multiply"
-					width="1000"
-					height="1000"
-					loading="eager"
-					fetchpriority="high"
-					decoding="async"
-				/>
-			</div>
-		)
-	}
-
-	<div class="relative z-10 space-y-3 p-4 md:space-y-5 md:p-7">
+<div class="relative flex min-h-[clamp(15rem,28dvh,20rem)] items-center">
+	<div class="relative z-10 w-full max-w-3xl space-y-3 px-1 py-8 md:space-y-5 md:px-2">
 		<div class="flex items-start gap-4">
-			<div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-[#e2d9cd] bg-white/70 shadow-[0_8px_20px_rgba(15,23,42,0.04)] md:h-14 md:w-14">
-				<Icon name={definition.icons.hero} class="h-6 w-6 text-[#585E66] md:h-7 md:w-7" />
+			<div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/24 bg-black/12 shadow-[0_8px_20px_rgba(0,0,0,0.08)] backdrop-blur-[2px] md:h-14 md:w-14">
+				<Icon name={definition.icons.hero} class="h-6 w-6 text-white/88 md:h-7 md:w-7" />
 			</div>
 			<div class="min-w-0">
-				<p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Experience</p>
-				<h1 class="mt-1 text-[2rem] font-semibold leading-none tracking-[-0.055em] text-slate-900 md:text-[3.2rem]">
+				<p class="text-xs font-semibold uppercase tracking-[0.18em] text-white/62">Experience</p>
+				<h1 class="mt-1 text-[2rem] font-semibold leading-none tracking-[-0.055em] text-white drop-shadow-sm md:text-[3.2rem]">
 					{definition.title}
 				</h1>
-				<p class="mt-2 line-clamp-2 max-w-2xl text-sm leading-6 text-slate-600 md:mt-3 md:line-clamp-none md:leading-7">{definition.description}</p>
+				<p class="mt-2 line-clamp-2 max-w-2xl text-sm leading-6 text-white/78 md:mt-3 md:line-clamp-none md:leading-7">{definition.description}</p>
 			</div>
 		</div>
-		<ExperienceStatistics items={statistics} />
+		<ExperienceStatistics items={statistics} tone="dark" />
 	</div>
 </div>
 
-<div class="border-t border-[#e3dbd0] px-4 py-3 md:px-5">
+<div class="rounded-[10px] border border-white/18 bg-[#f7f2eb]/92 px-4 py-3 shadow-sm backdrop-blur-md md:px-5">
 	<slot />
 </div>

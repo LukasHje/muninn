@@ -1,0 +1,91 @@
+---
+import Icon from "src/components/Icon.astro";
+import type { ExperienceDefinition } from "src/lib/experiences/registry";
+import type { ExperienceStatistic } from "src/lib/experiences/statistics";
+
+interface Props {
+	definition: ExperienceDefinition;
+	statistics: ExperienceStatistic[];
+}
+
+const { definition, statistics } = Astro.props;
+---
+
+<div class="recipes-hero">
+	<div class="recipes-hero__content">
+		<div class="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200/85">
+			<Icon name="chef-hat" class="h-4 w-4" />
+			<span>Personal cookbook</span>
+		</div>
+		<h1 class="mt-2 text-[2.15rem] font-semibold leading-none tracking-[-0.055em] text-white md:text-[3.4rem]">
+			{definition.title}
+		</h1>
+		<p class="mt-2 line-clamp-2 max-w-xl text-xs leading-5 text-stone-200/90 md:text-sm md:leading-6">
+			{definition.description}
+		</p>
+
+		<div class="recipes-hero__stats" aria-label="Cookbook statistics">
+			{
+				statistics.map((item) => (
+					<div class="min-w-0">
+						<p class="text-base font-semibold leading-none tracking-[-0.04em] text-white md:text-xl">{item.value}</p>
+						<p class="mt-1 truncate text-[9px] uppercase tracking-[0.09em] text-stone-300/80">{item.label}</p>
+					</div>
+				))
+			}
+		</div>
+	</div>
+</div>
+
+<style>
+	.recipes-hero {
+		position: relative;
+		min-height: clamp(15rem, 28dvh, 20rem);
+	}
+
+	.recipes-hero__content {
+		position: relative;
+		z-index: 1;
+		display: flex;
+		min-height: clamp(15rem, 28dvh, 20rem);
+		max-width: 46rem;
+		flex-direction: column;
+		justify-content: center;
+		padding: 2rem 0.25rem;
+	}
+
+	.recipes-hero__stats {
+		display: grid;
+		grid-template-columns: repeat(5, minmax(0, 1fr));
+		gap: 0.75rem;
+		max-width: 34rem;
+		margin-top: 1rem;
+	}
+
+	@media (min-width: 768px) {
+		.recipes-hero__content {
+			padding-right: 0.5rem;
+			padding-left: 0.5rem;
+		}
+	}
+
+	@media (min-width: 640px) and (max-width: 1279px) and (max-height: 500px) {
+		.recipes-hero,
+		.recipes-hero__content {
+			min-height: 8rem;
+		}
+
+		.recipes-hero__content {
+			max-width: 39rem;
+			padding: 0.85rem 1.25rem;
+		}
+
+		.recipes-hero__content > p {
+			display: none;
+		}
+
+		.recipes-hero__stats {
+			margin-top: 0.65rem;
+		}
+	}
+</style>

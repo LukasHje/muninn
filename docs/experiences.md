@@ -226,7 +226,7 @@ An Experience Definition owns:
 
 No Experience-specific information should be scattered throughout the application.
 
-Experiences without component overrides inherit the Default Experience landing page, hero, Generic Note Card, inspector, and metadata presentation. Gear is currently the only custom implementation.
+Experiences without component overrides inherit the Default Experience landing page, hero, Generic Note Card, inspector, and metadata presentation. Every resolved landing page is wrapped in the same artwork workspace, so registered hero art belongs behind the transparent Experience canvas rather than inside a hero component. Gear, Recipes, and Vehicles are custom implementations built on the same registry, artwork workspace, browser, shell, and inspector contracts.
 
 ---
 
@@ -296,6 +296,10 @@ Journal
 - This Month
 
 Widgets should remain independent reusable components.
+
+Recipe widgets are the first implemented dashboard composition. They cover featured and recent recipes, categories, ingredients, collections, aggregate cookbook statistics, and discovery links. Domain aggregation lives in a Recipe dashboard model; reusable widget shells and list renderers remain domain-neutral.
+
+Dashboard widgets may scroll horizontally, but they do not own vertical viewport scrolling. The Library workspace below them remains the Experience's vertical scroll container.
 
 ---
 
@@ -369,6 +373,21 @@ Statistics
 BrowseLibraryCard
 
 Future experiences should mostly be composition rather than implementation.
+
+## Recipes
+
+Recipes behaves like a personal cookbook layered over normal Markdown notes:
+
+- a warm editorial hero and summary statistics
+- compact horizontally scrollable dashboard widgets
+- the shared filter and sorting toolbar
+- Recipe Cards in the generic Library browser
+- a contextual Recipe inspector with ingredients and instruction previews
+- the authoritative full Note View for reading and editing context
+
+Recipe metadata is optional and additive. Notes are selected by their normalized `type`; missing cover art, timing, rating, ingredients, or collections must degrade gracefully. Common singular/plural metadata aliases are normalized centrally so filters, widgets, cards, and inspectors share the same values.
+
+The Recipe inspector is not a separate recipe-detail route. Opening a card keeps the current browse state and uses the shared Experience inspector lifecycle; opening the complete note still uses the normal Note View.
 
 ---
 

@@ -80,7 +80,13 @@ const snippetHtml = searchQuery && searchSnippet && searchField
 			</div>
 		</a>
 		<div class="absolute right-3 top-3">
-			<FavoriteToggleButton noteId={item.id} isFavorite={Boolean(item.favorite)} redirectTo={redirectTo} />
+			<FavoriteToggleButton
+				noteId={item.id}
+				isFavorite={Boolean(item.favorite)}
+				redirectTo={redirectTo}
+				size="xs"
+				elevated={false}
+			/>
 		</div>
 	</div>
 </article>

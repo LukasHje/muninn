@@ -1,0 +1,191 @@
+---
+import Icon from "src/components/Icon.astro";
+import DashboardMetadataList from "src/components/experiences/dashboard/DashboardMetadataList.astro";
+import DashboardNoteList from "src/components/experiences/dashboard/DashboardNoteList.astro";
+import DashboardWidget from "src/components/experiences/dashboard/DashboardWidget.astro";
+import ExperienceDashboard from "src/components/experiences/dashboard/ExperienceDashboard.astro";
+import { buildRecipeDashboardModel, getRecipeMetadata } from "src/lib/experiences/recipes";
+import type { ExperienceFilterState } from "src/lib/experiences/filters";
+import type { ExperienceDefinition } from "src/lib/experiences/registry";
+import type { LibraryItem } from "src/lib/vault";
+
+interface Props {
+	definition: ExperienceDefinition;
+	notes: LibraryItem[];
+	filterState: ExperienceFilterState;
+}
+
+const { definition, notes, filterState } = Astro.props;
+const dashboard = buildRecipeDashboardModel(notes);
+const path = Astro.url.pathname;
+const baseParams = Astro.url.searchParams;
+
+function buildFilterHref(key: string, value: string) {
+	const params = new URLSearchParams(baseParams);
+	params.set(`filter-${key}`, value);
+	params.delete("selected");
+	params.delete("inspector");
+	params.delete("experienceScroll");
+	return `${path}?${params.toString()}#experience-library`;
+}
+
+function buildMetadataItems(key: string, items: typeof dashboard.categories) {
+	return items.map((item) => ({
+		label: item.label,
+		count: item.count,
+		href: buildFilterHref(key, item.value),
+	}));
+}
+
+function buildCountItems(items: typeof dashboard.ingredients) {
+	return items.map((item) => ({
+		label: item.label,
+		count: item.count,
+		icon: item.icon,
+	}));
+}
+
+function getRecipeMetaLabel(note: LibraryItem) {
+	const metadata = getRecipeMetadata(note);
+	return [metadata.totalTime ?? metadata.cookTime, metadata.difficulty, metadata.cuisine]
+		.filter(Boolean)
+		.slice(0, 2)
+		.join(" · ") || note.updatedLabel;
+}
+
+const vegetarianCategory = dashboard.categories.find((item) =>
+	item.value.toLocaleLowerCase("en").includes("vegetar")
+);
+const favoriteCount = notes.filter((note) => getRecipeMetadata(note).favorite).length;
+const surpriseRecipe = notes.length > 0
+	? notes[Math.floor(Date.now() / 86_400_000) % notes.length]
+	: null;
+const discoveryItems = [
+	{
+		label: "Favorites",
+		helper: `${favoriteCount} saved`,
+		href: buildFilterHref("favorite", "true"),
+		icon: "star",
+	},
+	vegetarianCategory
+		? {
+				label: "Vegetarian",
+				helper: `${vegetarianCategory.count} recipes`,
+				href: buildFilterHref("category", vegetarianCategory.value),
+				icon: "leaf",
+			}
+		: null,
+	{
+		label: "Needs review",
+		helper: `${dashboard.needsReview} recipes`,
+		href: buildFilterHref("reviewed", "false"),
+		icon: "clipboard-list",
+	},
+].filter(Boolean) as Array<{ label: string; helper: string; href: string; icon: string }>;
+---
+
+<ExperienceDashboard label="Recipes dashboard">
+	<DashboardWidget title="Featured recipes" icon="sparkles" kicker="Highlights">
+		<DashboardNoteList
+			definition={definition}
+			items={dashboard.featured.map((note) => ({ note, meta: getRecipeMetaLabel(note) }))}
+			emptyLabel="Favorite or highly rated recipes appear here."
+		/>
+	</DashboardWidget>
+
+	<DashboardWidget title="Categories" icon="layout-grid" kicker="Explore">
+		<div class="flex h-full items-center justify-between gap-1 px-3 py-2.5">
+			{
+				dashboard.recipeKinds.map((item, index) => (
+					<>
+						{index > 0 && <span class="h-12 w-px shrink-0 bg-slate-300/55" aria-hidden="true"></span>}
+						<a
+							href={buildFilterHref("recipe_kind", item.value)}
+							aria-current={filterState.metadata.recipe_kind === item.value ? "true" : "false"}
+							class="group min-w-0 flex-1 rounded-[8px] px-1.5 py-1.5 text-center transition hover:bg-white/48 aria-[current=true]:bg-white/70 aria-[current=true]:shadow-sm"
+						>
+							<div class="relative mx-auto flex h-8 w-8 items-center justify-center">
+								<Icon name={item.icon} class="h-5 w-5 text-amber-700 transition group-hover:text-amber-800" />
+								<span class="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-700 px-1 text-[9px] font-bold tabular-nums text-white transition group-hover:bg-amber-800">
+									{item.count}
+								</span>
+							</div>
+							<p class="mt-1 truncate text-[10px] font-semibold text-slate-700 transition group-hover:text-slate-900">{item.label}</p>
+						</a>
+					</>
+				))
+			}
+		</div>
+	</DashboardWidget>
+
+	<DashboardWidget title="Popular ingredients" icon="shopping-basket" kicker="Pantry">
+		<DashboardMetadataList
+			items={buildCountItems(dashboard.ingredients)}
+			emptyLabel="Ingredient categories appear once recipes list ingredients."
+			scrollable
+		/>
+	</DashboardWidget>
+
+	<DashboardWidget title="Collections" icon="layers-3" kicker="Cookbooks">
+		<DashboardMetadataList items={buildMetadataItems("collection", dashboard.collections)} />
+	</DashboardWidget>
+
+	<DashboardWidget title="Recently added" icon="clock-3" kicker="Fresh notes">
+		<DashboardNoteList
+			definition={definition}
+			items={dashboard.recent.map((note) => ({ note, meta: note.updatedLabel }))}
+		/>
+	</DashboardWidget>
+
+	<DashboardWidget title="Cookbook at a glance" icon="chart-no-axes-column" kicker="Statistics">
+		<div class="grid grid-cols-2 gap-px bg-[#e5d7c7]">
+			<div class="bg-white/65 p-2.5">
+				<p class="text-lg font-semibold tracking-[-0.04em] text-slate-900">{dashboard.averageTotalMinutes ?? "—"}</p>
+				<p class="text-[10px] uppercase tracking-[0.09em] text-slate-400">avg minutes</p>
+			</div>
+			<div class="bg-white/65 p-2.5">
+				<p class="truncate text-sm font-semibold text-slate-900">{dashboard.mostCommonCuisine ?? "—"}</p>
+				<p class="text-[10px] uppercase tracking-[0.09em] text-slate-400">top cuisine</p>
+			</div>
+			<div class="bg-white/65 p-2.5">
+				<p class="truncate text-sm font-semibold text-slate-900">{dashboard.mostCommonIngredient ?? "—"}</p>
+				<p class="text-[10px] uppercase tracking-[0.09em] text-slate-400">top ingredient</p>
+			</div>
+			<div class="bg-white/65 p-2.5">
+				<p class="text-lg font-semibold tracking-[-0.04em] text-slate-900">{dashboard.quickMeals}</p>
+				<p class="text-[10px] uppercase tracking-[0.09em] text-slate-400">quick meals</p>
+			</div>
+		</div>
+	</DashboardWidget>
+
+	<DashboardWidget title="What should I cook?" icon="compass" kicker="Discovery">
+		<div class="grid grid-cols-2 gap-1.5 p-2.5">
+			{
+				surpriseRecipe && (
+					<button
+						type="button"
+						class="col-span-2 flex items-center justify-between rounded-[6px] bg-amber-600 px-3 py-2 text-left text-xs font-semibold text-white transition hover:bg-amber-700"
+						data-experience-card={surpriseRecipe.id}
+						aria-controls="experience-inspector-panel"
+						aria-label={`Inspect surprise recipe ${surpriseRecipe.title}`}
+						aria-pressed="false"
+					>
+						<span class="truncate">Cook tonight: {surpriseRecipe.title}</span>
+						<Icon name="dice-5" class="h-4 w-4 shrink-0" />
+					</button>
+				)
+			}
+			{
+				discoveryItems.map((item) => (
+					<a href={item.href} class="rounded-[6px] bg-white/62 px-2.5 py-2 transition hover:bg-amber-50">
+						<span class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700">
+							<Icon name={item.icon} class="h-3.5 w-3.5 text-amber-700" />
+							{item.label}
+						</span>
+						<span class="mt-0.5 block text-[9px] text-slate-400">{item.helper}</span>
+					</a>
+				))
+			}
+		</div>
+	</DashboardWidget>
+</ExperienceDashboard>
