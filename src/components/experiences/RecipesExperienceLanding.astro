@@ -1,0 +1,14 @@
+---
+import ExperienceView from "src/components/experiences/ExperienceView.astro";
+import RecipesDashboard from "src/components/experiences/RecipesDashboard.astro";
+import RecipesExperienceHero from "src/components/experiences/RecipesExperienceHero.astro";
+import type { ExperienceViewModel } from "src/lib/experiences/experience";
+
+type Props = ExperienceViewModel;
+
+const props = Astro.props;
+---
+
+<ExperienceView {...props} heroComponent={RecipesExperienceHero}>
+	<RecipesDashboard slot="dashboard" notes={props.notes} filterState={props.filterState} />
+</ExperienceView>

@@ -22,30 +22,80 @@ The registry does not implement selectors, traverse the Vault, parse Markdown, o
 ## Registered Experiences
 
 - Gear: custom landing page, Product Card, and custom inspector
-- Vehicles: Default Experience
+- Vehicles: custom thematic landing page, Vehicle Card, dashboard, and custom inspector
 - Travel: Default Experience
-- Recipes: Default Experience
+- Recipes: custom editorial landing page, dashboard, Recipe Card, and custom inspector
 - Books: Default Experience
 - Technology: Default Experience
 - Homelab: Default Experience
 
-The first six use frontmatter selectors. A selector may accept multiple equivalent values, as Recipes does for `recipes` and `recept`. Homelab uses a path selector and demonstrates that the registry is not tied to `type` metadata.
+The first six use frontmatter selectors. A selector may accept multiple equivalent values, as Recipes does for `recipe`, `recipes`, and `recept`, and Vehicles does for `vehicle`, `vehicles`, and `fordon`. Homelab uses a path selector and demonstrates that the registry is not tied to `type` metadata.
 
 ## Assets
 
 Assets are declared by each definition. Existing hero artwork follows:
 
 ```text
-/public/experiences/[experience]/experiences-heroart-[experience].webp
+/public/experiences/[experience]/experiences-heroart-[experience].[image-extension]
 ```
 
-Hero artwork and placeholder thumbnails may be absent. Default UI then renders the registered hero icon instead of requesting a missing image.
+Production hero artwork should use WebP at its intended display resolution. Lossless source files may be retained outside `public/`, but must not be shipped alongside the optimized asset because everything under `public/` is copied into the runtime image.
+
+An Experience may instead keep a cohesive asset set under `/public/experiences/[experience]-assets/`; Recipes uses this convention for its editorial hero. The registry remains the authority for the public path, so renderers must not derive paths from ids.
+
+Hero artwork and placeholder thumbnails may be absent. The shared artwork workspace then renders a theme-derived background and the hero keeps its registered icon instead of requesting a missing image. Individual landing pages and hero components must not resolve or paint the registered artwork themselves. An Experience may additionally register `placeholderThumbnailsByCategory`; the registry owns these public asset paths, while the domain adapter owns category normalization and fallback selection.
 
 ## Component Fallbacks
 
 `landingPage` and `inspector` are optional. Their absence selects the Default Experience implementation. `cardFamily` always resolves through the generic card renderer and falls back to `generic-note`.
 
 The browser consumes only the resolved definition. It must not contain Experience-id branches.
+
+## Recipe Definition
+
+Recipes deliberately accepts common vault vocabulary without requiring migration:
+
+- `type`: `recipe`, `recipes`, or `recept`
+- `category` / `categories`
+- `ingredient` / `ingredients`
+- `collection` / `collections`
+- optional timing, difficulty, servings, cuisine, rating, favorite, reviewed, and `recipe_status` fields
+
+Missing recipe metadata degrades to omitted UI or an empty statistic; it must not exclude an otherwise matching recipe note. Field aliases are resolved by shared selectors, not by Recipe components.
+
+The canonical lifecycle field is:
+
+```yaml
+recipe_status: made # made | to_try
+```
+
+`made` and `to_try` are normalized to the two presentation states `Made` and `To try`. Supported English and Swedish field aliases are accepted by the shared selector layer. A generic `status` field is intentionally not consumed because it may describe publishing or document workflow rather than the recipe lifecycle.
+
+Recipes does not render the generic Experience metadata filter row. Its compact statistics and cuisine controls own the visible category filtering and write `recipe_kind`, `favorite`, `reviewed`, and `cuisine` filters into the normal Experience filter pipeline. The four recipe kinds are:
+
+- Food
+- Drink
+- Dessert
+- Other
+
+`Food` is the fallback for ordinary meals, breakfast, lunch, dinner, baked bread, and snacks. `Drink` is reserved for alcoholic drinks and cocktails. Coffee, tea, chai, and hot chocolate intentionally fall into `Other` until the drink taxonomy is expanded.
+
+The Recipe dashboard model derives seven key values from the current note set: total recipes, favorites, Food/Mains, Desserts, Drinks, average rating, and recipes needing review. Cuisine distribution reports percentage shares from normalized cuisine metadata and groups values outside the five largest cuisines into `Other`.
+
+## Vehicles Definition
+
+Vehicles accepts common garage vocabulary without requiring vault migration:
+
+- `type`: `vehicle`, `vehicles`, or `fordon`
+- status aliases through `vehicle_status`, `status`, or `state`
+- manufacturer aliases such as `manufacturer`, `make`, `brand`, `märke`, and `tillverkare`
+- vehicle fields such as `model`, `generation`, `year`, `body_style`, `drivetrain`, `fuel`, `transmission`, `mileage`, `owner`, `location`, and `rating`
+
+Vehicles does not render the generic Experience metadata filter row. Its dashboard owns the visible garage controls and writes normal Experience filter parameters into the shared filter pipeline.
+
+Vehicle statistics and cards must be derived from actual notes. Missing fields are omitted or represented with neutral empty states; mockup values must not be hardcoded into the implementation.
+
+Vehicles resolves missing images in this order: explicit thumbnail, explicit cover, normalized note image, category placeholder, then the generic Vehicle placeholder when the note has no usable body style. Known categories without a registered placeholder render their category icon instead of borrowing an incorrect vehicle silhouette. Photographic category placeholders fill the image frame; the generic illustration retains contained placeholder presentation.
 
 ## Data Ownership
 

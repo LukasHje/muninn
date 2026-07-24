@@ -30,7 +30,7 @@ The Dockerfile uses two stages.
 
 The builder contains the full locked dependency tree, source code, Astro, TypeScript tooling, and asset compilers. Dependency manifests are copied before application files so the expensive `npm ci` layer remains cacheable when only source changes.
 
-The build runs against an intentionally empty temporary vault. Vault notes and generated `public/vault-assets` are runtime data and must never be baked into a release image. Vite's SSR `noExternal` contract bundles server dependencies into the generated server chunks so the result can run without a package installation.
+The build runs against an intentionally empty temporary vault. Vault notes and generated `public/vault-assets` are runtime data and must never be baked into a release image. In production mode, Vite's SSR `noExternal` contract bundles server dependencies into the generated server chunks so the result can run without a package installation. Development mode intentionally keeps Vite's default SSR externalization so CommonJS dependencies are loaded by Node instead of being forced through Vite's ESM module runner.
 
 ### Runtime
 
@@ -39,7 +39,7 @@ The final stage contains only:
 - the Node 22 Alpine runtime;
 - `dist/`.
 
-It must not contain `src/`, `docs/`, tests, the vault, generated vault assets, `node_modules`, TypeScript, the Astro CLI, Vite, or other build tools. The `vite.ssr.noExternal` setting is part of the container-runtime contract: removing it reintroduces external imports and would make the dist-only image fail at startup. Client-only libraries and build integrations remain in `devDependencies` to keep their lifecycle explicit even though no package tree is copied into runtime.
+It must not contain `src/`, `docs/`, tests, the vault, generated vault assets, `node_modules`, TypeScript, the Astro CLI, Vite, or other build tools. Production builds must retain `vite.ssr.noExternal: true`; Astro sets `NODE_ENV=production` for `astro build`, which activates this setting in `astro.config.mjs`. Development uses the externalized default and must not be used to produce a release artifact. Removing the production condition reintroduces external imports and would make the dist-only image fail at startup. Client-only libraries and build integrations remain in `devDependencies` to keep their lifecycle explicit even though no package tree is copied into runtime.
 
 The process runs as the image's unprivileged `node` user (UID/GID 1000) with `NODE_ENV=production`, `HOST=0.0.0.0`, `PORT=4321`, and `VAULT_PATH=/vault`.
 

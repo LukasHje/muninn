@@ -142,6 +142,14 @@ function isCalloutHeader(line: string) {
 	return /^\s*>\s*\[!([A-Za-z-]+)\]([+-])?\s*(.*)$/.test(line);
 }
 
+function isOpeningCodeFence(line: string) {
+	return /^\s{0,3}```[^\n`]*\s*$/.test(line);
+}
+
+function isClosingCodeFence(line: string) {
+	return /^\s{0,3}```\s*$/.test(line);
+}
+
 async function splitObsidianMarkdownSegments(
 	raw: string,
 	context: MarkdownParseContext,
@@ -180,15 +188,34 @@ async function splitObsidianMarkdownSegments(
 		const contentLines: string[] = [];
 
 		let cursor = index + 1;
+		let inLazyCodeFence = false;
 		while (cursor < lines.length) {
 			const currentLine = lines[cursor];
-			if (isCalloutHeader(currentLine)) {
+			if (!inLazyCodeFence && isCalloutHeader(currentLine)) {
 				break;
 			}
 
 			if (/^\s*>/.test(currentLine)) {
+				const contentLine = currentLine.replace(/^\s*>\s?/, "");
 				calloutSourceLines.push(currentLine);
-				contentLines.push(currentLine.replace(/^\s*>\s?/, ""));
+				contentLines.push(contentLine);
+
+				if (inLazyCodeFence && isClosingCodeFence(contentLine)) {
+					inLazyCodeFence = false;
+				} else if (!inLazyCodeFence && isOpeningCodeFence(contentLine)) {
+					inLazyCodeFence = true;
+				}
+
+				cursor += 1;
+				continue;
+			}
+
+			if (inLazyCodeFence) {
+				calloutSourceLines.push(currentLine);
+				contentLines.push(currentLine);
+				if (isClosingCodeFence(currentLine)) {
+					inLazyCodeFence = false;
+				}
 				cursor += 1;
 				continue;
 			}

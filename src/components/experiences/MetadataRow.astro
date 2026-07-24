@@ -10,14 +10,19 @@ interface Props {
 	value: string;
 }
 
-const { metadataKey, label, value } = Astro.props;
-const isStatus = metadataKey === "status";
+const { metadataKey, icon, label, value } = Astro.props;
+const isStatus = metadataKey === "status" || metadataKey === "vehicle_status";
 const statusColor = isStatus ? getExperienceStatusColor(value) : undefined;
 ---
 
 <div class="flex items-start gap-4 py-3">
 	<div class="flex min-w-0 items-start gap-3">
-		<ExperienceMetadataIcon metadataKey={metadataKey} value={value} className="h-5 w-5 shrink-0" />
+		<ExperienceMetadataIcon
+			metadataKey={metadataKey}
+			value={value}
+			{icon}
+			className="h-5 w-5 shrink-0"
+		/>
 		<div class="min-w-0 text-sm leading-6">
 			<span class="text-slate-500">{label.toLocaleLowerCase("en")}:</span>
 			{

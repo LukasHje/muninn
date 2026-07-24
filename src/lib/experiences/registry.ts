@@ -11,8 +11,25 @@ export type ExperienceId =
 	| "technology"
 	| "homelab";
 
-export type ExperienceLandingPage = "gear";
-export type ExperienceInspector = "gear";
+export type ExperienceLandingPage = "gear" | "recipes" | "vehicles";
+export type ExperienceInspector = "gear" | "recipes" | "vehicles";
+
+export type ExperienceStatisticMetric =
+	| { type: "total"; label: string; helper?: string }
+	| { type: "favorites"; label: string; helper?: string }
+	| { type: "unique-metadata"; key: string; label: string; helper?: string }
+	| { type: "unique-tags"; label: string; helper?: string };
+
+export type ExperienceStatisticsDefinition =
+	| {
+			type: "metadata-breakdown";
+			metadataKey: string;
+			maxValues: number;
+	  }
+	| {
+			type: "summary";
+			metrics: ExperienceStatisticMetric[];
+	  };
 
 export interface ExperienceDefinition {
 	id: ExperienceId;
@@ -27,6 +44,7 @@ export interface ExperienceDefinition {
 	assets: {
 		heroArtwork: string | null;
 		placeholderThumbnail: string | null;
+		placeholderThumbnailsByCategory?: Record<string, string>;
 	};
 	href: string;
 	libraryHref: string;
@@ -38,13 +56,11 @@ export interface ExperienceDefinition {
 	inspector?: ExperienceInspector;
 	featureSections: string[];
 	metadataFilters: string[];
+	showMetadataFilters?: boolean;
 	cardMetadata: string[];
 	inspectorMetadata: string[];
 	inspectorSections: string[];
-	statistics: {
-		metadataKey: string;
-		maxValues: number;
-	};
+	statistics: ExperienceStatisticsDefinition;
 }
 
 const commonInspectorSections = [
@@ -66,10 +82,6 @@ const gearFeatureSections = [
 	"Technical highlights",
 ];
 
-function getExperienceHeroArtworkPath(id: ExperienceId) {
-	return `/experiences/${id}/experiences-heroart-${id}.webp`;
-}
-
 const defaultExperienceConfig = {
 	libraryHref: "/notes",
 	cardFamily: "generic-note",
@@ -79,6 +91,7 @@ const defaultExperienceConfig = {
 	inspectorMetadata: ["type", "status", "category", "tags", "updated"],
 	inspectorSections: commonInspectorSections,
 	statistics: {
+		type: "metadata-breakdown",
 		metadataKey: "category",
 		maxValues: 4,
 	},
@@ -101,7 +114,7 @@ export const experienceDefinitions = [
 			hero: "gear",
 		},
 		assets: {
-			heroArtwork: getExperienceHeroArtworkPath("gear"),
+			heroArtwork: "/experiences/gear/experiences-heroart-gear-v2.webp",
 			placeholderThumbnail: "/assets/experiences/gear/placeholder-thumbnail.webp",
 		},
 		href: "/gear",
@@ -118,6 +131,7 @@ export const experienceDefinitions = [
 		inspectorMetadata: ["type", "status", "category", "manufacturer", "variant", "tags", "updated"],
 		inspectorSections: commonInspectorSections,
 		statistics: {
+			type: "metadata-breakdown",
 			metadataKey: "status",
 			maxValues: 4,
 		},
@@ -126,16 +140,59 @@ export const experienceDefinitions = [
 		...defaultExperienceConfig,
 		id: "vehicles",
 		title: "Vehicles",
-		description: "Vehicles, ownership notes, maintenance records, and transport references.",
-		selector: { type: "frontmatter", field: "type", value: "vehicle" },
+		description:
+			"A curated garage of machines, past, present, and future. Built for exploration and service.",
+		selector: { type: "frontmatter", field: "type", value: ["vehicle", "vehicles", "fordon"] },
 		theme: "slate",
-		icons: { sidebar: "vehicles", hero: "vehicles" },
+		icons: { sidebar: "car-front", hero: "car-front" },
 		assets: {
-			heroArtwork: getExperienceHeroArtworkPath("vehicles"),
-			placeholderThumbnail: "/assets/placeholders/car_placeholder_thumbnail.webp",
+			heroArtwork: "/experiences/vehicles/experiences-heroart-vehicles-v2.webp",
+			placeholderThumbnail: "/assets/placeholders/vehicle-suv-placeholder-thumbnail.webp",
+			placeholderThumbnailsByCategory: {
+				Hatchback: "/assets/placeholders/vehicle-hatchback-placeholder.webp",
+				Moped: "/assets/placeholders/vehicle-moped-placeholder.webp",
+				Motorcycle: "/assets/placeholders/vehicle-motorcycle-placeholder.webp",
+				"Station Wagon": "/assets/placeholders/vehicle-station-wagon-placeholder.webp",
+				SUV: "/assets/placeholders/vehicle-suv-placeholder.webp",
+				"Terrain Vehicle": "/assets/placeholders/vehicle-terrain-vehicle-placeholder.webp",
+			},
 		},
 		href: "/vehicles",
 		sidebar: { label: "Vehicles" },
+		cardFamily: "vehicle",
+		landingPage: "vehicles",
+		inspector: "vehicles",
+		featureSections: ["Overview", "Specs", "Specifications", "Ownership", "Planning", "Maintenance", "Notes", "Files"],
+		metadataFilters: ["vehicle_status", "vehicle_category", "drivetrain", "fuel"],
+		showMetadataFilters: false,
+		cardMetadata: ["manufacturer", "model", "year", "drivetrain", "fuel", "body_style"],
+		inspectorMetadata: [
+			"vehicle_status",
+			"manufacturer",
+			"model",
+			"generation",
+			"year",
+			"body_style",
+			"drivetrain",
+			"fuel",
+			"transmission",
+			"mileage",
+			"owner",
+			"location",
+			"rating",
+			"tags",
+			"updated",
+		],
+		inspectorSections: ["Overview", "Specs", "Specifications", "Ownership", "Planning", "Maintenance", "Notes", "Files"],
+		statistics: {
+			type: "summary",
+			metrics: [
+				{ type: "total", label: "Vehicles" },
+				{ type: "unique-metadata", key: "manufacturer", label: "Makes" },
+				{ type: "unique-metadata", key: "body_style", label: "Body styles" },
+				{ type: "unique-metadata", key: "drivetrain", label: "Drivetrains" },
+			],
+		},
 	},
 	{
 		...defaultExperienceConfig,
@@ -146,7 +203,7 @@ export const experienceDefinitions = [
 		theme: "emerald",
 		icons: { sidebar: "travel", hero: "travel" },
 		assets: {
-			heroArtwork: getExperienceHeroArtworkPath("travel"),
+			heroArtwork: "/experiences/travel/experiences-heroart-travel-v2.webp",
 			placeholderThumbnail: null,
 		},
 		href: "/travel",
@@ -157,15 +214,45 @@ export const experienceDefinitions = [
 		id: "recipes",
 		title: "Recipes",
 		description: "Recipes, cooking notes, techniques, and meals worth returning to.",
-		selector: { type: "frontmatter", field: "type", value: ["recipes", "recept"] },
+		selector: { type: "frontmatter", field: "type", value: ["recipe", "recipes", "recept"] },
 		theme: "amber",
-		icons: { sidebar: "recipes", hero: "recipes" },
+		icons: { sidebar: "chef-hat", hero: "chef-hat" },
 		assets: {
-			heroArtwork: getExperienceHeroArtworkPath("recipes"),
+			heroArtwork: "/experiences/recipes-assets/recipes-hero-v2.webp",
 			placeholderThumbnail: null,
 		},
 		href: "/recipes",
 		sidebar: { label: "Recipes" },
+		cardFamily: "recipe",
+		landingPage: "recipes",
+		inspector: "recipes",
+		featureSections: ["Ingredients", "Instructions", "Method", "Directions", "Notes", "Review"],
+		metadataFilters: ["recipe_kind", "favorite", "reviewed", "cuisine"],
+		showMetadataFilters: false,
+		cardMetadata: ["total_time", "cook_time", "difficulty", "cuisine"],
+		inspectorMetadata: [
+			"prep_time",
+			"cook_time",
+			"total_time",
+			"difficulty",
+			"servings",
+			"cuisine",
+			"collection",
+			"recipe_status",
+			"rating",
+			"tags",
+		],
+		inspectorSections: ["Ingredients", "Instructions", "Method", "Directions", "Notes", "Review"],
+		statistics: {
+			type: "summary",
+			metrics: [
+				{ type: "total", label: "Recipes" },
+				{ type: "favorites", label: "Favorites" },
+				{ type: "unique-metadata", key: "collection", label: "Collections" },
+				{ type: "unique-metadata", key: "ingredients", label: "Ingredients" },
+				{ type: "unique-tags", label: "Tags" },
+			],
+		},
 	},
 	{
 		...defaultExperienceConfig,
@@ -176,7 +263,7 @@ export const experienceDefinitions = [
 		theme: "slate",
 		icons: { sidebar: "books", hero: "books" },
 		assets: {
-			heroArtwork: getExperienceHeroArtworkPath("books"),
+			heroArtwork: "/experiences/books/experiences-heroart-books-v2.webp",
 			placeholderThumbnail: null,
 		},
 		href: "/books",
@@ -206,7 +293,7 @@ export const experienceDefinitions = [
 		theme: "sky",
 		icons: { sidebar: "server", hero: "server" },
 		assets: {
-			heroArtwork: null,
+			heroArtwork: "/experiences/homelab/experiences-heroart-homelab-v2.webp",
 			placeholderThumbnail: null,
 		},
 		href: "/homelab",

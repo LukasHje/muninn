@@ -7,9 +7,10 @@ interface Props {
 	className?: string;
 	highlightKey?: InspectorHighlightKey;
 	surface?: "plain" | "panel";
+	iconColor?: string;
 }
 
-const { title, className = "", highlightKey, surface = "plain" } = Astro.props;
+const { title, className = "", highlightKey, surface = "plain", iconColor = "#8E9C71" } = Astro.props;
 const highlightIconName = highlightKey ? getInspectorHighlightIconName(highlightKey) : null;
 ---
 
@@ -22,7 +23,7 @@ const highlightIconName = highlightKey ? getInspectorHighlightIconName(highlight
 >
 	<div class="flex items-center gap-3">
 		{
-			highlightIconName && <Icon name={highlightIconName} class="h-7 w-7 shrink-0 text-[#8E9C71]" />
+			highlightIconName && <Icon name={highlightIconName} class="h-7 w-7 shrink-0" style={`color:${iconColor}`} />
 		}
 		<h3 class="text-[1.35rem] font-semibold tracking-tight text-slate-900">{title}</h3>
 	</div>

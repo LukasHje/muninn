@@ -1,0 +1,376 @@
+---
+import Icon from "src/components/Icon.astro";
+import { buildRecipeDashboardModel } from "src/lib/experiences/recipes";
+import type { ExperienceFilterState } from "src/lib/experiences/filters";
+import type { LibraryItem } from "src/lib/vault";
+
+interface Props {
+	notes: LibraryItem[];
+	filterState: ExperienceFilterState;
+}
+
+const { notes, filterState } = Astro.props;
+const dashboard = buildRecipeDashboardModel(notes);
+const path = Astro.url.pathname;
+const baseParams = Astro.url.searchParams;
+const kindCounts = Object.fromEntries(
+	dashboard.recipeKinds.map((item) => [item.value, item.count])
+);
+
+function buildFilterHref(key: string, value: string | null) {
+	const params = new URLSearchParams(baseParams);
+	const queryKey = `filter-${key}`;
+
+	if (value) {
+		params.set(queryKey, value);
+	} else {
+		params.delete(queryKey);
+	}
+
+	params.delete("selected");
+	params.delete("inspector");
+	params.delete("experienceScroll");
+	return `${path}?${params.toString()}#experience-library`;
+}
+
+function buildAllRecipesHref() {
+	const params = new URLSearchParams(baseParams);
+	for (const key of ["recipe_kind", "favorite", "reviewed", "cuisine"]) {
+		params.delete(`filter-${key}`);
+	}
+	params.delete("selected");
+	params.delete("inspector");
+	params.delete("experienceScroll");
+	const query = params.toString();
+	return `${path}${query ? `?${query}` : ""}#experience-library`;
+}
+
+function formatShare(count: number) {
+	return dashboard.totalRecipes > 0
+		? `${Math.round((count / dashboard.totalRecipes) * 100)}% of recipes`
+		: "No recipes";
+}
+
+const metrics = [
+	{
+		label: "Total recipes",
+		value: String(dashboard.totalRecipes),
+		helper: "All recipes",
+		icon: "book-open",
+		tone: "#A86F32",
+		href: buildAllRecipesHref(),
+		active: Object.keys(filterState.metadata).length === 0,
+	},
+	{
+		label: "Favorites",
+		value: String(dashboard.favoriteRecipes),
+		helper: formatShare(dashboard.favoriteRecipes),
+		icon: "star",
+		tone: "#B8614A",
+		href: buildFilterHref("favorite", "true"),
+		active: filterState.metadata.favorite === "true",
+	},
+	{
+		label: "Mains",
+		value: String(kindCounts.food ?? 0),
+		helper: formatShare(kindCounts.food ?? 0),
+		icon: "cooking-pot",
+		tone: "#A77935",
+		href: buildFilterHref("recipe_kind", "food"),
+		active: filterState.metadata.recipe_kind === "food",
+	},
+	{
+		label: "Desserts",
+		value: String(kindCounts.dessert ?? 0),
+		helper: formatShare(kindCounts.dessert ?? 0),
+		icon: "cake-slice",
+		tone: "#A95F73",
+		href: buildFilterHref("recipe_kind", "dessert"),
+		active: filterState.metadata.recipe_kind === "dessert",
+	},
+	{
+		label: "Drinks",
+		value: String(kindCounts.drink ?? 0),
+		helper: formatShare(kindCounts.drink ?? 0),
+		icon: "martini",
+		tone: "#577A62",
+		href: buildFilterHref("recipe_kind", "drink"),
+		active: filterState.metadata.recipe_kind === "drink",
+	},
+	{
+		label: "Avg. rating",
+		value: dashboard.averageRating === null ? "—" : dashboard.averageRating.toFixed(1),
+		helper: dashboard.ratedRecipes > 0 ? `${dashboard.ratedRecipes} rated` : "No ratings",
+		icon: "star",
+		tone: "#A77935",
+		href: null,
+		active: false,
+	},
+	{
+		label: "Needs review",
+		value: String(dashboard.needsReview),
+		helper: formatShare(dashboard.needsReview),
+		icon: "clipboard-list",
+		tone: "#6D7380",
+		href: buildFilterHref("reviewed", "false"),
+		active: filterState.metadata.reviewed === "false",
+	},
+];
+---
+
+<section class="recipes-overview" aria-label="Recipes dashboard">
+	<div class="recipes-overview__metrics" aria-label="Recipe statistics">
+		{
+			metrics.map((metric) => {
+				const content = (
+					<>
+						<div class="recipes-metric__icon" aria-hidden="true">
+							<Icon name={metric.icon} class="h-4 w-4" />
+						</div>
+						<div class="min-w-0">
+							<p class="recipes-metric__label">{metric.label}</p>
+							<p class="recipes-metric__value">{metric.value}</p>
+							<p class="recipes-metric__helper">{metric.helper}</p>
+						</div>
+					</>
+				);
+
+				return metric.href ? (
+					<a
+						href={metric.href}
+						class="recipes-metric"
+						style={`--recipe-metric-tone:${metric.tone}`}
+						aria-current={metric.active ? "true" : undefined}
+					>
+						{content}
+					</a>
+				) : (
+					<div
+						class="recipes-metric"
+						style={`--recipe-metric-tone:${metric.tone}`}
+					>
+						{content}
+					</div>
+				);
+			})
+		}
+	</div>
+
+	<div class="recipes-cuisine" aria-label="Cuisine split">
+		<p class="recipes-cuisine__title">Cuisine split</p>
+		{
+			dashboard.cuisineSplit.length > 0 ? (
+				<div class="recipes-cuisine__items">
+					{dashboard.cuisineSplit.map((item, index) => (
+						<a
+							href={buildFilterHref("cuisine", item.value)}
+							class="recipes-cuisine__item"
+							aria-current={filterState.metadata.cuisine === item.value ? "true" : undefined}
+						>
+							<span
+								class="recipes-cuisine__dot"
+								data-cuisine-index={index}
+								aria-hidden="true"
+							></span>
+							<span class="truncate">{item.label}</span>
+							<span class="font-semibold tabular-nums text-slate-700">{item.percentage}%</span>
+						</a>
+					))}
+				</div>
+			) : (
+				<p class="text-[11px] text-slate-500">
+					Add cuisine metadata to recipes to see the distribution.
+				</p>
+			)
+		}
+	</div>
+</section>
+
+<style>
+	.recipes-overview {
+		overflow: hidden;
+		border: 1px solid rgba(220, 201, 179, 0.9);
+		border-radius: 10px;
+		background: rgba(255, 252, 247, 0.94);
+		box-shadow: 0 8px 22px rgba(87, 55, 30, 0.055);
+		backdrop-filter: blur(10px);
+	}
+
+	.recipes-overview__metrics {
+		display: grid;
+		grid-template-columns: repeat(7, minmax(7.5rem, 1fr));
+		overflow-x: auto;
+		overscroll-behavior-x: contain;
+		scrollbar-width: thin;
+		scrollbar-color: rgba(180, 126, 68, 0.3) transparent;
+	}
+
+	.recipes-overview__metrics::-webkit-scrollbar {
+		height: 3px;
+	}
+
+	.recipes-overview__metrics::-webkit-scrollbar-thumb {
+		border-radius: 999px;
+		background: rgba(180, 126, 68, 0.3);
+	}
+
+	.recipes-metric {
+		position: relative;
+		display: grid;
+		min-width: 0;
+		grid-template-columns: 2rem minmax(0, 1fr);
+		align-items: center;
+		gap: 0.55rem;
+		padding: 0.7rem 0.75rem;
+		transition: background-color 160ms ease;
+	}
+
+	.recipes-metric:hover,
+	.recipes-metric[aria-current="true"] {
+		background: color-mix(in srgb, var(--recipe-metric-tone) 7%, transparent);
+	}
+
+	.recipes-metric + .recipes-metric::before {
+		content: "";
+		position: absolute;
+		top: 0.8rem;
+		bottom: 0.8rem;
+		left: 0;
+		width: 1px;
+		background: rgba(222, 207, 189, 0.72);
+	}
+
+	.recipes-metric__icon {
+		display: flex;
+		height: 2rem;
+		width: 2rem;
+		align-items: center;
+		justify-content: center;
+		border-radius: 999px;
+		background: color-mix(in srgb, var(--recipe-metric-tone) 12%, white);
+		color: var(--recipe-metric-tone);
+	}
+
+	.recipes-metric__label {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-size: 0.56rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		line-height: 1;
+		text-transform: uppercase;
+		color: rgb(100 91 82);
+	}
+
+	.recipes-metric__value {
+		margin-top: 0.2rem;
+		font-size: 1.15rem;
+		font-weight: 650;
+		letter-spacing: -0.04em;
+		line-height: 1;
+		color: rgb(30 41 59);
+	}
+
+	.recipes-metric__helper {
+		margin-top: 0.22rem;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-size: 0.55rem;
+		color: rgb(148 135 122);
+	}
+
+	.recipes-cuisine {
+		display: flex;
+		min-width: 0;
+		align-items: center;
+		gap: 1rem;
+		border-top: 1px solid rgba(222, 207, 189, 0.72);
+		padding: 0.6rem 0.8rem;
+	}
+
+	.recipes-cuisine__title {
+		flex-shrink: 0;
+		font-size: 0.58rem;
+		font-weight: 700;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: rgb(161 98 37);
+	}
+
+	.recipes-cuisine__items {
+		display: flex;
+		min-width: 0;
+		flex: 1;
+		align-items: center;
+		gap: clamp(0.85rem, 2.2vw, 1.75rem);
+		overflow-x: auto;
+		overscroll-behavior-x: contain;
+		scrollbar-width: none;
+	}
+
+	.recipes-cuisine__items::-webkit-scrollbar {
+		display: none;
+	}
+
+	.recipes-cuisine__item {
+		display: flex;
+		min-width: 0;
+		flex-shrink: 0;
+		align-items: center;
+		gap: 0.38rem;
+		font-size: 0.62rem;
+		color: rgb(100 116 139);
+		transition: color 160ms ease;
+	}
+
+	.recipes-cuisine__item:hover,
+	.recipes-cuisine__item[aria-current="true"] {
+		color: rgb(120 75 35);
+	}
+
+	.recipes-cuisine__dot {
+		height: 0.42rem;
+		width: 0.42rem;
+		flex-shrink: 0;
+		border-radius: 999px;
+		background: #8a745f;
+	}
+
+	.recipes-cuisine__dot[data-cuisine-index="0"] {
+		background: #6f9259;
+	}
+
+	.recipes-cuisine__dot[data-cuisine-index="1"] {
+		background: #5b8ea8;
+	}
+
+	.recipes-cuisine__dot[data-cuisine-index="2"] {
+		background: #bc7657;
+	}
+
+	.recipes-cuisine__dot[data-cuisine-index="3"] {
+		background: #94709a;
+	}
+
+	.recipes-cuisine__dot[data-cuisine-index="4"] {
+		background: #c19142;
+	}
+
+	@media (max-width: 767px) {
+		.recipes-overview__metrics {
+			grid-template-columns: repeat(7, 8.25rem);
+		}
+
+		.recipes-cuisine {
+			align-items: flex-start;
+			flex-direction: column;
+			gap: 0.45rem;
+		}
+
+		.recipes-cuisine__items {
+			width: 100%;
+		}
+	}
+</style>

@@ -140,6 +140,30 @@ class DataArray<T> extends Array<T> {
 	}
 }
 
+function toDataArray<T>(value: T | Iterable<T> | null | undefined) {
+	if (value == null) {
+		return DataArray.fromValues<T>([]);
+	}
+
+	if (value instanceof DataArray) {
+		return DataArray.fromValues(Array.from(value));
+	}
+
+	if (Array.isArray(value)) {
+		return DataArray.fromValues(value);
+	}
+
+	if (
+		typeof value !== "string" &&
+		typeof value === "object" &&
+		Symbol.iterator in value
+	) {
+		return DataArray.fromValues(Array.from(value as Iterable<T>));
+	}
+
+	return DataArray.fromValues([value as T]);
+}
+
 function compareDataviewValues(left: unknown, right: unknown) {
 	if (left == null && right == null) {
 		return 0;
@@ -270,6 +294,23 @@ function toCell(value: unknown): DataviewJsCell {
 	}
 
 	return { kind: "text", value: String(value) };
+}
+
+function renderDataviewJsValue(value: unknown): string {
+	const cell = toCell(value);
+
+	switch (cell.kind) {
+		case "link":
+			return `[${cell.label.replaceAll("[", "\\[").replaceAll("]", "\\]")}](${cell.href})`;
+		case "html":
+			return cell.html;
+		case "text":
+			return cell.value;
+		case "date":
+			return new Date(cell.timestamp).toISOString();
+		case "empty":
+			return "";
+	}
 }
 
 function getErrorMessage(error: unknown) {
@@ -447,6 +488,19 @@ export async function executeDataviewJs(
 			current() {
 				return findCurrentPage();
 			},
+			array(value: unknown) {
+				return toDataArray(value);
+			},
+			where<T>(values: T | Iterable<T> | null | undefined, predicate: (value: T, index: number) => boolean) {
+				return toDataArray(values).where(predicate);
+			},
+			sort<T>(
+				values: T | Iterable<T> | null | undefined,
+				selector?: ((value: T) => unknown) | ((left: T, right: T) => number),
+				direction: "asc" | "desc" = "asc"
+			) {
+				return toDataArray(values).sort(selector, direction);
+			},
 			pages(query?: string) {
 				if (!query) {
 					return DataArray.fromValues(pages);
@@ -484,7 +538,7 @@ export async function executeDataviewJs(
 				flushInline();
 				blocks.push({
 					type: "markdown",
-					markdown: String(value ?? ""),
+					markdown: renderDataviewJsValue(value),
 				});
 			},
 			header(level: number, value: unknown) {
@@ -492,11 +546,11 @@ export async function executeDataviewJs(
 				const normalizedLevel = Math.min(Math.max(Number(level) || 1, 1), 6);
 				blocks.push({
 					type: "markdown",
-					markdown: `<h${normalizedLevel}>${String(value ?? "")}</h${normalizedLevel}>`,
+					markdown: `<h${normalizedLevel}>${renderDataviewJsValue(value)}</h${normalizedLevel}>`,
 				});
 			},
 			span(value: unknown) {
-				inlineBuffer += String(value ?? "");
+				inlineBuffer += renderDataviewJsValue(value);
 			},
 			el(tag: string, value?: unknown) {
 				if (tag === "br") {
@@ -508,14 +562,14 @@ export async function executeDataviewJs(
 				if (tag === "div") {
 					blocks.push({
 						type: "markdown",
-						markdown: String(value ?? ""),
+						markdown: renderDataviewJsValue(value),
 					});
 					return;
 				}
 
 				blocks.push({
 					type: "markdown",
-					markdown: `<${tag}>${String(value ?? "")}</${tag}>`,
+					markdown: `<${tag}>${renderDataviewJsValue(value)}</${tag}>`,
 				});
 			},
 			table(columns: unknown[], rows: unknown[][]) {

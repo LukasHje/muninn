@@ -1,0 +1,67 @@
+---
+import Icon from "src/components/Icon.astro";
+import type { ExperienceDefinition } from "src/lib/experiences/registry";
+
+interface Props {
+	definition: ExperienceDefinition;
+}
+
+const { definition } = Astro.props;
+---
+
+<div class="recipes-hero">
+	<div class="recipes-hero__content">
+		<div class="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200/85">
+			<Icon name="chef-hat" class="h-4 w-4" />
+			<span>Personal cookbook</span>
+		</div>
+		<h1 class="experience-hero-title mt-2 text-[2.15rem] font-semibold leading-none tracking-[-0.04em] text-white md:text-[3.4rem]">
+			{definition.title}
+		</h1>
+		<p class="experience-hero-description mt-2 line-clamp-2 max-w-xl text-xs leading-5 text-stone-200/90 md:text-sm md:leading-6">
+			{definition.description}
+		</p>
+	</div>
+</div>
+
+<style>
+	.recipes-hero {
+		position: relative;
+		min-height: clamp(15rem, 28dvh, 20rem);
+	}
+
+	.recipes-hero__content {
+		position: relative;
+		z-index: 1;
+		display: flex;
+		min-height: clamp(15rem, 28dvh, 20rem);
+		max-width: 46rem;
+		flex-direction: column;
+		justify-content: center;
+		padding: 2rem 0.25rem;
+	}
+
+	@media (min-width: 768px) {
+		.recipes-hero__content {
+			padding-right: 0.5rem;
+			padding-left: 0.5rem;
+		}
+	}
+
+	@media (min-width: 640px) and (max-width: 1279px) and (max-height: 500px) {
+		.recipes-hero,
+		.recipes-hero__content {
+			min-height: 8rem;
+		}
+
+		.recipes-hero__content {
+			max-width: 39rem;
+			padding: 0.85rem 1.25rem;
+		}
+
+		.recipes-hero__content > p {
+			display: none;
+		}
+
+	}
+</style>

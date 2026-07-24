@@ -19,6 +19,8 @@ export interface ExperienceViewModel {
 	statistics: ReturnType<typeof buildExperienceStatistics>;
 	metadataOptions: Record<string, ReturnType<typeof buildMetadataFilterOptions>>;
 	tagOptions: ReturnType<typeof buildTagFilterOptions>;
+	sortBy: "updated" | "title";
+	layout: "grid" | "list";
 }
 
 export function buildExperienceViewModel(
@@ -28,7 +30,15 @@ export function buildExperienceViewModel(
 ): ExperienceViewModel {
 	const notes = getExperienceNotes(items, definition);
 	const filterState = getExperienceFilterState(searchParams, definition);
-	const filteredNotes = filterExperienceNotes(notes, filterState);
+	const sortBy = searchParams.get("sort")?.trim() === "title" ? "title" : "updated";
+	const layout = searchParams.get("layout")?.trim() === "list" ? "list" : "grid";
+	const filteredNotes = filterExperienceNotes(notes, filterState).sort((left, right) => {
+		if (sortBy === "title") {
+			return left.title.localeCompare(right.title, "sv");
+		}
+
+		return right.updatedAt - left.updatedAt;
+	});
 	const selectedNote = filterState.selected
 		? filteredNotes.find((note) => note.id === filterState.selected || note.slugPath === filterState.selected) ?? null
 		: null;
@@ -45,5 +55,7 @@ export function buildExperienceViewModel(
 			definition.metadataFilters.map((key) => [key, buildMetadataFilterOptions(notes, key)])
 		),
 		tagOptions: buildTagFilterOptions(notes),
+		sortBy,
+		layout,
 	};
 }

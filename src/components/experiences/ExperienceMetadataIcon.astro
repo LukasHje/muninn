@@ -1,15 +1,19 @@
 ---
 import Icon from "src/components/Icon.astro";
-import { getMetadataIcon } from "src/lib/experiences/metadataIcons";
+import {
+	getMetadataIcon,
+	type ExperienceMetadataIconDescriptor,
+} from "src/lib/experiences/metadataIcons";
 
 interface Props {
 	metadataKey: string;
 	value?: string | null;
 	className?: string;
+	icon?: ExperienceMetadataIconDescriptor;
 }
 
-const { metadataKey, value = null, className = "" } = Astro.props;
-const icon = getMetadataIcon(metadataKey, value);
+const { metadataKey, value = null, className = "", icon: providedIcon } = Astro.props;
+const icon = providedIcon ?? getMetadataIcon(metadataKey, value);
 ---
 
 <div

@@ -85,6 +85,21 @@ const filteredItems = query
 	});
 
 const resultsCountLabel = formatUiNumber(filteredItems.length);
+const selectedCategoryLabel =
+	selectedCategory === "all"
+		? null
+		: categories.find((category) => category.value === selectedCategory)?.label ?? selectedCategory;
+const activeControlCount =
+	(query ? 1 : 0) + (selectedCategoryLabel ? 1 : 0) + selectedTags.length;
+const collapsedControlSummary = [
+	query ? `“${query}”` : null,
+	selectedCategoryLabel,
+	selectedTags.length === 1
+		? `#${selectedTags[0]}`
+		: selectedTags.length > 1
+			? ui.notesBrowser.selectedTags(selectedTags.length)
+			: null,
+].filter((value): value is string => Boolean(value)).join(" · ") || ui.notesBrowser.searchAndFilters;
 
 function buildLayoutHref(nextLayout: "list" | "grid") {
 	const next = new URLSearchParams(searchParams);
@@ -93,9 +108,16 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 }
 ---
 
-<div class="flex h-full min-h-0 flex-col gap-3 md:gap-5 xl:gap-6">
-	<section class="surface-panel shrink-0 p-3 md:p-5">
-		<div class="flex items-center gap-3 border-b border-[#eee7de] px-1 pb-4">
+<div
+	class="flex h-full min-h-0 flex-col gap-3 md:gap-5 xl:gap-6"
+	data-library-browser
+>
+	<section
+		class="library-controls-panel surface-panel shrink-0 p-3 md:p-5"
+		data-library-controls
+		data-library-controls-collapsed="false"
+	>
+		<div class="library-controls-header flex items-center gap-3 border-b border-[#eee7de] px-1 pb-4">
 			<a
 				href="/"
 				class="inline-flex h-11 w-11 items-center justify-center rounded-xl text-slate-500 transition hover:bg-[#f6f1ea] hover:text-slate-900"
@@ -103,10 +125,64 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 			>
 				<Icon name="chevron-left" class="h-4 w-4" />
 			</a>
-			<h1 class="text-lg font-semibold tracking-tight text-slate-900">{title}</h1>
+			<div class="min-w-0 flex-1">
+				<h1 class="truncate text-lg font-semibold tracking-tight text-slate-900">{title}</h1>
+				<p
+					class="library-controls-summary mt-0.5 hidden truncate text-xs text-slate-500"
+					title={collapsedControlSummary}
+				>
+					{collapsedControlSummary}
+				</p>
+			</div>
+			<button
+				type="button"
+				class="library-controls-toggle relative hidden h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#e7dfd5] bg-white text-slate-600 transition hover:border-[#ddd3c5] hover:bg-[#faf6ef] hover:text-slate-900"
+				aria-controls="library-search-filter-controls"
+				aria-expanded="true"
+				aria-label={ui.notesBrowser.collapseSearchAndFilters}
+				title={ui.notesBrowser.collapseSearchAndFilters}
+				data-expand-label={ui.notesBrowser.expandSearchAndFilters}
+				data-collapse-label={ui.notesBrowser.collapseSearchAndFilters}
+				data-library-controls-toggle
+			>
+				<svg
+					class="library-controls-icon-expanded h-5 w-5"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					aria-hidden="true"
+				>
+					<path d="M5 12h14"></path>
+				</svg>
+				<svg
+					class="library-controls-icon-collapsed hidden h-5 w-5"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					aria-hidden="true"
+				>
+					<path d="m6 9 6 6 6-6"></path>
+				</svg>
+				{
+					activeControlCount > 0 && (
+						<span class="absolute -right-1.5 -top-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-[#f6f2eb] bg-slate-900 px-1 text-[9px] font-semibold leading-none text-white">
+							{activeControlCount}
+						</span>
+					)
+				}
+			</button>
 		</div>
 
-		<form method="get" class="space-y-3 pt-3 md:space-y-4 md:pt-4">
+		<form
+			id="library-search-filter-controls"
+			method="get"
+			class="library-controls-body space-y-3 pt-3 md:space-y-4 md:pt-4"
+		>
 			<input type="hidden" name="layout" value={layout} />
 			<label class="block">
 				<span class="sr-only">{ui.notesBrowser.searchNotes}</span>
@@ -266,3 +342,108 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 		}
 	</SectionCard>
 </div>
+
+<script>
+	const LIBRARY_CONTROLS_STORAGE_KEY = "muninn:library-controls-collapsed";
+
+	function initLibraryControls() {
+		for (const root of document.querySelectorAll<HTMLElement>("[data-library-controls]")) {
+			if (root.dataset.libraryControlsReady === "true") {
+				continue;
+			}
+
+			const toggle = root.querySelector<HTMLButtonElement>("[data-library-controls-toggle]");
+			if (!toggle) {
+				continue;
+			}
+
+			root.dataset.libraryControlsReady = "true";
+			const mobileViewport = window.matchMedia("(max-width: 1279px)");
+			let prefersCollapsed = false;
+
+			try {
+				prefersCollapsed = window.sessionStorage.getItem(LIBRARY_CONTROLS_STORAGE_KEY) === "true";
+			} catch {
+				prefersCollapsed = false;
+			}
+
+			const applyState = () => {
+				const collapsed = mobileViewport.matches && prefersCollapsed;
+				root.dataset.libraryControlsCollapsed = collapsed ? "true" : "false";
+				toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+
+				const label = collapsed
+					? toggle.dataset.expandLabel ?? "Expand search and filters"
+					: toggle.dataset.collapseLabel ?? "Collapse search and filters";
+				toggle.setAttribute("aria-label", label);
+				toggle.title = label;
+			};
+
+			toggle.addEventListener("click", () => {
+				prefersCollapsed = root.dataset.libraryControlsCollapsed !== "true";
+
+				try {
+					window.sessionStorage.setItem(
+						LIBRARY_CONTROLS_STORAGE_KEY,
+						prefersCollapsed ? "true" : "false"
+					);
+				} catch {
+					// The control remains functional when browser storage is unavailable.
+				}
+
+				applyState();
+			});
+
+			mobileViewport.addEventListener("change", applyState);
+			document.addEventListener(
+				"astro:before-swap",
+				() => mobileViewport.removeEventListener("change", applyState),
+				{ once: true }
+			);
+			applyState();
+		}
+	}
+
+	initLibraryControls();
+	document.addEventListener("astro:page-load", initLibraryControls);
+</script>
+
+<style>
+	@media (max-width: 1279px) {
+		.library-controls-toggle {
+			display: inline-flex;
+		}
+
+		.library-controls-panel[data-library-controls-collapsed="true"] {
+			padding-top: 0.65rem;
+			padding-bottom: 0.65rem;
+		}
+
+		.library-controls-panel[data-library-controls-collapsed="true"] .library-controls-header {
+			border-bottom-color: transparent;
+			padding-bottom: 0;
+		}
+
+		.library-controls-panel[data-library-controls-collapsed="true"] .library-controls-summary {
+			display: block;
+		}
+
+		.library-controls-panel[data-library-controls-collapsed="true"] .library-controls-body {
+			display: none;
+		}
+
+		.library-controls-panel[data-library-controls-collapsed="true"] .library-controls-icon-expanded {
+			display: none;
+		}
+
+		.library-controls-panel[data-library-controls-collapsed="true"] .library-controls-icon-collapsed {
+			display: block;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.library-controls-toggle {
+			transition-duration: 0.01ms;
+		}
+	}
+</style>

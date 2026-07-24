@@ -1,6 +1,9 @@
 ---
 import DefaultExperienceLanding from "src/components/experiences/DefaultExperienceLanding.astro";
+import ExperienceArtworkWorkspace from "src/components/experiences/ExperienceArtworkWorkspace.astro";
 import GearExperienceLanding from "src/components/experiences/GearExperienceLanding.astro";
+import RecipesExperienceLanding from "src/components/experiences/RecipesExperienceLanding.astro";
+import VehiclesExperienceLanding from "src/components/experiences/VehiclesExperienceLanding.astro";
 import type { ExperienceViewModel } from "src/lib/experiences/experience";
 
 type Props = ExperienceViewModel;
@@ -8,10 +11,17 @@ type Props = ExperienceViewModel;
 const props = Astro.props;
 const landingPageComponents = {
 	gear: GearExperienceLanding,
+	recipes: RecipesExperienceLanding,
+	vehicles: VehiclesExperienceLanding,
 };
 const LandingPage = props.definition.landingPage
 	? landingPageComponents[props.definition.landingPage]
 	: DefaultExperienceLanding;
 ---
 
-<LandingPage {...props} />
+<ExperienceArtworkWorkspace
+	artwork={props.definition.assets.heroArtwork}
+	theme={props.definition.theme}
+>
+	<LandingPage {...props} />
+</ExperienceArtworkWorkspace>

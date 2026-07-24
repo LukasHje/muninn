@@ -1,0 +1,545 @@
+---
+import Icon from "src/components/Icon.astro";
+import type { ExperienceFilterState } from "src/lib/experiences/filters";
+import type { ExperienceDefinition } from "src/lib/experiences/registry";
+import { buildVehicleDashboardModel, getVehicleCategoryIcon } from "src/lib/experiences/vehicles";
+import type { LibraryItem } from "src/lib/vault";
+
+interface Props {
+	definition: ExperienceDefinition;
+	notes: LibraryItem[];
+	filterState: ExperienceFilterState;
+}
+
+const { notes, filterState } = Astro.props;
+const dashboard = buildVehicleDashboardModel(notes);
+const path = Astro.url.pathname;
+const baseParams = Astro.url.searchParams;
+const sortBy = baseParams.get("sort") === "title" ? "title" : "updated";
+const layout = baseParams.get("layout") === "list" ? "list" : "grid";
+const vehicleFilterKeys = ["vehicle_status", "vehicle_category", "drivetrain", "fuel"];
+
+function buildHref(mutator: (params: URLSearchParams) => void) {
+	const params = new URLSearchParams(baseParams);
+	mutator(params);
+	params.delete("selected");
+	params.delete("inspector");
+	params.delete("experienceScroll");
+	const query = params.toString();
+	return `${path}${query ? `?${query}` : ""}#experience-library`;
+}
+
+function buildFilterHref(key: string, value: string | null) {
+	return buildHref((params) => {
+		if (value) {
+			params.set(`filter-${key}`, value);
+		} else {
+			params.delete(`filter-${key}`);
+		}
+	});
+}
+
+function buildClearHref() {
+	return buildHref((params) => {
+		for (const key of vehicleFilterKeys) {
+			params.delete(`filter-${key}`);
+		}
+	});
+}
+
+function buildSortHref(value: "updated" | "title") {
+	return buildHref((params) => {
+		params.set("sort", value);
+	});
+}
+
+function buildLayoutHref(value: "grid" | "list") {
+	return buildHref((params) => {
+		params.set("layout", value);
+	});
+}
+
+function getPercent(count: number) {
+	return dashboard.total > 0 ? Math.round((count / dashboard.total) * 100) : 0;
+}
+
+const bodyStyleSummary = dashboard.bodyStyles.slice(0, 5);
+const drivetrainSummary = dashboard.drivetrains.slice(0, 5);
+const drivetrainTotal = drivetrainSummary.reduce((total, item) => total + item.count, 0);
+const donutColors = ["#9B7444", "#C1A27A", "#6D775F", "#9AA0A8", "#D8C7AD", "#7C6C3F"];
+let donutCursor = 0;
+const donutGradient = drivetrainSummary.length > 0 && drivetrainTotal > 0
+	? drivetrainSummary
+			.map((item, index) => {
+				const start = donutCursor;
+				const end = donutCursor + (item.count / drivetrainTotal) * 100;
+				donutCursor = end;
+				const color = donutColors[index % donutColors.length];
+				return `${color} ${start}% ${end}%`;
+			})
+			.join(", ")
+	: "#e7dccb 0% 100%";
+
+const statCards = [
+	{
+		label: "Total vehicles",
+		value: dashboard.total,
+		helper: "All time",
+		icon: "car-front",
+		iconColor: "#757F8C",
+		filled: false,
+	},
+	{
+		label: "Owned",
+		value: dashboard.owned,
+		helper: `${getPercent(dashboard.owned)}% of total`,
+		icon: "donut-thick",
+		iconColor: "#5D6855",
+		filled: true,
+	},
+	{
+		label: "Planned",
+		value: dashboard.planned,
+		helper: `${getPercent(dashboard.planned)}% of total`,
+		icon: "donut-thick",
+		iconColor: "#7C6C3F",
+		filled: true,
+	},
+	{
+		label: "Reviewed",
+		value: dashboard.reviewed,
+		helper: `${getPercent(dashboard.reviewed)}% of total`,
+		icon: "donut-thick",
+		iconColor: "#757F8C",
+		filled: true,
+	},
+];
+
+const categoryFilters = dashboard.categories.map((item) => ({
+	key: "vehicle_category",
+	icon: getVehicleCategoryIcon(item.value),
+	...item,
+}));
+const statusFilters = [
+	{ value: "owned", label: "Owned", color: "#5D6855" },
+	{ value: "planned", label: "Planned", color: "#7C6C3F" },
+	{ value: "reviewed", label: "Reviewed", color: "#757F8C" },
+];
+const hasAnyFilter = vehicleFilterKeys.some((key) => Boolean(filterState.metadata[key]));
+---
+
+<section class="vehicles-panel" aria-label="Vehicles overview">
+	<div class="vehicles-stats-row" aria-label="Vehicle statistics">
+		{
+			statCards.map((card) => (
+				<div class="vehicles-stat-card">
+					<p class="vehicles-stat-label">{card.label}</p>
+					<p class="vehicles-stat-value">{card.value}</p>
+					<div class="vehicles-stat-footer">
+						<span>{card.helper}</span>
+						<Icon
+							name={card.icon}
+							filled={card.filled}
+							class="h-4 w-4"
+							style={`color:${card.iconColor}`}
+						/>
+					</div>
+				</div>
+			))
+		}
+
+		<div class="vehicles-stat-card vehicles-stat-card--split">
+			<p class="vehicles-stat-label">Drivetrain split</p>
+			<div class="vehicles-split-layout">
+				<div class="vehicles-donut" style={`--vehicles-donut:${donutGradient};`} aria-hidden="true"></div>
+				<div class="vehicles-split-list">
+					{drivetrainSummary.map((item) => (
+						<a href={buildFilterHref("drivetrain", item.value)} class="vehicles-plain-row">
+							<span>{item.label}</span>
+							<strong>{item.count} ({drivetrainTotal > 0 ? Math.round((item.count / drivetrainTotal) * 100) : 0}%)</strong>
+						</a>
+					))}
+				</div>
+			</div>
+		</div>
+
+		<div class="vehicles-stat-card vehicles-stat-card--body">
+			<p class="vehicles-stat-label">Body styles</p>
+			<div class="vehicles-body-list">
+				{bodyStyleSummary.map((item) => (
+					<a href={buildFilterHref("body_style", item.value)} class="vehicles-plain-row">
+						<span>{item.label}</span>
+						<strong>{item.count}</strong>
+					</a>
+				))}
+			</div>
+		</div>
+	</div>
+
+	<div class="vehicles-filter-row" aria-label="Vehicle filters">
+		<div class="vehicles-filter-left">
+			<a
+				href={buildClearHref()}
+				aria-current={!hasAnyFilter ? "true" : "false"}
+				class="vehicles-filter-pill vehicles-filter-pill--primary"
+			>
+				<Icon name="layout-grid" class="h-4 w-4" />
+				All
+			</a>
+
+			<div class="vehicles-category-scroll" aria-label="Vehicle category filters">
+				{
+					categoryFilters.map((item) => (
+						<a
+							href={buildFilterHref(item.key, item.value)}
+							aria-current={filterState.metadata[item.key] === item.value ? "true" : "false"}
+							class="vehicles-filter-pill"
+						>
+							<Icon name={item.icon} class="h-4 w-4" />
+							{item.label}
+						</a>
+					))
+				}
+			</div>
+
+			<span class="vehicles-filter-divider" aria-hidden="true"></span>
+
+			{
+				statusFilters.map((status) => (
+					<a
+						href={buildFilterHref("vehicle_status", status.value)}
+						aria-current={filterState.metadata.vehicle_status === status.value ? "true" : "false"}
+						class="vehicles-filter-pill"
+					>
+						<Icon
+							name="dot-large"
+							filled
+							class="h-3.5 w-3.5"
+							style={`color:${status.color}`}
+						/>
+						{status.label}
+					</a>
+				))
+			}
+		</div>
+
+		<div class="vehicles-filter-controls">
+			<div class="vehicles-sort-menu">
+				<button type="button" class="vehicles-control-button">
+					Sort: {sortBy === "title" ? "Title (A–Z)" : "Recently Updated"}
+					<Icon name="chevron-down" class="h-3.5 w-3.5" />
+				</button>
+				<div class="vehicles-sort-menu__items">
+					<a href={buildSortHref("updated")} aria-current={sortBy === "updated" ? "true" : "false"}>Recently Updated</a>
+					<a href={buildSortHref("title")} aria-current={sortBy === "title" ? "true" : "false"}>Title (A–Z)</a>
+				</div>
+			</div>
+			<a href={buildLayoutHref("grid")} aria-current={layout === "grid" ? "true" : "false"} class="vehicles-icon-toggle" aria-label="Grid view">
+				<Icon name="layout-grid" class="h-4 w-4" />
+			</a>
+			<a href={buildLayoutHref("list")} aria-current={layout === "list" ? "true" : "false"} class="vehicles-icon-toggle" aria-label="List view">
+				<Icon name="layout-list" class="h-4 w-4" />
+			</a>
+		</div>
+	</div>
+</section>
+
+<style>
+	.vehicles-panel {
+		position: relative;
+		z-index: 20;
+		display: grid;
+		gap: 0.75rem;
+		min-width: 0;
+	}
+
+	.vehicles-stats-row {
+		display: grid;
+		grid-template-columns:
+			repeat(4, 7.35rem)
+			minmax(15rem, 1.35fr)
+			minmax(10.5rem, 1fr);
+		gap: 0.65rem;
+		min-width: 0;
+		overflow-x: auto;
+		overscroll-behavior-x: contain;
+		padding-bottom: 0.25rem;
+		scrollbar-width: thin;
+		scrollbar-color: rgba(151, 107, 56, 0.34) transparent;
+	}
+
+	.vehicles-stats-row::-webkit-scrollbar,
+	.vehicles-category-scroll::-webkit-scrollbar {
+		height: 4px;
+	}
+
+	.vehicles-stats-row::-webkit-scrollbar-thumb,
+	.vehicles-category-scroll::-webkit-scrollbar-thumb {
+		border-radius: 999px;
+		background: rgba(151, 107, 56, 0.34);
+	}
+
+	.vehicles-stat-card {
+		display: flex;
+		min-height: 7.45rem;
+		flex-direction: column;
+		border: 1px solid rgba(215, 196, 168, 0.9);
+		border-radius: 10px;
+		background: linear-gradient(145deg, rgba(255, 253, 249, 0.98), rgba(248, 239, 227, 0.94));
+		padding: 0.75rem 0.8rem;
+		box-shadow: 0 8px 22px rgba(87, 55, 30, 0.055);
+	}
+
+	.vehicles-stat-card--split {
+		min-width: 15rem;
+	}
+
+	.vehicles-stat-card--body {
+		min-width: 10.5rem;
+	}
+
+	.vehicles-stat-label {
+		font-size: 0.6rem;
+		font-weight: 750;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: rgb(82 75 66);
+	}
+
+	.vehicles-stat-value {
+		margin-top: 0.45rem;
+		font-size: 2.4rem;
+		font-weight: 650;
+		line-height: 1;
+		letter-spacing: -0.06em;
+		color: rgb(15 23 42);
+	}
+
+	.vehicles-stat-footer {
+		margin-top: auto;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		font-size: 0.68rem;
+		color: rgb(100 116 139);
+	}
+
+	.vehicles-split-layout {
+		display: grid;
+		grid-template-columns: 4.2rem minmax(0, 1fr);
+		align-items: center;
+		gap: 0.8rem;
+		margin-top: 0.75rem;
+	}
+
+	.vehicles-donut {
+		aspect-ratio: 1;
+		border-radius: 999px;
+		background: conic-gradient(var(--vehicles-donut));
+		position: relative;
+		box-shadow: inset 0 0 0 1px rgba(95, 72, 44, 0.18);
+	}
+
+	.vehicles-donut::after {
+		content: "";
+		position: absolute;
+		inset: 28%;
+		border-radius: inherit;
+		background: #fbf4eb;
+		box-shadow: inset 0 0 0 1px rgba(95, 72, 44, 0.12);
+	}
+
+	.vehicles-split-list,
+	.vehicles-body-list {
+		display: grid;
+		gap: 0.1rem;
+	}
+
+	.vehicles-plain-row {
+		position: relative;
+		isolation: isolate;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.8rem;
+		border-radius: 4px;
+		padding: 0.18rem 0.35rem;
+		font-size: 0.72rem;
+		color: rgb(71 85 105);
+		transition: color 160ms ease;
+	}
+
+	.vehicles-plain-row::before {
+		content: "";
+		position: absolute;
+		z-index: -1;
+		inset: 0.08rem -0.15rem;
+		background: linear-gradient(90deg, rgba(231, 190, 104, 0.36), rgba(231, 190, 104, 0.14));
+		clip-path: polygon(1% 12%, 99% 2%, 97% 88%, 0 100%);
+		transform: scaleX(0);
+		transform-origin: left center;
+		transition: transform 170ms ease;
+	}
+
+	.vehicles-plain-row:hover {
+		color: rgb(15 23 42);
+	}
+
+	.vehicles-plain-row:hover::before {
+		transform: scaleX(1);
+	}
+
+	.vehicles-plain-row strong {
+		font-size: 0.68rem;
+		font-variant-numeric: tabular-nums;
+		color: rgb(71 85 105);
+	}
+
+	.vehicles-filter-row {
+		position: relative;
+		z-index: 50;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		min-width: 0;
+		border: 1px solid rgba(215, 196, 168, 0.88);
+		border-radius: 10px;
+		background: rgba(255, 253, 249, 0.74);
+		padding: 0.55rem;
+		box-shadow: 0 8px 22px rgba(87, 55, 30, 0.045);
+	}
+
+	.vehicles-filter-left {
+		display: flex;
+		min-width: 0;
+		flex: 1;
+		align-items: center;
+		gap: 0.55rem;
+	}
+
+	.vehicles-category-scroll {
+		display: flex;
+		min-width: 0;
+		max-width: min(38vw, 30rem);
+		gap: 0.55rem;
+		overflow-x: auto;
+		overscroll-behavior-x: contain;
+		padding-bottom: 0.1rem;
+		scrollbar-width: thin;
+		scrollbar-color: rgba(151, 107, 56, 0.34) transparent;
+	}
+
+	.vehicles-filter-pill,
+	.vehicles-control-button,
+	.vehicles-icon-toggle {
+		display: inline-flex;
+		height: 2.35rem;
+		flex-shrink: 0;
+		align-items: center;
+		justify-content: center;
+		gap: 0.4rem;
+		border: 1px solid transparent;
+		border-radius: 7px;
+		background: rgba(244, 239, 231, 0.78);
+		padding: 0 0.7rem;
+		font-size: 0.72rem;
+		font-weight: 650;
+		color: rgb(71 85 105);
+		transition: border-color 180ms ease, background 180ms ease, color 180ms ease, box-shadow 180ms ease;
+	}
+
+	.vehicles-filter-pill svg,
+	.vehicles-control-button svg,
+	.vehicles-icon-toggle svg {
+		color: rgb(151 107 56);
+	}
+
+	.vehicles-filter-pill:hover,
+	.vehicles-filter-pill[aria-current="true"],
+	.vehicles-icon-toggle:hover,
+	.vehicles-icon-toggle[aria-current="true"],
+	.vehicles-control-button:hover {
+		border-color: rgba(182, 127, 55, 0.56);
+		background: rgba(255, 246, 229, 0.95);
+		color: rgb(15 23 42);
+		box-shadow: 0 6px 14px rgba(92, 61, 32, 0.07);
+	}
+
+	.vehicles-filter-pill--primary {
+		background: rgba(151, 107, 56, 0.12);
+		color: rgb(92 65 34);
+	}
+
+	.vehicles-filter-divider {
+		height: 1.75rem;
+		width: 1px;
+		flex-shrink: 0;
+		background: rgba(148, 116, 78, 0.22);
+	}
+
+	.vehicles-filter-controls {
+		display: flex;
+		flex-shrink: 0;
+		align-items: center;
+		gap: 0.45rem;
+	}
+
+	.vehicles-sort-menu {
+		position: relative;
+	}
+
+	.vehicles-sort-menu__items {
+		position: absolute;
+		right: 0;
+		top: calc(100% + 0.35rem);
+		z-index: 100;
+		display: none;
+		min-width: 12rem;
+		overflow: hidden;
+		border: 1px solid rgba(215, 196, 168, 0.92);
+		border-radius: 8px;
+		background: rgba(255, 253, 249, 0.98);
+		box-shadow: 0 14px 30px rgba(87, 55, 30, 0.12);
+	}
+
+	.vehicles-sort-menu:hover .vehicles-sort-menu__items,
+	.vehicles-sort-menu:focus-within .vehicles-sort-menu__items {
+		display: grid;
+	}
+
+	.vehicles-sort-menu__items a {
+		padding: 0.65rem 0.8rem;
+		font-size: 0.76rem;
+		font-weight: 650;
+		color: rgb(71 85 105);
+	}
+
+	.vehicles-sort-menu__items a:hover,
+	.vehicles-sort-menu__items a[aria-current="true"] {
+		background: rgba(255, 246, 229, 0.95);
+		color: rgb(15 23 42);
+	}
+
+	.vehicles-icon-toggle {
+		width: 2.35rem;
+		padding: 0;
+	}
+
+	@media (max-width: 767px) {
+		.vehicles-filter-row {
+			align-items: stretch;
+			flex-direction: column;
+		}
+
+		.vehicles-filter-left,
+		.vehicles-filter-controls {
+			width: 100%;
+		}
+
+		.vehicles-category-scroll {
+			max-width: none;
+		}
+	}
+</style>

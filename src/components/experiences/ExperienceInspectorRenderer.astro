@@ -1,6 +1,8 @@
 ---
 import DefaultNoteInspector from "src/components/experiences/DefaultNoteInspector.astro";
 import SelectedNoteInspector from "src/components/experiences/SelectedNoteInspector.astro";
+import RecipeNoteInspector from "src/components/experiences/RecipeNoteInspector.astro";
+import VehicleNoteInspector from "src/components/experiences/VehicleNoteInspector.astro";
 import type { InspectorSection } from "src/lib/experiences/inspector";
 import type { ExperienceDefinition } from "src/lib/experiences/registry";
 import type { LibraryItem } from "src/lib/vault";
@@ -16,6 +18,8 @@ interface Props {
 const props = Astro.props;
 const inspectorComponents = {
 	gear: SelectedNoteInspector,
+	recipes: RecipeNoteInspector,
+	vehicles: VehicleNoteInspector,
 };
 const InspectorComponent = props.definition.inspector
 	? inspectorComponents[props.definition.inspector]

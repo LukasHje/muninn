@@ -1,0 +1,65 @@
+---
+import Icon from "src/components/Icon.astro";
+
+interface Item {
+	label: string;
+	count: number;
+	href?: string;
+	icon?: string;
+}
+
+interface Props {
+	items: Item[];
+	emptyLabel?: string;
+	scrollable?: boolean;
+}
+
+const { items, emptyLabel = "Metadata appears here as the collection grows.", scrollable = false } = Astro.props;
+---
+
+{
+	items.length > 0 ? (
+		<div class:list={["dashboard-metadata-list grid grid-cols-2 gap-1.5 p-2.5", scrollable && "h-full overflow-y-auto pr-2"]}>
+			{items.map((item) => (
+				item.href ? (
+					<a
+						href={item.href}
+						class="flex min-w-0 items-center justify-between gap-2 rounded-[6px] border border-transparent bg-white/56 px-2.5 py-2 text-xs text-slate-600 transition hover:border-amber-200 hover:bg-amber-50/70 hover:text-amber-800"
+					>
+						<span class="flex min-w-0 items-center gap-1.5">
+							{item.icon && <Icon name={item.icon} class="h-3.5 w-3.5 shrink-0 text-amber-700" />}
+							<span class="truncate font-medium">{item.label}</span>
+						</span>
+						<span class="shrink-0 text-[10px] tabular-nums text-slate-400">{item.count}</span>
+					</a>
+				) : (
+					<div class="flex min-w-0 items-center justify-between gap-2 rounded-[6px] border border-transparent bg-white/56 px-2.5 py-2 text-xs text-slate-600">
+						<span class="flex min-w-0 items-center gap-1.5">
+							{item.icon && <Icon name={item.icon} class="h-3.5 w-3.5 shrink-0 text-amber-700" />}
+							<span class="truncate font-medium">{item.label}</span>
+						</span>
+						<span class="shrink-0 text-[10px] tabular-nums text-slate-400">{item.count}</span>
+					</div>
+				)
+			))}
+		</div>
+	) : (
+		<p class="p-3 text-xs leading-5 text-slate-500">{emptyLabel}</p>
+	)
+}
+
+<style>
+	.dashboard-metadata-list {
+		scrollbar-width: thin;
+		scrollbar-color: rgba(180, 126, 68, 0.34) transparent;
+	}
+
+	.dashboard-metadata-list::-webkit-scrollbar {
+		width: 4px;
+	}
+
+	.dashboard-metadata-list::-webkit-scrollbar-thumb {
+		border-radius: 999px;
+		background: rgba(180, 126, 68, 0.34);
+	}
+</style>

@@ -129,6 +129,8 @@ Inline Dataview expressions are resolved by `src/lib/inlineDataview.ts`. Both th
 
 Obsidian callout syntax is identified in the Obsidian stage, but its alias, Lucide icon and color mapping belong to Markdown UI. The detailed ownership and extension contract lives in `docs/callout-rendering.md`.
 
+Dataview and DataviewJS fenced code blocks become typed document nodes in the Obsidian stage. Nested content, including callouts and multi-column blocks, re-enters the complete parse pipeline so these nodes retain their type at every document depth. DataviewJS execution and generated-Markdown behaviour are defined in `docs/dataview-rendering.md`.
+
 ## Practical Rule
 
 When adding a new feature, ask:
