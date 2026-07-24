@@ -114,7 +114,7 @@ export const experienceDefinitions = [
 			hero: "gear",
 		},
 		assets: {
-			heroArtwork: "/experiences/gear/experiences-heroart-gear-v2.png",
+			heroArtwork: "/experiences/gear/experiences-heroart-gear-v2.webp",
 			placeholderThumbnail: "/assets/experiences/gear/placeholder-thumbnail.webp",
 		},
 		href: "/gear",
@@ -146,7 +146,7 @@ export const experienceDefinitions = [
 		theme: "slate",
 		icons: { sidebar: "car-front", hero: "car-front" },
 		assets: {
-			heroArtwork: "/experiences/vehicles/experiences-heroart-vehicles-v2.png",
+			heroArtwork: "/experiences/vehicles/experiences-heroart-vehicles-v2.webp",
 			placeholderThumbnail: "/assets/placeholders/vehicle-suv-placeholder-thumbnail.webp",
 			placeholderThumbnailsByCategory: {
 				Hatchback: "/assets/placeholders/vehicle-hatchback-placeholder.webp",
@@ -203,7 +203,7 @@ export const experienceDefinitions = [
 		theme: "emerald",
 		icons: { sidebar: "travel", hero: "travel" },
 		assets: {
-			heroArtwork: "/experiences/travel/experiences-heroart-travel-v2.png",
+			heroArtwork: "/experiences/travel/experiences-heroart-travel-v2.webp",
 			placeholderThumbnail: null,
 		},
 		href: "/travel",
@@ -218,7 +218,7 @@ export const experienceDefinitions = [
 		theme: "amber",
 		icons: { sidebar: "chef-hat", hero: "chef-hat" },
 		assets: {
-			heroArtwork: "/experiences/recipes-assets/recipes-hero-v2.png",
+			heroArtwork: "/experiences/recipes-assets/recipes-hero-v2.webp",
 			placeholderThumbnail: null,
 		},
 		href: "/recipes",
@@ -227,7 +227,7 @@ export const experienceDefinitions = [
 		landingPage: "recipes",
 		inspector: "recipes",
 		featureSections: ["Ingredients", "Instructions", "Method", "Directions", "Notes", "Review"],
-		metadataFilters: ["recipe_kind", "favorite", "reviewed"],
+		metadataFilters: ["recipe_kind", "favorite", "reviewed", "cuisine"],
 		showMetadataFilters: false,
 		cardMetadata: ["total_time", "cook_time", "difficulty", "cuisine"],
 		inspectorMetadata: [
@@ -238,6 +238,7 @@ export const experienceDefinitions = [
 			"servings",
 			"cuisine",
 			"collection",
+			"recipe_status",
 			"rating",
 			"tags",
 		],
@@ -262,7 +263,7 @@ export const experienceDefinitions = [
 		theme: "slate",
 		icons: { sidebar: "books", hero: "books" },
 		assets: {
-			heroArtwork: "/experiences/books/experiences-heroart-books-v2.png",
+			heroArtwork: "/experiences/books/experiences-heroart-books-v2.webp",
 			placeholderThumbnail: null,
 		},
 		href: "/books",
@@ -292,7 +293,7 @@ export const experienceDefinitions = [
 		theme: "sky",
 		icons: { sidebar: "server", hero: "server" },
 		assets: {
-			heroArtwork: "/experiences/homelab/experiences-heroart-homelab-v2.png",
+			heroArtwork: "/experiences/homelab/experiences-heroart-homelab-v2.webp",
 			placeholderThumbnail: null,
 		},
 		href: "/homelab",

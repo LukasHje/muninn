@@ -116,6 +116,7 @@ test("dashboard aggregation prioritizes favorites and ratings while deriving coo
 			ingredients: ["Tomato", "Garlic"],
 			collection: "Weeknight",
 			reviewed: "true",
+			recipe_status: "made",
 		}),
 		createRecipe("rated", {
 			type: "recipe",
@@ -124,6 +125,7 @@ test("dashboard aggregation prioritizes favorites and ratings while deriving coo
 			cuisine: "Italian",
 			category: "Dinner",
 			ingredients: ["Tomato", "Butter"],
+			recipe_status: "to_try",
 		}),
 	];
 	const dashboard = buildRecipeDashboardModel(notes);
@@ -133,9 +135,98 @@ test("dashboard aggregation prioritizes favorites and ratings while deriving coo
 	assert.equal(dashboard.vegetarian, 1);
 	assert.equal(dashboard.needsReview, 1);
 	assert.equal(dashboard.averageTotalMinutes, 43);
+	assert.equal(dashboard.averageRating, 4.8);
+	assert.equal(dashboard.totalRecipes, 2);
+	assert.equal(dashboard.favoriteRecipes, 1);
+	assert.equal(dashboard.ratedRecipes, 2);
 	assert.equal(dashboard.mostCommonCuisine, "Italian");
 	assert.equal(dashboard.mostCommonIngredient, "Vegetables");
+	assert.deepEqual(dashboard.cuisineSplit, [
+		{ value: "Italian", label: "Italian", count: 2, percentage: 100 },
+	]);
 	assert.equal(getRecipeMetadata(notes[0]).rating, 4.5);
+	assert.equal(getRecipeMetadata(notes[0]).status, "made");
+	assert.equal(getRecipeMetadata(notes[1]).status, "to-try");
+});
+
+test("recipe lifecycle status supports explicit English and Swedish aliases", () => {
+	assert.equal(
+		getRecipeMetadata(createRecipe("made", { type: "recipe", recipeStatus: "cooked" })).status,
+		"made"
+	);
+	assert.equal(
+		getRecipeMetadata(createRecipe("planned", { type: "recipe", recept_status: "att prova" })).status,
+		"to-try"
+	);
+	assert.equal(
+		getRecipeMetadata(createRecipe("unset", { type: "recipe", status: "published" })).status,
+		null
+	);
+});
+
+test("Swedish recipe frontmatter populates cards and dashboard statistics", () => {
+	const note = createRecipe(
+		"Brysselkex med sylt",
+		{
+			title: "Brysselkex med sylt",
+			type: "recept",
+			kategori: "bakverk",
+			tags: ["småkakor", "fika", "mördeg", "hallon", "bakning", "svenskt"],
+			portioner: "50 st",
+			tid: "1 tim 50 min",
+			betyg: "4.9",
+			recipe_status: "made",
+			datum: "2026-07-23",
+			cover: "[[brysselkex-med-sylt.jpeg]]",
+			källa: "https://receptfavoriter.se/recept/brysselkex-med-sylt.html",
+		},
+		{
+			tags: ["småkakor", "fika", "mördeg", "hallon", "bakning", "svenskt"],
+		}
+	);
+	const metadata = getRecipeMetadata(note);
+	const dashboard = buildRecipeDashboardModel([note]);
+
+	assert.deepEqual(metadata.categories, ["bakverk"]);
+	assert.equal(metadata.servings, "50 st");
+	assert.equal(metadata.totalTime, "1 tim 50 min");
+	assert.equal(metadata.rating, 4.9);
+	assert.equal(metadata.status, "made");
+	assert.equal(dashboard.averageTotalMinutes, 110);
+	assert.equal(dashboard.averageRating, 4.9);
+	assert.equal(
+		dashboard.recipeKinds.find(({ value }) => value === "dessert")?.count,
+		1
+	);
+});
+
+test("recipe dashboard exposes Food, Dessert, and Drink counts with cuisine percentages", () => {
+	const notes = [
+		createRecipe("main", { type: "recipe", cuisine: "Italian" }, {
+			content: "# Pasta\n\n## Ingredients\n- pasta",
+		}),
+		createRecipe("dessert", { type: "recipe", cuisine: "Swedish" }, {
+			content: "# Chocolate cake\n\n## Ingredients\n- chocolate",
+		}),
+		createRecipe("drink", { type: "recipe", cuisine: "Italian" }, {
+			content: "# Cocktail\n\n## Ingredients\n- gin",
+		}),
+	];
+	const dashboard = buildRecipeDashboardModel(notes);
+
+	assert.deepEqual(
+		dashboard.recipeKinds.map(({ value, count }) => ({ value, count })),
+		[
+			{ value: "food", count: 1 },
+			{ value: "drink", count: 1 },
+			{ value: "dessert", count: 1 },
+			{ value: "other", count: 0 },
+		]
+	);
+	assert.deepEqual(dashboard.cuisineSplit, [
+		{ value: "Italian", label: "Italian", count: 2, percentage: 67 },
+		{ value: "Swedish", label: "Swedish", count: 1, percentage: 33 },
+	]);
 });
 
 test("recipe dashboard treats highly rated recipes as featured without requiring a favorite flag", () => {

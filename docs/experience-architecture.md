@@ -101,11 +101,15 @@ No resolver may branch on `definition.id`. The definition chooses behavior decla
 
 Hero components own only foreground content such as title, description, statistics, and filters. They must remain transparent and must not load or paint `definition.assets.heroArtwork` themselves. Custom landing pages also must not reproduce the workspace wrapper; central ownership ensures that Default and future Experiences inherit the same presentation automatically.
 
+All Experience hero titles and descriptions use the shared serif hero typography. Individual Experiences may adjust scale and spacing, but must not replace that common editorial type identity with a domain-specific font stack.
+
 ## Dashboard Composition
 
 An Experience may provide a dashboard through the named `dashboard` slot in `ExperienceView`. The shared dashboard primitives own horizontal overflow, snap behavior, widget dimensions, and compact metadata or note lists. A domain landing page composes those primitives and supplies its domain model; it must not create a second browser, overlay controller, or viewport system.
 
 The dashboard is part of the fixed Experience chrome. The existing Library workspace remains the only vertical scroll owner. On narrow screens, dashboard widgets scroll horizontally so they do not consume unbounded vertical space. In a short landscape viewport, the optional dashboard may be omitted and the hero compressed to protect a usable Library scroll region; discovery chrome must never reduce the Library to zero height.
+
+Recipes uses a compact seven-metric overview followed by a cuisine percentage distribution instead of the general widget carousel. The overview may overflow horizontally on narrow screens, but remains fixed Experience chrome and does not acquire vertical scroll ownership.
 
 ## Filters and Statistics
 
@@ -113,7 +117,7 @@ Metadata filters are multi-value aware. A note matches when any normalized value
 
 Statistics are registry-defined. `metadata-breakdown` provides the Default and Gear behavior; `summary` composes reusable totals such as favorites, unique metadata values, and unique tags. New Experiences should extend these declarative metrics instead of adding Experience-id checks to the statistics pipeline.
 
-An Experience may hide the generic metadata filter row when a custom dashboard owns the visible filter controls. Those controls must still write normal Experience filter parameters and use the shared filter pipeline. Recipes uses this for its derived `recipe_kind` dashboard category buttons. Vehicles uses the same contract for garage dashboard controls, writing normal `vehicle_status`, `vehicle_category`, `drivetrain`, and `fuel` filter parameters back into the shared filter pipeline.
+An Experience may hide the generic metadata filter row when a custom dashboard owns the visible filter controls. Those controls must still write normal Experience filter parameters and use the shared filter pipeline. Recipes uses this for its compact recipe-kind metrics and cuisine distribution. Vehicles uses the same contract for garage dashboard controls, writing normal `vehicle_status`, `vehicle_category`, `drivetrain`, and `fuel` filter parameters back into the shared filter pipeline.
 
 The Vehicles dashboard presents Wishlist and Planned as the single canonical `planned` state. For those planned vehicles, `target_drivetrain`, `target_fuel`, and `target_transmission` act as fallbacks when the corresponding actual specification is absent; owned vehicles continue to prefer `drivetrain`, `fuel`, and `transmission`. Its visible body-style list is limited to the five most common raw values. The filter controller instead uses the derived `vehicle_category` dimension, which groups related body-style variants such as bicycle subtypes into one canonical category while preserving the raw metadata for cards and inspectors. Missing drivetrain metadata is grouped as `Other`, and the drivetrain visualization is generated from the current vault snapshot without a chart dependency.
 

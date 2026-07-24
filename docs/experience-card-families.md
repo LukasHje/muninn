@@ -91,11 +91,14 @@ The Default Experience always has a viable fallback through `generic-note`. Regi
 
 The `recipe` family uses an editorial hierarchy optimized for meal discovery:
 
-- cover or shared image fallback
-- category and cuisine context
-- title and short summary
-- cooking or total time, difficulty, and servings
-- the shared favorite control
+- four columns on wide desktop, with the shared responsive grid behavior below that breakpoint
+- a 4:3 cover or shared image fallback
+- the shared favorite control over the image
+- title followed by at most two category or cuisine tags
+- one compact facts row for rating, servings, and cooking or total time
+- an optional lifecycle footer for the normalized `Made` or `To try` recipe status
+
+Grid cards deliberately omit the note summary. The full note and contextual inspector remain responsible for descriptive content.
 
 It consumes normalized recipe metadata from `src/lib/experiences/recipes.ts`. Cards must omit absent values rather than invent defaults, and they must retain the shared `data-experience-card` selection contract so the generic browser can open the Recipe inspector.
 

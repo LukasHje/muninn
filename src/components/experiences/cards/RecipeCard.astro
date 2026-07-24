@@ -3,7 +3,11 @@ import FavoriteToggleButton from "src/components/FavoriteToggleButton.astro";
 import Icon from "src/components/Icon.astro";
 import type { ExperienceDefinition } from "src/lib/experiences/registry";
 import { getRecipeMetadata } from "src/lib/experiences/recipes";
-import { getCardImage, getNoteSummary, isPlaceholderExperienceImage } from "src/lib/experiences/selectors";
+import {
+	getCardImage,
+	getExperienceContextTags,
+	isPlaceholderExperienceImage,
+} from "src/lib/experiences/selectors";
 import type { LibraryItem } from "src/lib/vault";
 
 interface Props {
@@ -22,34 +26,52 @@ const {
 const imageUrl = getCardImage(note, definition);
 const isPlaceholderImage = isPlaceholderExperienceImage(imageUrl, definition);
 const recipe = getRecipeMetadata(note);
-const summary = getNoteSummary(note);
 const time = recipe.totalTime ?? recipe.cookTime ?? recipe.prepTime;
-const category = recipe.cuisine ?? recipe.categories[0] ?? null;
-type RecipeFact = { iconName: string; value: string; label: string };
+const tags = Array.from(
+	new Set([
+		...recipe.categories,
+		...(recipe.cuisine ? [recipe.cuisine] : []),
+		...getExperienceContextTags(note, 2),
+	])
+).slice(0, 2);
+
+type RecipeFact = { iconName: string; value: string; label: string; filled?: boolean };
 const isRecipeFact = (fact: RecipeFact | null): fact is RecipeFact => fact !== null;
 const recipeFactCandidates: Array<RecipeFact | null> = [
-	time ? { iconName: "clock-3", value: time, label: "Time" } : null,
-	recipe.servings ? { iconName: "users", value: recipe.servings, label: "Servings" } : null,
-	recipe.difficulty
-		? { iconName: "chef-hat", value: recipe.difficulty, label: "Difficulty" }
+	recipe.rating !== null
+		? {
+				iconName: "star",
+				value: recipe.rating.toFixed(recipe.rating % 1 === 0 ? 0 : 1),
+				label: "Rating",
+				filled: true,
+			}
 		: null,
+	recipe.servings ? { iconName: "users", value: recipe.servings, label: "Servings" } : null,
+	time ? { iconName: "clock-3", value: time, label: "Time" } : null,
 ];
-const recipeFacts = recipeFactCandidates.filter(isRecipeFact).slice(0, 4);
+const recipeFacts = recipeFactCandidates.filter(isRecipeFact);
+const statusPresentation = recipe.status === "made"
+	? { label: "Made", icon: "circle-check", className: "recipe-card__status--made" }
+	: recipe.status === "to-try"
+		? { label: "To try", icon: "circle", className: "recipe-card__status--to-try" }
+		: null;
 ---
 
 <article
 	data-selected={selected ? "true" : "false"}
 	class="recipe-card group relative overflow-hidden rounded-[10px] border border-[#e1d3c3] bg-[#fffdf9]"
 >
-	<div class="absolute right-2 top-2 z-20 rounded-[7px] bg-[#fffaf2]/90 shadow-sm backdrop-blur-sm">
+	<div class="absolute right-2 top-2 z-20">
 		<FavoriteToggleButton
 			noteId={note.id}
 			isFavorite={Boolean(note.favorite)}
 			redirectTo={redirectTo}
+			tone="dark"
 			variant="chromeless"
-			size="md"
+			size="sm"
 		/>
 	</div>
+
 	<button
 		type="button"
 		class="block h-full w-full text-left"
@@ -60,7 +82,7 @@ const recipeFacts = recipeFactCandidates.filter(isRecipeFact).slice(0, 4);
 	>
 		<div
 			class:list={[
-				"relative aspect-[16/9] overflow-hidden border-b border-[#eadfd3] bg-[#f0e4d5]",
+				"relative aspect-[4/3] overflow-hidden border-b border-[#eadfd3] bg-[#f0e4d5]",
 				(!imageUrl || isPlaceholderImage) && "flex items-center justify-center p-6",
 			]}
 		>
@@ -81,45 +103,61 @@ const recipeFacts = recipeFactCandidates.filter(isRecipeFact).slice(0, 4);
 					<Icon name="chef-hat" class="h-12 w-12 text-amber-700/45" />
 				)
 			}
-			<div class="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-950/45 to-transparent" aria-hidden="true"></div>
-			{
-				category && (
-					<span class="absolute bottom-2.5 left-3 rounded-[5px] bg-slate-950/58 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-white backdrop-blur-sm">
-						{category}
-					</span>
-				)
-			}
-			{
-				recipe.rating !== null && (
-					<span class="absolute bottom-2.5 right-3 flex items-center gap-1.5 rounded-[5px] bg-slate-950/58 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">
-						<Icon name="star" class="h-3 w-3 text-amber-300" filled />
-						{recipe.rating.toFixed(recipe.rating % 1 === 0 ? 0 : 1)}
-					</span>
-				)
-			}
 		</div>
 
-		<div class="flex flex-col p-4">
-			<h2 class="truncate pr-8 text-lg font-semibold tracking-[-0.04em] text-slate-900">{note.title}</h2>
-			{summary && <p class="mt-2 line-clamp-2 text-xs leading-5 text-slate-500">{summary}</p>}
+		<div class="px-3.5 pb-3 pt-3">
+			<h2 class="truncate text-[0.95rem] font-semibold tracking-[-0.025em] text-slate-900">{note.title}</h2>
 
 			{
-				recipeFacts.length > 0 && (
-					<div class="mt-3 flex overflow-hidden rounded-[7px] border border-[#eadfd3] bg-[#fbf4eb]/72">
-						{recipeFacts.map((fact, index) => (
-							<div
-								class="relative flex min-w-0 flex-1 basis-0 items-center justify-center gap-1.5 px-2.5 py-2 text-center"
-								title={`${fact.label}: ${fact.value}`}
-								aria-label={`${fact.label}: ${fact.value}`}
+				tags.length > 0 && (
+					<div class="mt-2 flex min-w-0 items-center gap-1.5 overflow-hidden">
+						{tags.map((tag, index) => (
+							<span
+								class:list={[
+									"max-w-[8.5rem] truncate rounded-[4px] px-1.5 py-0.5 text-[9px] font-semibold",
+									index === 0
+										? "bg-amber-100 text-amber-800"
+										: "bg-slate-100 text-slate-600",
+								]}
 							>
-								{index > 0 && <span class="absolute left-0 top-1/2 h-6 w-px -translate-y-1/2 bg-[#e2d2bf]" aria-hidden="true"></span>}
-								<Icon name={fact.iconName} class="h-3.5 w-3.5 shrink-0 text-amber-700" />
-								<p class="truncate text-[10px] font-semibold text-slate-700">{fact.value}</p>
-							</div>
+								{tag}
+							</span>
 						))}
 					</div>
 				)
 			}
+
+			{
+				recipeFacts.length > 0 && (
+					<div class="mt-3 flex min-w-0 items-center gap-x-3 overflow-hidden text-[10px] font-medium text-slate-600">
+						{recipeFacts.map((fact) => (
+							<span
+								class="flex min-w-0 items-center gap-1"
+								title={`${fact.label}: ${fact.value}`}
+								aria-label={`${fact.label}: ${fact.value}`}
+							>
+								<Icon
+									name={fact.iconName}
+									filled={fact.filled}
+									class="h-3.5 w-3.5 shrink-0 text-amber-600"
+								/>
+								<span class="truncate tabular-nums">{fact.value}</span>
+							</span>
+						))}
+					</div>
+				)
+			}
+
+			<div class="mt-3 min-h-[1.85rem] border-t border-[#eadfd3] pt-2.5">
+				{
+					statusPresentation && (
+						<span class:list={["recipe-card__status", statusPresentation.className]}>
+							<Icon name={statusPresentation.icon} class="h-3 w-3" />
+							{statusPresentation.label}
+						</span>
+					)
+				}
+			</div>
 		</div>
 	</button>
 </article>
@@ -135,6 +173,22 @@ const recipeFacts = recipeFactCandidates.filter(isRecipeFact).slice(0, 4);
 		border-color: rgba(194, 126, 61, 0.72);
 		box-shadow: 0 18px 38px rgba(77, 48, 25, 0.1);
 		transform: translateY(-1px);
+	}
+
+	.recipe-card__status {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		font-size: 0.62rem;
+		font-weight: 650;
+	}
+
+	.recipe-card__status--made {
+		color: #3f7651;
+	}
+
+	.recipe-card__status--to-try {
+		color: #8a6a32;
 	}
 
 	@media (prefers-reduced-motion: reduce) {

@@ -39,6 +39,8 @@ Assets are declared by each definition. Existing hero artwork follows:
 /public/experiences/[experience]/experiences-heroart-[experience].[image-extension]
 ```
 
+Production hero artwork should use WebP at its intended display resolution. Lossless source files may be retained outside `public/`, but must not be shipped alongside the optimized asset because everything under `public/` is copied into the runtime image.
+
 An Experience may instead keep a cohesive asset set under `/public/experiences/[experience]-assets/`; Recipes uses this convention for its editorial hero. The registry remains the authority for the public path, so renderers must not derive paths from ids.
 
 Hero artwork and placeholder thumbnails may be absent. The shared artwork workspace then renders a theme-derived background and the hero keeps its registered icon instead of requesting a missing image. Individual landing pages and hero components must not resolve or paint the registered artwork themselves. An Experience may additionally register `placeholderThumbnailsByCategory`; the registry owns these public asset paths, while the domain adapter owns category normalization and fallback selection.
@@ -57,11 +59,19 @@ Recipes deliberately accepts common vault vocabulary without requiring migration
 - `category` / `categories`
 - `ingredient` / `ingredients`
 - `collection` / `collections`
-- optional timing, difficulty, servings, cuisine, rating, favorite, and reviewed fields
+- optional timing, difficulty, servings, cuisine, rating, favorite, reviewed, and `recipe_status` fields
 
 Missing recipe metadata degrades to omitted UI or an empty statistic; it must not exclude an otherwise matching recipe note. Field aliases are resolved by shared selectors, not by Recipe components.
 
-Recipes does not render the generic Experience metadata filter row. Its dashboard category control owns the visible category filtering and writes the derived `recipe_kind` filter into the normal Experience filter pipeline. The four recipe kinds are:
+The canonical lifecycle field is:
+
+```yaml
+recipe_status: made # made | to_try
+```
+
+`made` and `to_try` are normalized to the two presentation states `Made` and `To try`. Supported English and Swedish field aliases are accepted by the shared selector layer. A generic `status` field is intentionally not consumed because it may describe publishing or document workflow rather than the recipe lifecycle.
+
+Recipes does not render the generic Experience metadata filter row. Its compact statistics and cuisine controls own the visible category filtering and write `recipe_kind`, `favorite`, `reviewed`, and `cuisine` filters into the normal Experience filter pipeline. The four recipe kinds are:
 
 - Food
 - Drink
@@ -69,6 +79,8 @@ Recipes does not render the generic Experience metadata filter row. Its dashboar
 - Other
 
 `Food` is the fallback for ordinary meals, breakfast, lunch, dinner, baked bread, and snacks. `Drink` is reserved for alcoholic drinks and cocktails. Coffee, tea, chai, and hot chocolate intentionally fall into `Other` until the drink taxonomy is expanded.
+
+The Recipe dashboard model derives seven key values from the current note set: total recipes, favorites, Food/Mains, Desserts, Drinks, average rating, and recipes needing review. Cuisine distribution reports percentage shares from normalized cuisine metadata and groups values outside the five largest cuisines into `Other`.
 
 ## Vehicles Definition
 

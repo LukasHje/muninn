@@ -297,7 +297,7 @@ Journal
 
 Widgets should remain independent reusable components.
 
-Recipe widgets are the first implemented dashboard composition. They cover featured and recent recipes, categories, ingredients, collections, aggregate cookbook statistics, and discovery links. Domain aggregation lives in a Recipe dashboard model; reusable widget shells and list renderers remain domain-neutral.
+Recipes uses a compact dashboard composition with seven cookbook metrics and a cuisine percentage distribution. Domain aggregation lives in the Recipe dashboard model; the dashboard remains presentation-only and writes filters through the shared Experience filter pipeline.
 
 Dashboard widgets may scroll horizontally, but they do not own vertical viewport scrolling. The Library workspace below them remains the Experience's vertical scroll container.
 
@@ -378,14 +378,16 @@ Future experiences should mostly be composition rather than implementation.
 
 Recipes behaves like a personal cookbook layered over normal Markdown notes:
 
-- a warm editorial hero and summary statistics
-- compact horizontally scrollable dashboard widgets
+- a warm editorial hero using the shared serif title and description treatment
+- a compact seven-metric overview and cuisine distribution
 - the shared filter and sorting toolbar
-- Recipe Cards in the generic Library browser
+- four-column Recipe Cards on wide desktop, without summary text
+- compact card facts for rating, servings, and time
+- optional `Made` or `To try` lifecycle state from explicit recipe metadata
 - a contextual Recipe inspector with ingredients and instruction previews
 - the authoritative full Note View for reading and editing context
 
-Recipe metadata is optional and additive. Notes are selected by their normalized `type`; missing cover art, timing, rating, ingredients, or collections must degrade gracefully. Common singular/plural metadata aliases are normalized centrally so filters, widgets, cards, and inspectors share the same values.
+Recipe metadata is optional and additive. Notes are selected by their normalized `type`; missing cover art, timing, rating, ingredients, cuisine, lifecycle state, or collections must degrade gracefully. Common singular/plural metadata aliases are normalized centrally so filters, dashboard values, cards, and inspectors share the same values.
 
 The Recipe inspector is not a separate recipe-detail route. Opening a card keeps the current browse state and uses the shared Experience inspector lifecycle; opening the complete note still uses the normal Note View.
 

@@ -17,9 +17,19 @@ export interface RecipeMetadata {
 	categories: string[];
 	collections: string[];
 	cuisine: string | null;
+	status: RecipeLifecycleStatus | null;
+}
+
+export type RecipeLifecycleStatus = "made" | "to-try";
+
+export interface RecipeCuisineShare extends ExperienceFilterOption {
+	percentage: number;
 }
 
 export interface RecipeDashboardModel {
+	totalRecipes: number;
+	favoriteRecipes: number;
+	ratedRecipes: number;
 	featured: LibraryItem[];
 	recent: LibraryItem[];
 	categories: ExperienceFilterOption[];
@@ -29,9 +39,11 @@ export interface RecipeDashboardModel {
 	vegetarian: number;
 	needsReview: number;
 	averageTotalMinutes: number | null;
+	averageRating: number | null;
 	mostCommonCuisine: string | null;
 	mostCommonIngredient: string | null;
 	recipeKinds: RecipeKindCount[];
+	cuisineSplit: RecipeCuisineShare[];
 }
 
 export interface RecipeKindCount {
@@ -56,6 +68,30 @@ function parseRating(value: string | null) {
 
 	const rating = Number.parseFloat(value.replace(",", "."));
 	return Number.isFinite(rating) ? rating : null;
+}
+
+function normalizeRecipeStatus(value: string | null): RecipeLifecycleStatus | null {
+	const normalized = normalizeRecipeText(value ?? "").replace(/[-_]+/g, " ");
+
+	if (["made", "cooked", "tried", "done", "lagad", "tillagad", "provad"].includes(normalized)) {
+		return "made";
+	}
+
+	if (
+		[
+			"to try",
+			"try",
+			"planned",
+			"wishlist",
+			"want to try",
+			"ska provas",
+			"att prova",
+		].includes(normalized)
+	) {
+		return "to-try";
+	}
+
+	return null;
 }
 
 export function parseRecipeDurationMinutes(value: string | null) {
@@ -276,6 +312,24 @@ function buildRecipeKindCounts(items: Array<{ note: LibraryItem; metadata: Recip
 	return definitions.map((definition) => ({ ...definition, count: counts.get(definition.value) ?? 0 }));
 }
 
+function buildCuisineSplit(options: ExperienceFilterOption[]): RecipeCuisineShare[] {
+	const total = options.reduce((sum, option) => sum + option.count, 0);
+	if (total === 0) {
+		return [];
+	}
+
+	const visible = options.slice(0, 5);
+	const remainingCount = options.slice(5).reduce((sum, option) => sum + option.count, 0);
+	const grouped = remainingCount > 0
+		? [...visible, { value: "other", label: "Other", count: remainingCount }]
+		: visible;
+
+	return grouped.map((option) => ({
+		...option,
+		percentage: Math.round((option.count / total) * 100),
+	}));
+}
+
 export function getRecipeMetadata(note: LibraryItem): RecipeMetadata {
 	const ingredientGroups = buildRecipeIngredientGroups(note);
 
@@ -293,6 +347,7 @@ export function getRecipeMetadata(note: LibraryItem): RecipeMetadata {
 		categories: getNoteMetadataValues(note, "category"),
 		collections: getNoteMetadataValues(note, "collection"),
 		cuisine: getNoteMetadataValue(note, "cuisine"),
+		status: normalizeRecipeStatus(getNoteMetadataValue(note, "recipe_status")),
 	};
 }
 
@@ -320,8 +375,14 @@ export function buildRecipeDashboardModel(notes: LibraryItem[]): RecipeDashboard
 	const ingredients = buildRecipeIngredientOptions(notes);
 	const collections = buildMetadataFilterOptions(notes, "collection");
 	const cuisines = buildMetadataFilterOptions(notes, "cuisine");
+	const ratings = metadata
+		.map(({ metadata: item }) => item.rating)
+		.filter((value): value is number => value !== null);
 
 	return {
+		totalRecipes: notes.length,
+		favoriteRecipes: metadata.filter(({ metadata: item }) => item.favorite).length,
+		ratedRecipes: ratings.length,
 		featured: metadata
 			.filter(({ metadata: item }) => isFeaturedRecipe(item))
 			.map(({ note }) => note)
@@ -343,8 +404,13 @@ export function buildRecipeDashboardModel(notes: LibraryItem[]): RecipeDashboard
 			totalMinutes.length > 0
 				? Math.round(totalMinutes.reduce((sum, value) => sum + value, 0) / totalMinutes.length)
 				: null,
+		averageRating:
+			ratings.length > 0
+				? Math.round((ratings.reduce((sum, value) => sum + value, 0) / ratings.length) * 10) / 10
+				: null,
 		mostCommonCuisine: cuisines[0]?.label ?? null,
 		mostCommonIngredient: ingredients[0]?.label ?? null,
 		recipeKinds: buildRecipeKindCounts(metadata),
+		cuisineSplit: buildCuisineSplit(cuisines),
 	};
 }

@@ -59,6 +59,7 @@ const metadataLabels: Record<string, string> = {
 	reviewed: "Reviewed",
 	favorite: "Favorite",
 	recipe_kind: "Recipe kind",
+	recipe_status: "Recipe status",
 	vehicle_status: "Status",
 	vehicle_category: "Vehicle category",
 	body_style: "Body style",
@@ -94,6 +95,8 @@ const metadataAliases: Record<string, string[]> = {
 	location: ["location", "plats", "garage"],
 	rating: ["rating", "betyg"],
 	servings: ["servings", "portioner"],
+	total_time: ["total_time", "total-time", "totalTime", "time", "tid", "duration"],
+	recipe_status: ["recipe_status", "recipe-status", "recipeStatus", "recept_status", "receptstatus"],
 };
 
 const plannedVehicleMetadataFallbacks: Record<string, string> = {

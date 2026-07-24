@@ -28,6 +28,11 @@
 		@apply rounded-2xl border border-[#ece5dc] bg-white shadow-[0_8px_24px_rgba(15,23,42,0.04)];
 	}
 
+	.experience-hero-title,
+	.experience-hero-description {
+		font-family: Georgia, "Times New Roman", serif;
+	}
+
 	.sidebar-shell {
 		@apply rounded-none border-r border-white/8 bg-[linear-gradient(180deg,#0a1018_0%,#101722_100%)] p-5 text-white shadow-[0_20px_40px_rgba(2,6,23,0.22)];
 	}

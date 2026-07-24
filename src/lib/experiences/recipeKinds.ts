@@ -39,7 +39,7 @@ export function getRecipeKindFromSignals(signals: RecipeKindSignals): RecipeKind
 		return "drink";
 	}
 
-	if (/\b(dessert|desserts|cake|cakes|kaka|kakor|tarta|tårta|muffin|muffins|cupcake|cupcakes|ice cream|glass|candy|godis|chocolate|choklad|paj|pie)\b/.test(haystack)) {
+	if (/\b(dessert|desserts|cake|cakes|kaka|kakor|smakaka|smakakor|kex|cookie|cookies|bakverk|tarta|tårta|muffin|muffins|cupcake|cupcakes|ice cream|glass|candy|godis|chocolate|choklad|paj|pie)\b/.test(haystack)) {
 		return "dessert";
 	}
 

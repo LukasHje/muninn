@@ -1,191 +1,376 @@
 ---
 import Icon from "src/components/Icon.astro";
-import DashboardMetadataList from "src/components/experiences/dashboard/DashboardMetadataList.astro";
-import DashboardNoteList from "src/components/experiences/dashboard/DashboardNoteList.astro";
-import DashboardWidget from "src/components/experiences/dashboard/DashboardWidget.astro";
-import ExperienceDashboard from "src/components/experiences/dashboard/ExperienceDashboard.astro";
-import { buildRecipeDashboardModel, getRecipeMetadata } from "src/lib/experiences/recipes";
+import { buildRecipeDashboardModel } from "src/lib/experiences/recipes";
 import type { ExperienceFilterState } from "src/lib/experiences/filters";
-import type { ExperienceDefinition } from "src/lib/experiences/registry";
 import type { LibraryItem } from "src/lib/vault";
 
 interface Props {
-	definition: ExperienceDefinition;
 	notes: LibraryItem[];
 	filterState: ExperienceFilterState;
 }
 
-const { definition, notes, filterState } = Astro.props;
+const { notes, filterState } = Astro.props;
 const dashboard = buildRecipeDashboardModel(notes);
 const path = Astro.url.pathname;
 const baseParams = Astro.url.searchParams;
+const kindCounts = Object.fromEntries(
+	dashboard.recipeKinds.map((item) => [item.value, item.count])
+);
 
-function buildFilterHref(key: string, value: string) {
+function buildFilterHref(key: string, value: string | null) {
 	const params = new URLSearchParams(baseParams);
-	params.set(`filter-${key}`, value);
+	const queryKey = `filter-${key}`;
+
+	if (value) {
+		params.set(queryKey, value);
+	} else {
+		params.delete(queryKey);
+	}
+
 	params.delete("selected");
 	params.delete("inspector");
 	params.delete("experienceScroll");
 	return `${path}?${params.toString()}#experience-library`;
 }
 
-function buildMetadataItems(key: string, items: typeof dashboard.categories) {
-	return items.map((item) => ({
-		label: item.label,
-		count: item.count,
-		href: buildFilterHref(key, item.value),
-	}));
+function buildAllRecipesHref() {
+	const params = new URLSearchParams(baseParams);
+	for (const key of ["recipe_kind", "favorite", "reviewed", "cuisine"]) {
+		params.delete(`filter-${key}`);
+	}
+	params.delete("selected");
+	params.delete("inspector");
+	params.delete("experienceScroll");
+	const query = params.toString();
+	return `${path}${query ? `?${query}` : ""}#experience-library`;
 }
 
-function buildCountItems(items: typeof dashboard.ingredients) {
-	return items.map((item) => ({
-		label: item.label,
-		count: item.count,
-		icon: item.icon,
-	}));
+function formatShare(count: number) {
+	return dashboard.totalRecipes > 0
+		? `${Math.round((count / dashboard.totalRecipes) * 100)}% of recipes`
+		: "No recipes";
 }
 
-function getRecipeMetaLabel(note: LibraryItem) {
-	const metadata = getRecipeMetadata(note);
-	return [metadata.totalTime ?? metadata.cookTime, metadata.difficulty, metadata.cuisine]
-		.filter(Boolean)
-		.slice(0, 2)
-		.join(" · ") || note.updatedLabel;
-}
-
-const vegetarianCategory = dashboard.categories.find((item) =>
-	item.value.toLocaleLowerCase("en").includes("vegetar")
-);
-const favoriteCount = notes.filter((note) => getRecipeMetadata(note).favorite).length;
-const surpriseRecipe = notes.length > 0
-	? notes[Math.floor(Date.now() / 86_400_000) % notes.length]
-	: null;
-const discoveryItems = [
+const metrics = [
+	{
+		label: "Total recipes",
+		value: String(dashboard.totalRecipes),
+		helper: "All recipes",
+		icon: "book-open",
+		tone: "#A86F32",
+		href: buildAllRecipesHref(),
+		active: Object.keys(filterState.metadata).length === 0,
+	},
 	{
 		label: "Favorites",
-		helper: `${favoriteCount} saved`,
-		href: buildFilterHref("favorite", "true"),
+		value: String(dashboard.favoriteRecipes),
+		helper: formatShare(dashboard.favoriteRecipes),
 		icon: "star",
+		tone: "#B8614A",
+		href: buildFilterHref("favorite", "true"),
+		active: filterState.metadata.favorite === "true",
 	},
-	vegetarianCategory
-		? {
-				label: "Vegetarian",
-				helper: `${vegetarianCategory.count} recipes`,
-				href: buildFilterHref("category", vegetarianCategory.value),
-				icon: "leaf",
-			}
-		: null,
+	{
+		label: "Mains",
+		value: String(kindCounts.food ?? 0),
+		helper: formatShare(kindCounts.food ?? 0),
+		icon: "cooking-pot",
+		tone: "#A77935",
+		href: buildFilterHref("recipe_kind", "food"),
+		active: filterState.metadata.recipe_kind === "food",
+	},
+	{
+		label: "Desserts",
+		value: String(kindCounts.dessert ?? 0),
+		helper: formatShare(kindCounts.dessert ?? 0),
+		icon: "cake-slice",
+		tone: "#A95F73",
+		href: buildFilterHref("recipe_kind", "dessert"),
+		active: filterState.metadata.recipe_kind === "dessert",
+	},
+	{
+		label: "Drinks",
+		value: String(kindCounts.drink ?? 0),
+		helper: formatShare(kindCounts.drink ?? 0),
+		icon: "martini",
+		tone: "#577A62",
+		href: buildFilterHref("recipe_kind", "drink"),
+		active: filterState.metadata.recipe_kind === "drink",
+	},
+	{
+		label: "Avg. rating",
+		value: dashboard.averageRating === null ? "—" : dashboard.averageRating.toFixed(1),
+		helper: dashboard.ratedRecipes > 0 ? `${dashboard.ratedRecipes} rated` : "No ratings",
+		icon: "star",
+		tone: "#A77935",
+		href: null,
+		active: false,
+	},
 	{
 		label: "Needs review",
-		helper: `${dashboard.needsReview} recipes`,
-		href: buildFilterHref("reviewed", "false"),
+		value: String(dashboard.needsReview),
+		helper: formatShare(dashboard.needsReview),
 		icon: "clipboard-list",
+		tone: "#6D7380",
+		href: buildFilterHref("reviewed", "false"),
+		active: filterState.metadata.reviewed === "false",
 	},
-].filter(Boolean) as Array<{ label: string; helper: string; href: string; icon: string }>;
+];
 ---
 
-<ExperienceDashboard label="Recipes dashboard">
-	<DashboardWidget title="Featured recipes" icon="sparkles" kicker="Highlights">
-		<DashboardNoteList
-			definition={definition}
-			items={dashboard.featured.map((note) => ({ note, meta: getRecipeMetaLabel(note) }))}
-			emptyLabel="Favorite or highly rated recipes appear here."
-		/>
-	</DashboardWidget>
-
-	<DashboardWidget title="Categories" icon="layout-grid" kicker="Explore">
-		<div class="flex h-full items-center justify-between gap-1 px-3 py-2.5">
-			{
-				dashboard.recipeKinds.map((item, index) => (
+<section class="recipes-overview" aria-label="Recipes dashboard">
+	<div class="recipes-overview__metrics" aria-label="Recipe statistics">
+		{
+			metrics.map((metric) => {
+				const content = (
 					<>
-						{index > 0 && <span class="h-12 w-px shrink-0 bg-slate-300/55" aria-hidden="true"></span>}
-						<a
-							href={buildFilterHref("recipe_kind", item.value)}
-							aria-current={filterState.metadata.recipe_kind === item.value ? "true" : "false"}
-							class="group min-w-0 flex-1 rounded-[8px] px-1.5 py-1.5 text-center transition hover:bg-white/48 aria-[current=true]:bg-white/70 aria-[current=true]:shadow-sm"
-						>
-							<div class="relative mx-auto flex h-8 w-8 items-center justify-center">
-								<Icon name={item.icon} class="h-5 w-5 text-amber-700 transition group-hover:text-amber-800" />
-								<span class="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-700 px-1 text-[9px] font-bold tabular-nums text-white transition group-hover:bg-amber-800">
-									{item.count}
-								</span>
-							</div>
-							<p class="mt-1 truncate text-[10px] font-semibold text-slate-700 transition group-hover:text-slate-900">{item.label}</p>
-						</a>
+						<div class="recipes-metric__icon" aria-hidden="true">
+							<Icon name={metric.icon} class="h-4 w-4" />
+						</div>
+						<div class="min-w-0">
+							<p class="recipes-metric__label">{metric.label}</p>
+							<p class="recipes-metric__value">{metric.value}</p>
+							<p class="recipes-metric__helper">{metric.helper}</p>
+						</div>
 					</>
-				))
-			}
-		</div>
-	</DashboardWidget>
+				);
 
-	<DashboardWidget title="Popular ingredients" icon="shopping-basket" kicker="Pantry">
-		<DashboardMetadataList
-			items={buildCountItems(dashboard.ingredients)}
-			emptyLabel="Ingredient categories appear once recipes list ingredients."
-			scrollable
-		/>
-	</DashboardWidget>
-
-	<DashboardWidget title="Collections" icon="layers-3" kicker="Cookbooks">
-		<DashboardMetadataList items={buildMetadataItems("collection", dashboard.collections)} />
-	</DashboardWidget>
-
-	<DashboardWidget title="Recently added" icon="clock-3" kicker="Fresh notes">
-		<DashboardNoteList
-			definition={definition}
-			items={dashboard.recent.map((note) => ({ note, meta: note.updatedLabel }))}
-		/>
-	</DashboardWidget>
-
-	<DashboardWidget title="Cookbook at a glance" icon="chart-no-axes-column" kicker="Statistics">
-		<div class="grid grid-cols-2 gap-px bg-[#e5d7c7]">
-			<div class="bg-white/65 p-2.5">
-				<p class="text-lg font-semibold tracking-[-0.04em] text-slate-900">{dashboard.averageTotalMinutes ?? "—"}</p>
-				<p class="text-[10px] uppercase tracking-[0.09em] text-slate-400">avg minutes</p>
-			</div>
-			<div class="bg-white/65 p-2.5">
-				<p class="truncate text-sm font-semibold text-slate-900">{dashboard.mostCommonCuisine ?? "—"}</p>
-				<p class="text-[10px] uppercase tracking-[0.09em] text-slate-400">top cuisine</p>
-			</div>
-			<div class="bg-white/65 p-2.5">
-				<p class="truncate text-sm font-semibold text-slate-900">{dashboard.mostCommonIngredient ?? "—"}</p>
-				<p class="text-[10px] uppercase tracking-[0.09em] text-slate-400">top ingredient</p>
-			</div>
-			<div class="bg-white/65 p-2.5">
-				<p class="text-lg font-semibold tracking-[-0.04em] text-slate-900">{dashboard.quickMeals}</p>
-				<p class="text-[10px] uppercase tracking-[0.09em] text-slate-400">quick meals</p>
-			</div>
-		</div>
-	</DashboardWidget>
-
-	<DashboardWidget title="What should I cook?" icon="compass" kicker="Discovery">
-		<div class="grid grid-cols-2 gap-1.5 p-2.5">
-			{
-				surpriseRecipe && (
-					<button
-						type="button"
-						class="col-span-2 flex items-center justify-between rounded-[6px] bg-amber-600 px-3 py-2 text-left text-xs font-semibold text-white transition hover:bg-amber-700"
-						data-experience-card={surpriseRecipe.id}
-						aria-controls="experience-inspector-panel"
-						aria-label={`Inspect surprise recipe ${surpriseRecipe.title}`}
-						aria-pressed="false"
+				return metric.href ? (
+					<a
+						href={metric.href}
+						class="recipes-metric"
+						style={`--recipe-metric-tone:${metric.tone}`}
+						aria-current={metric.active ? "true" : undefined}
 					>
-						<span class="truncate">Cook tonight: {surpriseRecipe.title}</span>
-						<Icon name="dice-5" class="h-4 w-4 shrink-0" />
-					</button>
-				)
-			}
-			{
-				discoveryItems.map((item) => (
-					<a href={item.href} class="rounded-[6px] bg-white/62 px-2.5 py-2 transition hover:bg-amber-50">
-						<span class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700">
-							<Icon name={item.icon} class="h-3.5 w-3.5 text-amber-700" />
-							{item.label}
-						</span>
-						<span class="mt-0.5 block text-[9px] text-slate-400">{item.helper}</span>
+						{content}
 					</a>
-				))
-			}
-		</div>
-	</DashboardWidget>
-</ExperienceDashboard>
+				) : (
+					<div
+						class="recipes-metric"
+						style={`--recipe-metric-tone:${metric.tone}`}
+					>
+						{content}
+					</div>
+				);
+			})
+		}
+	</div>
+
+	<div class="recipes-cuisine" aria-label="Cuisine split">
+		<p class="recipes-cuisine__title">Cuisine split</p>
+		{
+			dashboard.cuisineSplit.length > 0 ? (
+				<div class="recipes-cuisine__items">
+					{dashboard.cuisineSplit.map((item, index) => (
+						<a
+							href={buildFilterHref("cuisine", item.value)}
+							class="recipes-cuisine__item"
+							aria-current={filterState.metadata.cuisine === item.value ? "true" : undefined}
+						>
+							<span
+								class="recipes-cuisine__dot"
+								data-cuisine-index={index}
+								aria-hidden="true"
+							></span>
+							<span class="truncate">{item.label}</span>
+							<span class="font-semibold tabular-nums text-slate-700">{item.percentage}%</span>
+						</a>
+					))}
+				</div>
+			) : (
+				<p class="text-[11px] text-slate-500">
+					Add cuisine metadata to recipes to see the distribution.
+				</p>
+			)
+		}
+	</div>
+</section>
+
+<style>
+	.recipes-overview {
+		overflow: hidden;
+		border: 1px solid rgba(220, 201, 179, 0.9);
+		border-radius: 10px;
+		background: rgba(255, 252, 247, 0.94);
+		box-shadow: 0 8px 22px rgba(87, 55, 30, 0.055);
+		backdrop-filter: blur(10px);
+	}
+
+	.recipes-overview__metrics {
+		display: grid;
+		grid-template-columns: repeat(7, minmax(7.5rem, 1fr));
+		overflow-x: auto;
+		overscroll-behavior-x: contain;
+		scrollbar-width: thin;
+		scrollbar-color: rgba(180, 126, 68, 0.3) transparent;
+	}
+
+	.recipes-overview__metrics::-webkit-scrollbar {
+		height: 3px;
+	}
+
+	.recipes-overview__metrics::-webkit-scrollbar-thumb {
+		border-radius: 999px;
+		background: rgba(180, 126, 68, 0.3);
+	}
+
+	.recipes-metric {
+		position: relative;
+		display: grid;
+		min-width: 0;
+		grid-template-columns: 2rem minmax(0, 1fr);
+		align-items: center;
+		gap: 0.55rem;
+		padding: 0.7rem 0.75rem;
+		transition: background-color 160ms ease;
+	}
+
+	.recipes-metric:hover,
+	.recipes-metric[aria-current="true"] {
+		background: color-mix(in srgb, var(--recipe-metric-tone) 7%, transparent);
+	}
+
+	.recipes-metric + .recipes-metric::before {
+		content: "";
+		position: absolute;
+		top: 0.8rem;
+		bottom: 0.8rem;
+		left: 0;
+		width: 1px;
+		background: rgba(222, 207, 189, 0.72);
+	}
+
+	.recipes-metric__icon {
+		display: flex;
+		height: 2rem;
+		width: 2rem;
+		align-items: center;
+		justify-content: center;
+		border-radius: 999px;
+		background: color-mix(in srgb, var(--recipe-metric-tone) 12%, white);
+		color: var(--recipe-metric-tone);
+	}
+
+	.recipes-metric__label {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-size: 0.56rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		line-height: 1;
+		text-transform: uppercase;
+		color: rgb(100 91 82);
+	}
+
+	.recipes-metric__value {
+		margin-top: 0.2rem;
+		font-size: 1.15rem;
+		font-weight: 650;
+		letter-spacing: -0.04em;
+		line-height: 1;
+		color: rgb(30 41 59);
+	}
+
+	.recipes-metric__helper {
+		margin-top: 0.22rem;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-size: 0.55rem;
+		color: rgb(148 135 122);
+	}
+
+	.recipes-cuisine {
+		display: flex;
+		min-width: 0;
+		align-items: center;
+		gap: 1rem;
+		border-top: 1px solid rgba(222, 207, 189, 0.72);
+		padding: 0.6rem 0.8rem;
+	}
+
+	.recipes-cuisine__title {
+		flex-shrink: 0;
+		font-size: 0.58rem;
+		font-weight: 700;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: rgb(161 98 37);
+	}
+
+	.recipes-cuisine__items {
+		display: flex;
+		min-width: 0;
+		flex: 1;
+		align-items: center;
+		gap: clamp(0.85rem, 2.2vw, 1.75rem);
+		overflow-x: auto;
+		overscroll-behavior-x: contain;
+		scrollbar-width: none;
+	}
+
+	.recipes-cuisine__items::-webkit-scrollbar {
+		display: none;
+	}
+
+	.recipes-cuisine__item {
+		display: flex;
+		min-width: 0;
+		flex-shrink: 0;
+		align-items: center;
+		gap: 0.38rem;
+		font-size: 0.62rem;
+		color: rgb(100 116 139);
+		transition: color 160ms ease;
+	}
+
+	.recipes-cuisine__item:hover,
+	.recipes-cuisine__item[aria-current="true"] {
+		color: rgb(120 75 35);
+	}
+
+	.recipes-cuisine__dot {
+		height: 0.42rem;
+		width: 0.42rem;
+		flex-shrink: 0;
+		border-radius: 999px;
+		background: #8a745f;
+	}
+
+	.recipes-cuisine__dot[data-cuisine-index="0"] {
+		background: #6f9259;
+	}
+
+	.recipes-cuisine__dot[data-cuisine-index="1"] {
+		background: #5b8ea8;
+	}
+
+	.recipes-cuisine__dot[data-cuisine-index="2"] {
+		background: #bc7657;
+	}
+
+	.recipes-cuisine__dot[data-cuisine-index="3"] {
+		background: #94709a;
+	}
+
+	.recipes-cuisine__dot[data-cuisine-index="4"] {
+		background: #c19142;
+	}
+
+	@media (max-width: 767px) {
+		.recipes-overview__metrics {
+			grid-template-columns: repeat(7, 8.25rem);
+		}
+
+		.recipes-cuisine {
+			align-items: flex-start;
+			flex-direction: column;
+			gap: 0.45rem;
+		}
+
+		.recipes-cuisine__items {
+			width: 100%;
+		}
+	}
+</style>

@@ -10,5 +10,5 @@ const props = Astro.props;
 ---
 
 <ExperienceView {...props} heroComponent={RecipesExperienceHero}>
-	<RecipesDashboard slot="dashboard" definition={props.definition} notes={props.notes} filterState={props.filterState} />
+	<RecipesDashboard slot="dashboard" notes={props.notes} filterState={props.filterState} />
 </ExperienceView>

@@ -25,6 +25,7 @@ const metadataSvgFallbacks: Record<string, string> = {
 	collection: "layers-3",
 	rating: "star",
 	ingredients: "shopping-basket",
+	recipe_status: "circle-check",
 	vehicle_status: "status",
 	body_style: "car-front",
 	drivetrain: "gauge",
@@ -44,6 +45,14 @@ export function getMetadataIcon(key: string, value?: string | null): ExperienceM
 			kind: "svg",
 			name: metadataSvgFallbacks.status,
 			color: getExperienceStatusColor(value),
+		};
+	}
+
+	if (key === "recipe_status") {
+		return {
+			kind: "svg",
+			name: value?.toLocaleLowerCase("en").includes("made") ? "circle-check" : "clock-3",
+			color: value?.toLocaleLowerCase("en").includes("made") ? "#3F7651" : "#8A6A32",
 		};
 	}
 

@@ -26,10 +26,10 @@ const { definition, statistics } = Astro.props;
 			</div>
 
 			<div class="min-w-0 space-y-2.5">
-				<h1 class="text-[2rem] font-semibold leading-none tracking-[-0.06em] text-white drop-shadow-sm md:text-[3.8rem] xl:text-[4.1rem] xl:leading-[0.92]">
+				<h1 class="experience-hero-title text-[2rem] font-semibold leading-none tracking-[-0.045em] text-white drop-shadow-sm md:text-[3.8rem] xl:text-[4.1rem] xl:leading-[0.92]">
 					{definition.title}
 				</h1>
-				<p class="line-clamp-2 max-w-2xl text-[0.95rem] leading-6 text-white/78 md:line-clamp-none md:text-[1rem] md:leading-7">
+				<p class="experience-hero-description line-clamp-2 max-w-2xl text-[0.95rem] leading-6 text-white/78 md:line-clamp-none md:text-[1rem] md:leading-7">
 					{definition.description}
 				</p>
 				<ExperienceStatistics items={statistics} tone="dark" />
