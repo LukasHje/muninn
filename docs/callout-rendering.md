@@ -25,6 +25,23 @@ It must not decide colors, icons or layout.
 
 `src/components/obsidian/calloutDefinitions.ts` owns the display-only mapping from Obsidian type identifiers to canonical types, icons and tone classes. `Callout.astro` owns callout markup, interaction and styling. These files are part of Markdown UI and must not affect the application shell.
 
+## Nested Content Contract
+
+A callout body is a nested Markdown document, not an opaque Markdown string. After one blockquote level is removed, the body re-enters the full Core → Obsidian → Plugin pipeline. Consequently, typed blocks such as `DataviewBlock`, `DataviewJSBlock`, maps, media sliders and nested callouts must remain typed children in the document tree.
+
+Muninn accepts both fully quoted fenced blocks and Obsidian's lazy fenced continuation form:
+
+````markdown
+> [!info]- Status
+>```dataviewjs
+dv.paragraph("Rendered inside the callout");
+>```
+````
+
+While such a quoted fence is open, unquoted code lines belong to the callout until its closing fence. The parser must not terminate the callout at the first lazy continuation line or flatten the fence into ordinary Markdown.
+
+Callout rendering traverses its typed children recursively. Fold state affects only visibility and interaction; it must never prevent nested blocks from being parsed or executed.
+
 ## Supported Types and Aliases
 
 Muninn follows Obsidian's built-in callout families:

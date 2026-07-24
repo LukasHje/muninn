@@ -37,8 +37,9 @@ Before making architectural or feature-level changes, always read the relevant i
 - docs/ui-boundaries.md
 - docs/attachment-rendering.md
 - docs/callout-rendering.md
+- docs/dataview-rendering.md
 
-Read these before changing Markdown parsing, rendered note content, attachments, embeds, or the boundary between Application UI and Markdown UI.
+Read these before changing Markdown parsing, rendered note content, attachments, embeds, Dataview execution, or the boundary between Application UI and Markdown UI.
 
 ---
 
