@@ -1,5 +1,11 @@
 # Muninn
 
+<p align="left">
+  <img src="https://img.shields.io/badge/status-development-red?style=for-the-badge" alt="Status: in development" />
+  <img src="https://img.shields.io/github/v/release/LukasHje/muninn?style=for-the-badge" alt="Latest release version" />
+  <img src="./docs/assets/codex-collaboration-badge.svg" alt="Crafted with Codex" />
+</p>
+
 Muninn is an Astro-based, read-only interface for an Obsidian vault. It combines a searchable Library with focused, data-rich Experiences that surface useful information from your notes. Outside Docker, Muninn reads the vault location from `VAULT_PATH`; inside Docker, the vault is always mounted at `/vault`.
 
 <p align="center">
