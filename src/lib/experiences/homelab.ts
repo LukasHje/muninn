@@ -606,6 +606,10 @@ export function getHomelabArtworkCategory(note: LibraryItem): string | null {
 			if (exact) return exact;
 			return formFactorArtworkRegistry.find((definition) => definition.id === formFactor)?.fallbackArtwork ?? null;
 		}
+		// Role/category inference exists to refine otherwise generic Server notes
+		// (for example a server documented as a NAS). Explicit device entities
+		// already describe their appearance and must retain their own artwork.
+		if (classification.entity !== "server") return entityArtworkRegistry[classification.entity] ?? null;
 		const roleOverride = getHomelabNodeCategory(note);
 		return nodeCategoryArtworkRegistry[roleOverride] ?? entityArtworkRegistry[classification.entity] ?? null;
 	}

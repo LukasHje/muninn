@@ -88,6 +88,7 @@ test("Homelab artwork resolves from both entity and form factor", () => {
 	assert.equal(getHomelabArtworkCategory(workstation("all-in-one")), "workstation-all-in-one");
 	assert.equal(getHomelabArtworkCategory(workstation("mini-pc")), "workstation-mini-pc");
 	assert.equal(getHomelabArtworkCategory(note("07 Mitt Homelab/07.05 Hardware_specs/07.05.01 Current/Phone.md", { type: "smartphone", form_factor: "handheld" })), "smartphone");
+	assert.equal(getHomelabArtworkCategory(note("07 Mitt Homelab/07.05 Hardware_specs/07.05.01 Current/Phone without form factor.md", { type: "smartphone" })), "smartphone");
 	assert.equal(getHomelabArtworkCategory(note("07 Mitt Homelab/07.05 Hardware_specs/07.05.01 Current/Tablet.md", { type: "tablet", form_factor: "tablet" })), "tablet");
 });
 
