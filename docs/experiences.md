@@ -389,6 +389,10 @@ Recipes behaves like a personal cookbook layered over normal Markdown notes:
 
 Recipe metadata is optional and additive. Notes are selected by their normalized `type`; missing cover art, timing, rating, ingredients, cuisine, lifecycle state, or collections must degrade gracefully. Common singular/plural metadata aliases are normalized centrally so filters, dashboard values, cards, and inspectors share the same values.
 
+A recipe is considered reviewed when it has either an explicit truthy `reviewed` value or a valid `rating`/`betyg`. The `Needs review` metric and its filter must use this same derived state.
+
+Markdown ingredient extraction starts at an `Ingredients` or `Ingredienser` heading and includes lists beneath deeper subsection headings, such as `Kakdeg` or `Pensling och garnering`. Extraction stops at the next heading at the same or a higher level, so the dashboard and Recipe inspector use the same complete ingredient set without consuming instruction lists.
+
 The Recipe inspector is not a separate recipe-detail route. Opening a card keeps the current browse state and uses the shared Experience inspector lifecycle; opening the complete note still uses the normal Note View.
 
 ---

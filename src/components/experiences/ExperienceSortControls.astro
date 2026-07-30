@@ -1,0 +1,161 @@
+---
+import Icon from "src/components/Icon.astro";
+import type { ExperienceSortField, ExperienceSortOrder } from "src/lib/experiences/sorting";
+
+interface Props {
+	sortBy: ExperienceSortField;
+	sortOrder: ExperienceSortOrder;
+	className?: string;
+}
+
+const { sortBy, sortOrder, className } = Astro.props;
+const path = Astro.url.pathname;
+const baseParams = Astro.url.searchParams;
+
+interface SortTarget {
+	field: ExperienceSortField;
+	order: ExperienceSortOrder;
+}
+
+const dateCycle: SortTarget[] = [
+	{ field: "updated", order: "desc" },
+	{ field: "updated", order: "asc" },
+	{ field: "created", order: "desc" },
+	{ field: "created", order: "asc" },
+];
+
+const currentDateIndex = dateCycle.findIndex(
+	(target) => target.field === sortBy && target.order === sortOrder
+);
+const nextDateTarget = dateCycle[(currentDateIndex + 1) % dateCycle.length];
+const nextTitleTarget: SortTarget = {
+	field: "title",
+	order: sortBy === "title" && sortOrder === "asc" ? "desc" : "asc",
+};
+
+function buildSortHref({ field, order }: SortTarget) {
+	const params = new URLSearchParams(baseParams);
+	params.set("sort", field);
+	params.set("order", order);
+	params.delete("selected");
+	params.delete("inspector");
+	params.delete("experienceScroll");
+	const query = params.toString();
+	return `${path}${query ? `?${query}` : ""}#experience-library`;
+}
+
+function getDateLabel() {
+	return sortBy === "created" ? "Created" : "Updated";
+}
+
+function describeTarget({ field, order }: SortTarget) {
+	if (field === "title") {
+		return `Sort by title, ${order === "asc" ? "A to Z" : "Z to A"}`;
+	}
+
+	return `Sort by ${field} date, ${order === "asc" ? "oldest first" : "newest first"}`;
+}
+---
+
+<nav
+	class:list={["experience-sort-controls", className]}
+	aria-label="Sort notes"
+>
+	<a
+		href={buildSortHref(nextDateTarget)}
+		class="experience-sort-button experience-sort-button--date"
+		aria-current={sortBy !== "title" ? "true" : undefined}
+		aria-label={describeTarget(nextDateTarget)}
+		title={describeTarget(nextDateTarget)}
+	>
+		<span>{getDateLabel()}</span>
+		{
+			sortBy !== "title" && (
+				<Icon
+					name={sortOrder === "asc" ? "arrow-up" : "arrow-down"}
+					class="experience-sort-button__icon"
+				/>
+			)
+		}
+	</a>
+	<a
+		href={buildSortHref(nextTitleTarget)}
+		class="experience-sort-button experience-sort-button--title"
+		aria-current={sortBy === "title" ? "true" : undefined}
+		aria-label={describeTarget(nextTitleTarget)}
+		title={describeTarget(nextTitleTarget)}
+	>
+		<span>{sortBy === "title" && sortOrder === "desc" ? "Z–A" : "A–Z"}</span>
+		{
+			sortBy === "title" && (
+				<Icon
+					name={sortOrder === "asc" ? "arrow-up" : "arrow-down"}
+					class="experience-sort-button__icon"
+				/>
+			)
+		}
+	</a>
+</nav>
+
+<style>
+	.experience-sort-controls {
+		display: inline-flex;
+		flex-shrink: 0;
+		align-items: center;
+		gap: var(--experience-sort-gap, 0.2rem);
+		border: 1px solid var(--experience-sort-border, rgba(215, 196, 168, 0.88));
+		border-radius: var(--experience-sort-radius, 8px);
+		background: var(--experience-sort-background, rgba(255, 253, 249, 0.72));
+		padding: var(--experience-sort-padding, 0.18rem);
+		box-shadow: var(--experience-sort-shadow, 0 5px 14px rgba(87, 55, 30, 0.04));
+	}
+
+	.experience-sort-button {
+		display: inline-flex;
+		height: var(--experience-sort-button-height, 2rem);
+		flex-shrink: 0;
+		align-items: center;
+		justify-content: center;
+		gap: var(--experience-sort-button-gap, 0.3rem);
+		border: 1px solid transparent;
+		border-radius: var(--experience-sort-button-radius, 6px);
+		padding: var(--experience-sort-button-padding, 0 0.58rem);
+		font-size: var(--experience-sort-font-size, 0.68rem);
+		font-weight: 680;
+		white-space: nowrap;
+		color: var(--experience-control-color, rgb(71 85 105));
+		transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+	}
+
+	.experience-sort-button:hover {
+		border-color: var(--experience-control-hover-border, rgba(182, 127, 55, 0.32));
+		background: var(--experience-control-hover-background, rgba(255, 246, 229, 0.8));
+		color: var(--experience-control-hover-color, rgb(30 41 59));
+	}
+
+	.experience-sort-button[aria-current="true"] {
+		border-color: var(--experience-control-active-border, rgba(182, 127, 55, 0.52));
+		background: var(--experience-control-active-background, rgba(237, 214, 174, 0.42));
+		color: var(--experience-control-active-color, rgb(92 65 34));
+	}
+
+	.experience-sort-button--date {
+		width: var(--experience-sort-date-width, 5.4rem);
+	}
+
+	.experience-sort-button--title {
+		width: var(--experience-sort-title-width, 3.8rem);
+	}
+
+	:global(.experience-sort-button__icon) {
+		height: var(--experience-sort-icon-size, 0.72rem);
+		width: var(--experience-sort-icon-size, 0.72rem);
+		stroke-width: 2.2;
+	}
+
+	@media (max-width: 639px) {
+		.experience-sort-button {
+			padding: var(--experience-sort-mobile-button-padding, 0 0.48rem);
+		}
+	}
+</style>

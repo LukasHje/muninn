@@ -1,0 +1,84 @@
+---
+import Icon from "src/components/Icon.astro";
+
+interface Props {
+	layout: "grid" | "list";
+}
+
+const { layout } = Astro.props;
+const path = Astro.url.pathname;
+const baseParams = Astro.url.searchParams;
+
+function buildLayoutHref(value: "grid" | "list") {
+	const params = new URLSearchParams(baseParams);
+	params.set("layout", value);
+	params.delete("selected");
+	params.delete("inspector");
+	params.delete("experienceScroll");
+	const query = params.toString();
+	return `${path}${query ? `?${query}` : ""}#experience-library`;
+}
+---
+
+<nav class="experience-layout-controls" aria-label="Note layout">
+	<a
+		href={buildLayoutHref("grid")}
+		class="experience-layout-button"
+		data-experience-layout-option="grid"
+		aria-current={layout === "grid" ? "true" : undefined}
+		aria-label="Grid view"
+		title="Grid view"
+	>
+		<Icon name="layout-grid" class="experience-layout-button__icon" />
+	</a>
+	<a
+		href={buildLayoutHref("list")}
+		class="experience-layout-button"
+		data-experience-layout-option="list"
+		aria-current={layout === "list" ? "true" : undefined}
+		aria-label="List view"
+		title="List view"
+	>
+		<Icon name="layout-list" class="experience-layout-button__icon" />
+	</a>
+</nav>
+
+<style>
+	.experience-layout-controls {
+		display: inline-flex;
+		flex-shrink: 0;
+		align-items: center;
+		gap: var(--experience-layout-gap, 0.35rem);
+	}
+
+	.experience-layout-button {
+		display: inline-flex;
+		height: var(--experience-layout-button-size, 2.38rem);
+		width: var(--experience-layout-button-size, 2.38rem);
+		flex-shrink: 0;
+		align-items: center;
+		justify-content: center;
+		border: 1px solid transparent;
+		border-radius: var(--experience-layout-button-radius, 8px);
+		background: var(--experience-layout-button-background, rgba(244, 239, 231, 0.78));
+		color: var(--experience-control-color, rgb(71 85 105));
+		transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+	}
+
+	.experience-layout-button:hover {
+		border-color: var(--experience-control-hover-border, rgba(182, 127, 55, 0.32));
+		background: var(--experience-control-hover-background, rgba(255, 246, 229, 0.8));
+		color: var(--experience-control-hover-color, rgb(30 41 59));
+	}
+
+	.experience-layout-button[aria-current="true"] {
+		border-color: var(--experience-control-active-border, rgba(182, 127, 55, 0.52));
+		background: var(--experience-control-active-background, rgba(237, 214, 174, 0.42));
+		color: var(--experience-control-active-color, rgb(92 65 34));
+	}
+
+	:global(.experience-layout-button__icon) {
+		height: var(--experience-layout-icon-size, 1rem);
+		width: var(--experience-layout-icon-size, 1rem);
+	}
+</style>

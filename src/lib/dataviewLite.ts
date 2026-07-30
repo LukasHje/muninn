@@ -79,6 +79,7 @@ function splitCommaSeparated(value: string) {
 	const parts: string[] = [];
 	let current = "";
 	let inQuotes = false;
+	let parenthesisDepth = 0;
 
 	for (const character of value) {
 		if (character === '"') {
@@ -87,7 +88,19 @@ function splitCommaSeparated(value: string) {
 			continue;
 		}
 
-		if (character === "," && !inQuotes) {
+		if (!inQuotes && character === "(") {
+			parenthesisDepth += 1;
+			current += character;
+			continue;
+		}
+
+		if (!inQuotes && character === ")") {
+			parenthesisDepth = Math.max(0, parenthesisDepth - 1);
+			current += character;
+			continue;
+		}
+
+		if (character === "," && !inQuotes && parenthesisDepth === 0) {
 			parts.push(current.trim());
 			current = "";
 			continue;
@@ -140,10 +153,23 @@ function normalizeComparisonValue(value: string | number | string[] | null) {
 	if (typeof value === "number") {
 		return value;
 	}
+	if (typeof value === "string" && /^-?\d+(?:\.\d+)?$/.test(value.trim())) {
+		return Number(value);
+	}
 	return value?.toLocaleLowerCase("sv-SE") ?? "";
 }
 
 function compareValues(left: string | number | string[] | null, right: string | number | string[] | null) {
+	if (left == null && right == null) {
+		return 0;
+	}
+	if (left == null) {
+		return -1;
+	}
+	if (right == null) {
+		return 1;
+	}
+
 	const normalizedLeft = normalizeComparisonValue(left);
 	const normalizedRight = normalizeComparisonValue(right);
 
@@ -183,6 +209,18 @@ function readMetadata(note: LibraryItem, key: string) {
 	}
 
 	return null;
+}
+
+function isDirectFieldExpression(field: string) {
+	const normalizedField = normalizeFieldName(field);
+	return (
+		supportedFieldSet.has(normalizedField) ||
+		/^[a-z_][a-z0-9_-]*$/i.test(field.trim())
+	);
+}
+
+function isIsoDateValue(value: string) {
+	return /^\d{4}-\d{2}-\d{2}(?:[T\s].*)?$/.test(value.trim());
 }
 
 function resolveField(note: LibraryItem, field: string): ResolvedField | null {
@@ -254,22 +292,100 @@ function resolveField(note: LibraryItem, field: string): ResolvedField | null {
 			return { raw: null, cell: { kind: "empty" } };
 		}
 		default:
-			return null;
+			if (!isDirectFieldExpression(field)) {
+				return null;
+			}
+
+			{
+				const value = readMetadata(note, field.trim());
+				if (Array.isArray(value)) {
+					return {
+						raw: value.length > 0 ? value : null,
+						cell: value.length > 0 ? { kind: "tags", values: value } : { kind: "empty" },
+					};
+				}
+				if (typeof value === "string" && value.trim()) {
+					if (isIsoDateValue(value)) {
+						return {
+							raw: new Date(value).getTime(),
+							cell: { kind: "date", timestamp: new Date(value).getTime() },
+						};
+					}
+					return { raw: value, cell: { kind: "text", value } };
+				}
+				return { raw: null, cell: { kind: "empty" } };
+			}
 	}
+}
+
+function resolveExpression(note: LibraryItem, expression: string): ResolvedField | null {
+	const trimmedExpression = expression.trim();
+	const roundDivisionMatch = trimmedExpression.match(
+		/^\(?\s*round\(\s*([a-z_][a-z0-9_-]*)\s*\/\s*([a-z_][a-z0-9_-]*)\s*\)\s*\)?$/i
+	);
+	if (roundDivisionMatch) {
+		const numeratorRaw = resolveField(note, roundDivisionMatch[1])?.raw;
+		const denominatorRaw = resolveField(note, roundDivisionMatch[2])?.raw;
+		if (numeratorRaw == null || denominatorRaw == null) {
+			return { raw: null, cell: { kind: "empty" } };
+		}
+		const numerator = Number(numeratorRaw);
+		const denominator = Number(denominatorRaw);
+		if (!Number.isFinite(numerator) || !Number.isFinite(denominator) || denominator === 0) {
+			return { raw: null, cell: { kind: "empty" } };
+		}
+		const value = Math.round(numerator / denominator);
+		return { raw: value, cell: { kind: "text", value: String(value) } };
+	}
+
+	const linkMatch = trimmedExpression.match(/^link\(\s*file\.link\s*,\s*([a-z_][a-z0-9_-]*)\s*\)$/i);
+	if (linkMatch) {
+		const label = resolveField(note, linkMatch[1])?.raw;
+		return {
+			raw: typeof label === "string" ? label : note.title,
+			cell: {
+				kind: "link",
+				href: note.href,
+				label: typeof label === "string" && label.trim() ? label : note.title,
+			},
+		};
+	}
+
+	const choiceMatch = trimmedExpression.match(
+		/^choice\(\s*([a-z_][a-z0-9_-]*)\s*=\s*"([^"]*)"\s*,\s*"([^"]*)"\s*,\s*"([^"]*)"\s*\)$/i
+	);
+	if (choiceMatch) {
+		const [, field, expected, whenTrue, whenFalse] = choiceMatch;
+		const raw = resolveField(note, field)?.raw;
+		const matches = String(normalizeComparisonValue(raw ?? "")) === expected.toLocaleLowerCase("sv-SE");
+		const value = matches ? whenTrue : whenFalse;
+		return { raw: value, cell: { kind: "text", value } };
+	}
+
+	return resolveField(note, trimmedExpression);
+}
+
+function isSupportedColumnExpression(expression: string) {
+	return (
+		isDirectFieldExpression(expression) ||
+		/^\(?\s*round\(\s*[a-z_][a-z0-9_-]*\s*\/\s*[a-z_][a-z0-9_-]*\s*\)\s*\)?$/i.test(expression.trim()) ||
+		/^link\(\s*file\.link\s*,\s*[a-z_][a-z0-9_-]*\s*\)$/i.test(expression.trim()) ||
+		/^choice\(\s*[a-z_][a-z0-9_-]*\s*=\s*"[^"]*"\s*,\s*"[^"]*"\s*,\s*"[^"]*"\s*\)$/i.test(expression.trim())
+	);
 }
 
 function parseColumn(expression: string): ParsedColumn | null {
 	const match = expression.match(/^(.*?)\s+as\s+"([^"]+)"$/i);
 	if (match) {
 		const field = match[1].trim();
-		if (!supportedFieldSet.has(normalizeFieldName(field))) {
+		if (!isSupportedColumnExpression(field)) {
 			return null;
 		}
 		return { field, label: match[2].trim() };
 	}
 
 	const field = expression.trim();
-	if (!supportedFieldSet.has(normalizeFieldName(field))) {
+	if (!isSupportedColumnExpression(field)) {
 		return null;
 	}
 	return { field, label: field };
@@ -284,7 +400,7 @@ function parseSortRules(input: string) {
 			}
 
 			const field = match[1].trim();
-			if (!supportedFieldSet.has(normalizeFieldName(field))) {
+			if (!isDirectFieldExpression(field)) {
 				return null;
 			}
 
@@ -299,13 +415,21 @@ function parseSortRules(input: string) {
 }
 
 function buildPredicate(condition: string) {
+	const existenceMatch = condition.match(/^([a-z_][a-z0-9_-]*)$/i);
+	if (existenceMatch && isDirectFieldExpression(existenceMatch[1])) {
+		return (note: LibraryItem) => {
+			const raw = resolveField(note, existenceMatch[1])?.raw;
+			return Array.isArray(raw) ? raw.length > 0 : raw != null && raw !== "";
+		};
+	}
+
 	const containsMatch = condition.match(/^(!)?contains\((.*?),(.*)\)$/i);
 	if (containsMatch) {
 		const negate = containsMatch[1] === "!";
 		const field = containsMatch[2].trim();
 		const queryValue = containsMatch[3].trim().replace(/^"|"$/g, "");
 
-		if (!supportedFieldSet.has(normalizeFieldName(field))) {
+		if (!isDirectFieldExpression(field)) {
 			return null;
 		}
 
@@ -323,7 +447,7 @@ function buildPredicate(condition: string) {
 		const field = equalityMatch[1].trim();
 		const expected = equalityMatch[2].trim().toLocaleLowerCase("sv-SE");
 
-		if (!supportedFieldSet.has(normalizeFieldName(field))) {
+		if (!isDirectFieldExpression(field)) {
 			return null;
 		}
 
@@ -340,14 +464,17 @@ function buildPredicate(condition: string) {
 	return null;
 }
 
-function filterByFrom(allNotes: LibraryItem[], fromPath?: string) {
-	if (!fromPath) {
+function filterByFrom(allNotes: LibraryItem[], fromPaths: string[]) {
+	if (fromPaths.length === 0) {
 		return allNotes;
 	}
 
-	const normalizedFrom = fromPath.replace(/^\/+|\/+$/g, "");
-	return allNotes.filter(
-		(note) => note.relativePath === normalizedFrom || note.relativePath.startsWith(`${normalizedFrom}/`)
+	const normalizedPaths = fromPaths.map((fromPath) => fromPath.replace(/^\/+|\/+$/g, ""));
+	return allNotes.filter((note) =>
+		normalizedPaths.some(
+			(normalizedFrom) =>
+				note.relativePath === normalizedFrom || note.relativePath.startsWith(`${normalizedFrom}/`)
+		)
 	);
 }
 
@@ -370,7 +497,7 @@ function toUnsupported(query: string, reason: string): DataviewLiteUnsupportedRe
 }
 
 function extractClauses(query: string) {
-	const fromMatch = query.match(/\bfrom\s+"([^"]+)"/i);
+	const fromMatch = query.match(/\bfrom\s+([\s\S]*?)(?=\bwhere\b|\bsort\b|$)/i);
 	const whereMatch = query.match(/\bwhere\s+([\s\S]*?)(?=\bsort\b|$)/i);
 	const sortMatch = query.match(/\bsort\s+([\s\S]*)$/i);
 	const clauseStarts = [fromMatch?.index, whereMatch?.index, sortMatch?.index].filter(
@@ -380,7 +507,7 @@ function extractClauses(query: string) {
 
 	return {
 		header: query.slice(0, headerEnd).trim(),
-		fromPath: fromMatch?.[1]?.trim(),
+		fromPaths: Array.from(fromMatch?.[1]?.matchAll(/"([^"]+)"/g) ?? []).map((match) => match[1].trim()),
 		whereClause: whereMatch?.[1]?.trim(),
 		sortClause: sortMatch?.[1]?.trim(),
 	};
@@ -416,7 +543,7 @@ export function executeDataviewLite(
 		return toUnsupported(query, ui.dataview.reasons.unsupportedSort);
 	}
 
-	let notes = filterByFrom(allNotes, clauses.fromPath);
+	let notes = filterByFrom(allNotes, clauses.fromPaths);
 	if (predicates.length > 0) {
 		notes = notes.filter((note) => predicates.every((predicate) => predicate(note)));
 	}
@@ -424,7 +551,7 @@ export function executeDataviewLite(
 		notes = sortNotes(notes, sortRules);
 	}
 
-	const tableMatch = clauses.header.match(/^table(?:\s+without\s+id)?\s+(.+)$/i);
+	const tableMatch = clauses.header.match(/^table(?:\s+without\s+id)?\s+([\s\S]+)$/i);
 	if (tableMatch) {
 		const columnExpressions = splitCommaSeparated(tableMatch[1]);
 		const columns = columnExpressions.map((expression) => parseColumn(expression));
@@ -436,7 +563,7 @@ export function executeDataviewLite(
 			type: "table",
 			columns: columns as ParsedColumn[],
 			rows: notes.map((note) =>
-				(columns as ParsedColumn[]).map((column) => resolveField(note, column.field)?.cell ?? { kind: "empty" })
+				(columns as ParsedColumn[]).map((column) => resolveExpression(note, column.field)?.cell ?? { kind: "empty" })
 			),
 		};
 	}
@@ -444,13 +571,13 @@ export function executeDataviewLite(
 	const listMatch = clauses.header.match(/^list(?:\s+(.*))?$/i);
 	if (listMatch) {
 		const expression = listMatch[1]?.trim() || "file.link";
-		if (!supportedFieldSet.has(normalizeFieldName(expression))) {
+		if (!isSupportedColumnExpression(expression)) {
 			return toUnsupported(query, ui.dataview.reasons.unsupportedListExpression);
 		}
 
 		return {
 			type: "list",
-			items: notes.map((note) => resolveField(note, expression)?.cell ?? { kind: "empty" }),
+			items: notes.map((note) => resolveExpression(note, expression)?.cell ?? { kind: "empty" }),
 		};
 	}
 

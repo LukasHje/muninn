@@ -3,16 +3,19 @@ import MetadataPill from "src/components/experiences/MetadataPill.astro";
 import DefaultExperienceHero from "src/components/experiences/DefaultExperienceHero.astro";
 import ExperienceCardRenderer from "src/components/experiences/ExperienceCardRenderer.astro";
 import ExperienceInspectorRenderer from "src/components/experiences/ExperienceInspectorRenderer.astro";
+import ExperienceBrowserControls from "src/components/experiences/ExperienceBrowserControls.astro";
 import Icon from "src/components/Icon.astro";
 import { ui } from "src/i18n";
 import type { ExperienceDefinition } from "src/lib/experiences/registry";
 import type { ExperienceFilterOption, ExperienceFilterState } from "src/lib/experiences/filters";
 import { buildExperienceInspectorModel } from "src/lib/experiences/inspector";
+import type { ExperienceSortField, ExperienceSortOrder } from "src/lib/experiences/sorting";
 import type { ExperienceStatistic } from "src/lib/experiences/statistics";
 import type { LibraryItem } from "src/lib/vault";
 
 interface Props {
 	definition: ExperienceDefinition;
+	notes?: LibraryItem[];
 	filteredNotes: LibraryItem[];
 	selectedNote: LibraryItem | null;
 	filterState: ExperienceFilterState;
@@ -20,20 +23,26 @@ interface Props {
 	metadataOptions: Record<string, ExperienceFilterOption[]>;
 	statistics: ExperienceStatistic[];
 	heroComponent?: typeof DefaultExperienceHero;
-	sortBy?: "updated" | "title";
+	sortBy?: ExperienceSortField;
+	sortOrder?: ExperienceSortOrder;
 	layout?: "grid" | "list";
+	showHeroBrowserControls?: boolean;
 }
 
+const { filteredNotes } = Astro.props;
 const {
 	definition,
-	filteredNotes,
+	notes = filteredNotes,
 	selectedNote,
 	filterState,
 	totalFilteredNotes,
 	metadataOptions,
 	statistics,
 	heroComponent: HeroComponent = DefaultExperienceHero,
+	sortBy = "updated",
+	sortOrder = "desc",
 	layout = "grid",
+	showHeroBrowserControls = true,
 } = Astro.props;
 
 const currentPath = Astro.url.pathname;
@@ -82,6 +91,7 @@ const initialInspector = initialInspectorNote
 		)
 	: null;
 const [primaryFilterKey, secondaryFilterKey] = definition.showMetadataFilters === false ? [] : definition.metadataFilters;
+const discoveryContentId = `experience-discovery-${definition.id}`;
 ---
 
 <div
@@ -91,32 +101,81 @@ const [primaryFilterKey, secondaryFilterKey] = definition.showMetadataFilters ==
 	data-initial-selected={initialInspectorNote?.id ?? ""}
 	data-inspector-endpoint={inspectorEndpoint}
 	data-experience-total-count={totalFilteredNotes}
+	data-experience-id={definition.id}
+	data-experience-card-family={definition.cardFamily}
 >
 	<div class="experience-canvas" data-experience-workspace>
-		<section class="experience-hero-shell">
-			<HeroComponent definition={definition} statistics={statistics}>
-				<div class="experience-filter-row">
+		<div class="experience-discovery" data-experience-discovery data-collapsed="false">
+			<button
+				type="button"
+				class="experience-discovery-collapse"
+				data-experience-discovery-collapse
+				aria-controls={discoveryContentId}
+				aria-expanded="true"
+				aria-label={`Collapse ${definition.title} overview and filters`}
+				hidden
+			>
+				<Icon name="chevron-down" class="h-4 w-4 rotate-180" />
+			</button>
+
+			<button
+				type="button"
+				class="experience-discovery-compact"
+				data-experience-discovery-expand
+				aria-controls={discoveryContentId}
+				aria-expanded="false"
+				aria-label={`Expand ${definition.title} overview and filters`}
+			>
+				<span class="experience-discovery-compact-main">
+					<span class="experience-discovery-compact-title">{definition.title}</span>
+					<span class="experience-discovery-compact-statistics">
+						{
+							statistics.slice(0, 3).map((statistic) => (
+								<span>
+									<strong>{statistic.value}</strong>
+									{statistic.label}
+								</span>
+							))
+						}
+					</span>
+				</span>
+				<span class="experience-discovery-compact-action">
+					<span>Overview &amp; Filters</span>
+					<Icon name="chevron-down" class="h-4 w-4" />
+				</span>
+			</button>
+
+			<div
+				id={discoveryContentId}
+				class="experience-discovery-content"
+				data-experience-discovery-content
+			>
+				<section class="experience-hero-shell">
+					<HeroComponent definition={definition} statistics={statistics} notes={notes}>
+						<div class="experience-filter-row">
 					{
 						primaryFilterKey && (
-							<div class="flex shrink-0 items-center gap-2.5 whitespace-nowrap">
-								<MetadataPill
-									label="All"
-									href={buildFilterHref(primaryFilterKey, null)}
-									active={!filterState.metadata[primaryFilterKey]}
-									tone={definition.theme}
-									shape="squircle"
-									className="min-w-[4.1rem] justify-center whitespace-nowrap"
-								/>
-								{(metadataOptions[primaryFilterKey] ?? []).map((option) => (
+							<div class="experience-primary-filter-viewport">
+								<div class="experience-primary-filter-track">
 									<MetadataPill
-										label={option.label}
-										href={buildFilterHref(primaryFilterKey, option.value)}
-										active={filterState.metadata[primaryFilterKey] === option.value}
+										label="All"
+										href={buildFilterHref(primaryFilterKey, null)}
+										active={!filterState.metadata[primaryFilterKey]}
 										tone={definition.theme}
 										shape="squircle"
 										className="min-w-[4.1rem] justify-center whitespace-nowrap"
 									/>
-								))}
+									{(metadataOptions[primaryFilterKey] ?? []).map((option) => (
+										<MetadataPill
+											label={option.label}
+											href={buildFilterHref(primaryFilterKey, option.value)}
+											active={filterState.metadata[primaryFilterKey] === option.value}
+											tone={definition.theme}
+											shape="squircle"
+											className="min-w-[4.1rem] justify-center whitespace-nowrap"
+										/>
+									))}
+								</div>
 							</div>
 						)
 					}
@@ -125,21 +184,7 @@ const [primaryFilterKey, secondaryFilterKey] = definition.showMetadataFilters ==
 
 					{
 						secondaryFilterKey && (
-							<div
-								class="experience-filter-scroller"
-								data-experience-filter-shell
-								data-scrollable="false"
-								data-can-scroll-prev="false"
-								data-can-scroll-next="false"
-							>
-								<button
-									type="button"
-									class="experience-filter-arrow experience-filter-arrow--prev"
-									data-experience-filter-prev
-									aria-label={`Scroll ${secondaryFilterKey} left`}
-								>
-									<Icon name="chevron-left" class="h-4 w-4" />
-								</button>
+							<div class="experience-filter-scroller">
 								<div class="experience-filter-viewport" data-experience-filter-viewport>
 									<div class="experience-filter-track">
 										<MetadataPill
@@ -162,28 +207,39 @@ const [primaryFilterKey, secondaryFilterKey] = definition.showMetadataFilters ==
 										))}
 									</div>
 								</div>
-								<button
-									type="button"
-									class="experience-filter-arrow experience-filter-arrow--next"
-									data-experience-filter-next
-									aria-label={`Scroll ${secondaryFilterKey} right`}
-								>
-									<Icon name="chevron-left" class="h-4 w-4 rotate-180" />
-								</button>
 							</div>
 						)
 					}
-				</div>
-			</HeroComponent>
-		</section>
 
-		{
-			Astro.slots.has("dashboard") && (
-				<section class="experience-dashboard-shell shrink-0">
-					<slot name="dashboard" />
+					{
+						showHeroBrowserControls && (
+							<div class="experience-sort-group">
+								{(primaryFilterKey || secondaryFilterKey) && (
+									<div class="experience-filter-divider" aria-hidden="true"></div>
+								)}
+								<div class="experience-filter-sort">
+									<ExperienceBrowserControls
+										sortBy={sortBy}
+										sortOrder={sortOrder}
+										layout={layout}
+									/>
+								</div>
+							</div>
+						)
+					}
+						</div>
+					</HeroComponent>
 				</section>
-			)
-		}
+
+				{
+					Astro.slots.has("dashboard") && (
+						<section class="experience-dashboard-shell shrink-0">
+							<slot name="dashboard" />
+						</section>
+					)
+				}
+			</div>
+		</div>
 
 		<div id="experience-library" class="experience-workspace">
 			<section class="experience-notes-scroll min-w-0">
@@ -252,6 +308,7 @@ const [primaryFilterKey, secondaryFilterKey] = definition.showMetadataFilters ==
 								sections={initialInspector.sections}
 								noteHref={initialInspector.noteHref}
 								redirectTo={initialInspector.redirectTo}
+								experienceNotes={notes}
 							/>
 						</div>
 					)
@@ -274,10 +331,14 @@ const [primaryFilterKey, secondaryFilterKey] = definition.showMetadataFilters ==
 
 			const workspace = root.querySelector("[data-experience-workspace]");
 			const notesScroll = root.querySelector(".experience-notes-scroll");
-			const inspector = root.querySelector("[data-experience-inspector-root]");
-			const backdrop = root.querySelector("[data-experience-inspector-backdrop]");
-			const inspectorPanelsRoot = root.querySelector("[data-experience-inspector-panels]");
-			const filterShells = Array.from(root.querySelectorAll("[data-experience-filter-shell]"));
+				const cardList = root.querySelector("[data-experience-card-list]");
+				const inspector = root.querySelector("[data-experience-inspector-root]");
+				const backdrop = root.querySelector("[data-experience-inspector-backdrop]");
+				const inspectorPanelsRoot = root.querySelector("[data-experience-inspector-panels]");
+				const discovery = root.querySelector("[data-experience-discovery]");
+				const discoveryContent = root.querySelector("[data-experience-discovery-content]");
+				const discoveryCollapse = root.querySelector("[data-experience-discovery-collapse]");
+				const discoveryExpand = root.querySelector("[data-experience-discovery-expand]");
 
 		if (
 			!(workspace instanceof HTMLElement) ||
@@ -293,8 +354,85 @@ const [primaryFilterKey, secondaryFilterKey] = definition.showMetadataFilters ==
 			? root.querySelector(`[data-experience-card="${CSS.escape(selectedId)}"]`)
 			: null;
 		let preservedNotesScrollTop = notesScroll instanceof HTMLElement ? notesScroll.scrollTop : 0;
-		const inspectorEndpoint = root.dataset.inspectorEndpoint ?? "";
-		const inspectorPanelRequests = new Map();
+			const inspectorEndpoint = root.dataset.inspectorEndpoint ?? "";
+			const inspectorPanelRequests = new Map();
+			const mobileDiscoveryQuery = window.matchMedia("(max-width: 767px)");
+			let removeDiscoveryListeners = () => {};
+
+			if (
+				discovery instanceof HTMLElement &&
+				discoveryContent instanceof HTMLElement &&
+				discoveryCollapse instanceof HTMLButtonElement &&
+				discoveryExpand instanceof HTMLButtonElement
+			) {
+				const experienceId = root.dataset.experienceId ?? "";
+				const discoveryStorageKey = `muninn:experience-discovery:${experienceId}`;
+				let isDiscoveryCollapsed = sessionStorage.getItem(discoveryStorageKey) === "collapsed";
+
+				const syncDiscoveryPresentation = () => {
+					const isMobile = mobileDiscoveryQuery.matches;
+					const compact = isMobile && isDiscoveryCollapsed;
+
+					discovery.dataset.collapsed = compact ? "true" : "false";
+					discoveryContent.setAttribute("aria-hidden", compact ? "true" : "false");
+					discoveryContent.inert = compact;
+					discoveryCollapse.hidden = !isMobile || compact;
+					discoveryCollapse.setAttribute("aria-expanded", compact ? "false" : "true");
+					discoveryExpand.setAttribute("aria-expanded", compact ? "false" : "true");
+					discoveryExpand.setAttribute("aria-hidden", compact ? "false" : "true");
+				};
+
+				const collapseDiscovery = () => {
+					isDiscoveryCollapsed = true;
+					sessionStorage.setItem(discoveryStorageKey, "collapsed");
+					syncDiscoveryPresentation();
+					requestAnimationFrame(() => discoveryExpand.focus());
+				};
+
+				const expandDiscovery = () => {
+					isDiscoveryCollapsed = false;
+					sessionStorage.setItem(discoveryStorageKey, "expanded");
+					syncDiscoveryPresentation();
+					requestAnimationFrame(() => discoveryCollapse.focus());
+				};
+
+				const clearDiscoveryStateWhenLeaving = (event: Event) => {
+					const target = event.target;
+					if (!(target instanceof Element)) {
+						return;
+					}
+					const link = target.closest("a[href]");
+					if (!(link instanceof HTMLAnchorElement)) {
+						return;
+					}
+					const destination = new URL(link.href, window.location.origin);
+					if (
+						destination.origin === window.location.origin &&
+						destination.pathname !== window.location.pathname
+					) {
+						const experienceRootPath = `/${experienceId}`;
+						if (
+							destination.pathname !== experienceRootPath &&
+							!destination.pathname.startsWith(`${experienceRootPath}/`)
+						) {
+							sessionStorage.removeItem(discoveryStorageKey);
+						}
+					}
+				};
+
+				discoveryCollapse.addEventListener("click", collapseDiscovery);
+				discoveryExpand.addEventListener("click", expandDiscovery);
+				document.addEventListener("click", clearDiscoveryStateWhenLeaving);
+				mobileDiscoveryQuery.addEventListener("change", syncDiscoveryPresentation);
+				syncDiscoveryPresentation();
+
+				removeDiscoveryListeners = () => {
+					discoveryCollapse.removeEventListener("click", collapseDiscovery);
+					discoveryExpand.removeEventListener("click", expandDiscovery);
+					document.removeEventListener("click", clearDiscoveryStateWhenLeaving);
+					mobileDiscoveryQuery.removeEventListener("change", syncDiscoveryPresentation);
+				};
+			}
 
 		const getCards = () => Array.from(root.querySelectorAll("[data-experience-card]"));
 		const getInspectorPanels = () =>
@@ -307,6 +445,42 @@ const [primaryFilterKey, secondaryFilterKey] = definition.showMetadataFilters ==
 			Array.from(root.querySelectorAll("[data-favorite-toggle]")).filter(
 				(form) => form instanceof HTMLFormElement && form.dataset.favoriteNoteId === noteId
 			);
+
+		const setExperienceLayout = (layout: "grid" | "list") => {
+			if (!(cardList instanceof HTMLElement)) {
+				return;
+			}
+
+			const isRecipe = root.dataset.experienceCardFamily === "recipe";
+			cardList.dataset.experienceLayout = layout;
+			cardList.classList.toggle("grid-cols-1", layout === "list");
+			cardList.classList.toggle("gap-2.5", layout === "list");
+			cardList.classList.toggle("gap-4", layout === "grid" && isRecipe);
+			cardList.classList.toggle("gap-5", layout === "grid" && !isRecipe);
+			cardList.classList.toggle("md:grid-cols-2", layout === "grid");
+			cardList.classList.toggle("xl:grid-cols-4", layout === "grid" && isRecipe);
+			cardList.classList.toggle("xl:grid-cols-3", layout === "grid" && !isRecipe);
+
+			for (const option of root.querySelectorAll("[data-experience-layout-option]")) {
+				if (!(option instanceof HTMLAnchorElement)) {
+					continue;
+				}
+
+				const active = option.dataset.experienceLayoutOption === layout;
+				if (active) {
+					option.setAttribute("aria-current", "true");
+				} else {
+					option.removeAttribute("aria-current");
+				}
+			}
+
+			const url = new URL(window.location.href);
+			url.searchParams.set("layout", layout);
+			url.searchParams.delete("selected");
+			url.searchParams.delete("inspector");
+			url.searchParams.delete("experienceScroll");
+			window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+		};
 
 		const buildReturnTo = () => {
 			const url = new URL(window.location.pathname + window.location.search, window.location.origin);
@@ -544,6 +718,17 @@ const [primaryFilterKey, secondaryFilterKey] = definition.showMetadataFilters ==
 				return;
 			}
 
+			const layoutOption = target.closest("[data-experience-layout-option]");
+			if (layoutOption instanceof HTMLAnchorElement) {
+				const nextLayout = layoutOption.dataset.experienceLayoutOption;
+				if (nextLayout === "grid" || nextLayout === "list") {
+					event.preventDefault();
+					closeInspector();
+					setExperienceLayout(nextLayout);
+				}
+				return;
+			}
+
 			const card = target.closest("[data-experience-card]");
 			if (!(card instanceof HTMLButtonElement)) {
 				return;
@@ -570,6 +755,7 @@ const [primaryFilterKey, secondaryFilterKey] = definition.showMetadataFilters ==
 		window.addEventListener("muninn:request-inspector-close", handleInspectorCloseRequest);
 		document.addEventListener("astro:before-swap", () => {
 			window.removeEventListener("muninn:request-inspector-close", handleInspectorCloseRequest);
+			removeDiscoveryListeners();
 		}, { once: true });
 
 		root.addEventListener("keydown", (event) => {
@@ -593,49 +779,6 @@ const [primaryFilterKey, secondaryFilterKey] = definition.showMetadataFilters ==
 				notesScroll.addEventListener("scroll", () => {
 					syncOpenNoteLinks();
 				}, { passive: true });
-			}
-
-			for (const shell of filterShells) {
-				if (!(shell instanceof HTMLElement)) {
-					continue;
-				}
-
-				const viewport = shell.querySelector("[data-experience-filter-viewport]");
-				const prevButton = shell.querySelector("[data-experience-filter-prev]");
-				const nextButton = shell.querySelector("[data-experience-filter-next]");
-
-				if (!(viewport instanceof HTMLElement)) {
-					continue;
-				}
-
-				const updateFilterControls = () => {
-					const maxScrollLeft = Math.max(viewport.scrollWidth - viewport.clientWidth, 0);
-					const hasOverflow = maxScrollLeft > 4;
-					const canScrollPrev = viewport.scrollLeft > 4;
-					const canScrollNext = viewport.scrollLeft < maxScrollLeft - 4;
-
-					shell.dataset.scrollable = hasOverflow ? "true" : "false";
-					shell.dataset.canScrollPrev = canScrollPrev ? "true" : "false";
-					shell.dataset.canScrollNext = canScrollNext ? "true" : "false";
-				};
-
-				prevButton?.addEventListener("click", () => {
-					viewport.scrollBy({
-						left: -Math.max(viewport.clientWidth * 0.7, 220),
-						behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-					});
-				});
-
-				nextButton?.addEventListener("click", () => {
-					viewport.scrollBy({
-						left: Math.max(viewport.clientWidth * 0.7, 220),
-						behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-					});
-				});
-
-				viewport.addEventListener("scroll", updateFilterControls, { passive: true });
-				window.addEventListener("resize", updateFilterControls);
-				requestAnimationFrame(updateFilterControls);
 			}
 
 			syncSelectionState();
@@ -666,24 +809,62 @@ const [primaryFilterKey, secondaryFilterKey] = definition.showMetadataFilters ==
 		transition: padding-right 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
 	}
 
-		.experience-filter-row {
-			display: flex;
-			align-items: center;
+	.experience-discovery,
+	.experience-discovery-content {
+		position: relative;
+		display: flex;
+		min-width: 0;
+		flex-shrink: 0;
+		flex-direction: column;
+		gap: 0.85rem;
+	}
+
+	.experience-discovery-collapse,
+	.experience-discovery-compact {
+		display: none;
+	}
+
+	.experience-filter-row {
+		display: flex;
+		align-items: center;
 		gap: 0.85rem;
 		min-width: 0;
 	}
 
-		.experience-filter-divider {
-			height: 1.9rem;
-			width: 1px;
-			flex-shrink: 0;
-			background: rgba(148, 163, 184, 0.2);
-		}
+	.experience-filter-divider {
+		height: 1.9rem;
+		width: 1px;
+		flex-shrink: 0;
+		background: rgba(148, 163, 184, 0.2);
+	}
+
+	.experience-primary-filter-viewport {
+		min-width: 0;
+		max-width: min(34rem, 40vw);
+		flex: 0 1 auto;
+		overflow-x: auto;
+		overscroll-behavior-x: contain;
+		scrollbar-width: none;
+		-ms-overflow-style: none;
+	}
+
+	.experience-primary-filter-viewport::-webkit-scrollbar {
+		display: none;
+	}
+
+	.experience-primary-filter-track {
+		display: flex;
+		width: max-content;
+		align-items: center;
+		gap: 0.625rem;
+		white-space: nowrap;
+	}
 
 	.experience-filter-scroller {
 		position: relative;
 		display: flex;
 		min-width: 0;
+		max-width: min(44rem, 52vw);
 		flex: 1;
 		align-items: center;
 	}
@@ -705,91 +886,16 @@ const [primaryFilterKey, secondaryFilterKey] = definition.showMetadataFilters ==
 		width: max-content;
 		align-items: center;
 		gap: 0.65rem;
-		padding-left: 2.85rem;
-		padding-right: 2.85rem;
+		padding-right: 0.5rem;
 		white-space: nowrap;
 	}
 
-	.experience-filter-scroller::before,
-	.experience-filter-scroller::after {
-		content: "";
-		position: absolute;
-		top: 0;
-		bottom: 0;
-		z-index: 1;
-		width: 3.5rem;
-		pointer-events: none;
-		opacity: 0;
-		transition: opacity 180ms ease;
-	}
-
-	.experience-filter-scroller::before {
-		left: 0;
-		background: linear-gradient(
-			90deg,
-			rgba(247, 242, 235, 1) 0%,
-			rgba(247, 242, 235, 0.98) 42%,
-			rgba(247, 242, 235, 0.72) 70%,
-			rgba(247, 242, 235, 0) 100%
-		);
-	}
-
-	.experience-filter-scroller::after {
-		right: 0;
-		background: linear-gradient(
-			270deg,
-			rgba(247, 242, 235, 1) 0%,
-			rgba(247, 242, 235, 0.98) 42%,
-			rgba(247, 242, 235, 0.72) 70%,
-			rgba(247, 242, 235, 0) 100%
-		);
-	}
-
-	.experience-filter-scroller[data-can-scroll-prev="true"]::before,
-	.experience-filter-scroller[data-can-scroll-next="true"]::after {
-		opacity: 1;
-	}
-
-	.experience-filter-arrow {
-		position: absolute;
-		top: 50%;
-		z-index: 2;
-		display: inline-flex;
-		height: 2rem;
-		width: 2rem;
+	.experience-sort-group {
+		margin-left: auto;
+		display: flex;
+		flex-shrink: 0;
 		align-items: center;
-		justify-content: center;
-		border: 1px solid #ddd4c8;
-		border-radius: 9999px;
-		background: rgba(255, 255, 255, 0.85);
-		color: rgb(71 85 105);
-		transform: translateY(-50%);
-		transition:
-			opacity 180ms ease,
-			border-color 180ms ease,
-			color 180ms ease,
-			background-color 180ms ease;
-	}
-
-	.experience-filter-arrow:hover {
-		border-color: #cfc4b5;
-		background: rgba(255, 255, 255, 0.98);
-		color: rgb(15 23 42);
-	}
-
-	.experience-filter-arrow--prev {
-		left: -0.15rem;
-	}
-
-	.experience-filter-arrow--next {
-		right: -0.15rem;
-	}
-
-	.experience-filter-scroller[data-scrollable="false"] .experience-filter-arrow,
-	.experience-filter-scroller[data-can-scroll-prev="false"] .experience-filter-arrow--prev,
-	.experience-filter-scroller[data-can-scroll-next="false"] .experience-filter-arrow--next {
-		opacity: 0;
-		pointer-events: none;
+		gap: 0.85rem;
 	}
 
 	.experience-workspace {
@@ -869,26 +975,163 @@ const [primaryFilterKey, secondaryFilterKey] = definition.showMetadataFilters ==
 	}
 
 	@media (max-width: 767px) {
+		.experience-discovery {
+			overflow: hidden;
+			border-radius: 1rem;
+			transition:
+				min-height 360ms cubic-bezier(0.2, 0.8, 0.2, 1),
+				box-shadow 280ms ease;
+		}
+
+		.experience-discovery-collapse {
+			position: absolute;
+			top: 0.65rem;
+			right: 0.65rem;
+			z-index: 30;
+			height: 2.75rem;
+			width: 2.75rem;
+			align-items: center;
+			justify-content: center;
+			border: 1px solid rgba(255, 255, 255, 0.42);
+			border-radius: 0.85rem;
+			background: rgba(15, 23, 42, 0.58);
+			color: white;
+			box-shadow: 0 5px 16px rgba(15, 23, 42, 0.14);
+		}
+
+		.experience-discovery-collapse:not([hidden]) {
+			display: inline-flex;
+		}
+
+		.experience-discovery-compact {
+			position: absolute;
+			inset: 0;
+			z-index: 25;
+			min-height: 5.75rem;
+			width: 100%;
+			align-items: center;
+			justify-content: space-between;
+			gap: 0.9rem;
+			border: 1px solid rgba(255, 255, 255, 0.22);
+			border-radius: 1rem;
+			background:
+				linear-gradient(90deg, rgba(10, 17, 17, 0.82), rgba(20, 29, 27, 0.48)),
+				rgba(23, 31, 29, 0.28);
+			padding: 0.8rem 0.85rem 0.75rem;
+			color: white;
+			box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
+			text-align: left;
+			backdrop-filter: blur(3px);
+			opacity: 0;
+			pointer-events: none;
+			transform: translateY(0.5rem);
+			transition:
+				opacity 220ms ease,
+				transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+		}
+
+		.experience-discovery[data-collapsed="true"] {
+			min-height: 5.75rem;
+		}
+
+		.experience-discovery[data-collapsed="true"] .experience-discovery-compact {
+			display: flex;
+			opacity: 1;
+			pointer-events: auto;
+			transform: translateY(0);
+		}
+
+		.experience-discovery-compact-main {
+			display: flex;
+			min-width: 0;
+			flex: 1;
+			flex-direction: column;
+			gap: 0.45rem;
+		}
+
+		.experience-discovery-compact-title {
+			overflow: hidden;
+			font-family: Georgia, "Times New Roman", serif;
+			font-size: 1.2rem;
+			font-weight: 600;
+			letter-spacing: -0.025em;
+			line-height: 1;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		.experience-discovery-compact-statistics {
+			display: flex;
+			min-width: 0;
+			gap: 0.75rem;
+			overflow: hidden;
+			color: rgba(255, 255, 255, 0.68);
+			font-size: 0.68rem;
+			line-height: 1;
+			text-transform: uppercase;
+			white-space: nowrap;
+		}
+
+		.experience-discovery-compact-statistics span {
+			display: inline-flex;
+			align-items: baseline;
+			gap: 0.25rem;
+		}
+
+		.experience-discovery-compact-statistics strong {
+			color: white;
+			font-size: 0.82rem;
+		}
+
+		.experience-discovery-compact-action {
+			display: inline-flex;
+			flex-shrink: 0;
+			align-items: center;
+			gap: 0.35rem;
+			color: rgba(255, 255, 255, 0.82);
+			font-size: 0.7rem;
+			font-weight: 650;
+			white-space: nowrap;
+		}
+
+		.experience-discovery-content {
+			max-height: 70rem;
+			opacity: 1;
+			transform: translateY(0);
+			transition:
+				max-height 420ms cubic-bezier(0.2, 0.8, 0.2, 1),
+				opacity 180ms ease,
+				transform 360ms cubic-bezier(0.2, 0.8, 0.2, 1);
+		}
+
+		.experience-discovery[data-collapsed="true"] .experience-discovery-content {
+			max-height: 0;
+			overflow: hidden;
+			opacity: 0;
+			transform: translateY(-1rem);
+		}
+
 		.experience-filter-row {
 			gap: 0.7rem;
 			overflow-x: auto;
 			overscroll-behavior-x: contain;
 			padding-bottom: 0.3rem;
-			scrollbar-width: thin;
-			scrollbar-color: rgba(100, 116, 139, 0.42) transparent;
+			scrollbar-width: none;
+			-ms-overflow-style: none;
 		}
 
 		.experience-filter-row::-webkit-scrollbar {
-			height: 3px;
-		}
-
-		.experience-filter-row::-webkit-scrollbar-thumb {
-			border-radius: 999px;
-			background: rgba(100, 116, 139, 0.42);
+			display: none;
 		}
 
 		.experience-filter-divider {
 			display: none;
+		}
+
+		.experience-primary-filter-viewport {
+			max-width: none;
+			flex: none;
+			overflow: visible;
 		}
 
 		.experience-filter-viewport {
@@ -902,6 +1145,7 @@ const [primaryFilterKey, secondaryFilterKey] = definition.showMetadataFilters ==
 
 		.experience-filter-scroller {
 			flex: none;
+			max-width: none;
 		}
 
 		.experience-filter-track {
@@ -909,17 +1153,6 @@ const [primaryFilterKey, secondaryFilterKey] = definition.showMetadataFilters ==
 			padding-right: 1rem;
 		}
 
-		.experience-filter-arrow {
-			display: none;
-		}
-
-		.experience-filter-scroller::before {
-			display: none;
-		}
-
-		.experience-filter-scroller::after {
-			width: 2rem;
-		}
 	}
 
 	@media (min-width: 640px) and (max-width: 1279px) and (max-height: 500px) {
@@ -962,11 +1195,11 @@ const [primaryFilterKey, secondaryFilterKey] = definition.showMetadataFilters ==
 
 	@media (prefers-reduced-motion: reduce) {
 		.experience-canvas,
+		.experience-discovery,
+		.experience-discovery-content,
+		.experience-discovery-compact,
 		.experience-inspector-backdrop,
-		.experience-inspector-panel,
-		.experience-filter-scroller::before,
-		.experience-filter-scroller::after,
-		.experience-filter-arrow {
+		.experience-inspector-panel {
 			transition-duration: 0.01ms;
 			scroll-behavior: auto;
 		}

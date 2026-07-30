@@ -12,6 +12,7 @@
     "build": "astro build",
     "start": "node ./dist/server/entry.mjs",
     "typecheck": "astro check",
+    "update-os-icons": "node --import tsx scripts/update-os-icons.ts",
     "test": "node --import tsx --test src/**/*.test.ts",
     "preview": "astro preview",
     "astro": "astro"
@@ -26,6 +27,7 @@
     "pdfjs-dist": "^6.1.200",
     "tailwindcss": "^4.3.2",
     "tsx": "^4.22.4",
+    "svgo": "^4.0.1",
     "typescript": "^6.0.3"
   },
   "dependencies": {

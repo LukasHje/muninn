@@ -1,0 +1,25 @@
+---
+import Icon from "src/components/Icon.astro";
+import type { ExperienceDefinition } from "src/lib/experiences/registry";
+import { buildHomelabDashboardModel } from "src/lib/experiences/homelab";
+import type { LibraryItem } from "src/lib/vault";
+interface Props { definition: ExperienceDefinition; notes?: LibraryItem[] }
+const { definition, notes = [] } = Astro.props;
+const model = buildHomelabDashboardModel(notes);
+---
+<div class="relative flex min-h-[clamp(15rem,28dvh,20rem)] items-center">
+	<div class="relative z-10 max-w-2xl px-1 py-8 md:px-2">
+		<div class="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-sky-200/75"><Icon name="server" class="h-4 w-4" /><span>Infrastructure archive</span></div>
+		<h1 class="experience-hero-title text-[3.35rem] font-semibold leading-[.88] tracking-[-.045em] text-white drop-shadow-sm md:text-[5rem]">{definition.title}</h1>
+		<p class="experience-hero-description mt-4 max-w-[34rem] text-sm leading-7 text-white/80 md:text-base">{definition.description}</p>
+		<div class="homelab-hero-metrics mt-4" aria-label="Homelab summary">
+			<span><strong>{model.totalNodes}</strong> Nodes</span>
+			<span><strong>{model.totalServices}</strong> Services</span>
+			<span><strong>{model.totalSpecifications}</strong> Specifications</span>
+			<span><strong>{model.totalDocumentation}</strong> Documentation</span>
+		</div>
+	</div>
+</div>
+<style>
+	.homelab-hero-metrics{display:flex;max-width:100%;align-items:center;gap:.45rem;overflow-x:auto;scrollbar-width:none}.homelab-hero-metrics::-webkit-scrollbar{display:none}.homelab-hero-metrics span{display:inline-flex;flex:none;align-items:baseline;gap:.3rem;border-left:1px solid rgba(186,230,253,.24);padding:0 .65rem;font-size:10px;font-weight:600;letter-spacing:.04em;color:rgba(224,242,254,.68)}.homelab-hero-metrics span:first-child{border-left:0;padding-left:0}.homelab-hero-metrics strong{font-size:13px;color:#e0f2fe}
+</style>

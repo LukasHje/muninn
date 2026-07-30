@@ -46,6 +46,13 @@ export type DataviewJsExecutionResult = DataviewJsSuccessResult | DataviewJsErro
 
 type StructuredFrontmatter = Record<string, unknown>;
 
+interface StructuredPagesSnapshot {
+	pages: Record<string, unknown>[];
+}
+
+let structuredPagesPromise: Promise<StructuredPagesSnapshot> | null = null;
+let structuredPagesSource: LibraryItem[] | null = null;
+
 interface VaultFileNode {
 	type: "file";
 	path: string;
@@ -231,17 +238,9 @@ function isDateLikeString(value: string) {
 	return /^\d{4}-\d{2}-\d{2}(?:[T\s].*)?$/.test(value.trim());
 }
 
-function isDateFieldKey(key?: string) {
-	return Boolean(key && /(date|_eol|^created$|^updated$|_at$)/i.test(key));
-}
-
-function isUnknownDateValue(value: string) {
-	return /^(unknown|n\/a|na|none|null|-)?$/i.test(value.trim());
-}
-
-function coerceValue(value: unknown, key?: string): unknown {
+function coerceValue(value: unknown): unknown {
 	if (Array.isArray(value)) {
-		return value.map((entry) => coerceValue(entry, key));
+		return value.map((entry) => coerceValue(entry));
 	}
 
 	if (value instanceof Date) {
@@ -250,12 +249,8 @@ function coerceValue(value: unknown, key?: string): unknown {
 
 	if (value && typeof value === "object") {
 		return Object.fromEntries(
-			Object.entries(value as Record<string, unknown>).map(([entryKey, entry]) => [entryKey, coerceValue(entry, entryKey)])
+			Object.entries(value as Record<string, unknown>).map(([entryKey, entry]) => [entryKey, coerceValue(entry)])
 		);
-	}
-
-	if (typeof value === "string" && isDateFieldKey(key) && isUnknownDateValue(value)) {
-		return null;
 	}
 
 	if (typeof value === "string" && isDateLikeString(value)) {
@@ -354,7 +349,7 @@ async function buildStructuredPages(allNotes: LibraryItem[]) {
 
 		return {
 			...Object.fromEntries(
-				Object.entries(structured).map(([key, value]) => [key, coerceValue(value, key)])
+				Object.entries(structured).map(([key, value]) => [key, coerceValue(value)])
 			),
 			file: {
 				name: fileName,
@@ -368,7 +363,25 @@ async function buildStructuredPages(allNotes: LibraryItem[]) {
 		};
 	});
 
-	return { pages, structuredMap };
+	return { pages };
+}
+
+function getStructuredPages(allNotes: LibraryItem[]) {
+	if (!structuredPagesPromise || structuredPagesSource !== allNotes) {
+		structuredPagesSource = allNotes;
+		structuredPagesPromise = buildStructuredPages(allNotes).catch((error) => {
+			structuredPagesPromise = null;
+			structuredPagesSource = null;
+			throw error;
+		});
+	}
+
+	return structuredPagesPromise;
+}
+
+export function invalidateDataviewJsCache() {
+	structuredPagesPromise = null;
+	structuredPagesSource = null;
 }
 
 function buildVaultTree(notes: LibraryItem[]) {
@@ -449,12 +462,21 @@ export async function executeDataviewJs(
 ): Promise<DataviewJsExecutionResult> {
 	try {
 		const normalizedCode = normalizeDataviewJsCode(code);
-		const { pages } = await buildStructuredPages(allNotes);
+		const { pages } = await getStructuredPages(allNotes);
 		const pageLookup = createPageLookup(pages, allNotes);
 		const notesByPath = new Map(allNotes.map((note) => [note.relativePath.toLowerCase(), note]));
 		const vaultTree = buildVaultTree(allNotes);
 		const blocks: DataviewJsBlock[] = [];
 		let inlineBuffer = "";
+
+		const appendInline = (value: unknown) => {
+			const rendered = renderDataviewJsValue(value);
+			const startsMarkdownListItem = /^\s*(?:[-+*]|\d+[.)])\s+/.test(rendered);
+			if (startsMarkdownListItem && inlineBuffer && !inlineBuffer.endsWith("\n")) {
+				inlineBuffer += "\n";
+			}
+			inlineBuffer += rendered;
+		};
 
 		const flushInline = () => {
 			if (!inlineBuffer.trim()) {
@@ -550,7 +572,7 @@ export async function executeDataviewJs(
 				});
 			},
 			span(value: unknown) {
-				inlineBuffer += renderDataviewJsValue(value);
+				appendInline(value);
 			},
 			el(tag: string, value?: unknown) {
 				if (tag === "br") {

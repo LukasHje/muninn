@@ -11,8 +11,8 @@ export type ExperienceId =
 	| "technology"
 	| "homelab";
 
-export type ExperienceLandingPage = "gear" | "recipes" | "vehicles";
-export type ExperienceInspector = "gear" | "recipes" | "vehicles";
+export type ExperienceLandingPage = "gear" | "recipes" | "vehicles" | "homelab";
+export type ExperienceInspector = "gear" | "recipes" | "vehicles" | "homelab";
 
 export type ExperienceStatisticMetric =
 	| { type: "total"; label: string; helper?: string }
@@ -155,7 +155,7 @@ export const experienceDefinitions = [
 				"Station Wagon": "/assets/placeholders/vehicle-station-wagon-placeholder.webp",
 				SUV: "/assets/placeholders/vehicle-suv-placeholder.webp",
 				"Terrain Vehicle": "/assets/placeholders/vehicle-terrain-vehicle-placeholder.webp",
-			},
+			} as Record<string, string>,
 		},
 		href: "/vehicles",
 		sidebar: { label: "Vehicles" },
@@ -295,9 +295,61 @@ export const experienceDefinitions = [
 		assets: {
 			heroArtwork: "/experiences/homelab/experiences-heroart-homelab-v2.webp",
 			placeholderThumbnail: null,
+			placeholderThumbnailsByCategory: {
+				documentation: "/assets/placeholders/homelab-documentation-placeholder.webp",
+				specification: "/assets/placeholders/homelab-specification-placeholder.webp",
+				server: "/assets/placeholders/homelab-server-node-placeholder.webp",
+				nas: "/assets/placeholders/homelab-service-storage-placeholder.webp",
+				network: "/assets/placeholders/homelab-network-device-placeholder.webp",
+				workstation: "/assets/placeholders/homelab-workstation-placeholder.webp",
+				"workstation-desktop": "/assets/placeholders/homelab-workstation-placeholder.webp",
+				"workstation-laptop": "/assets/placeholders/homelab-laptop-placeholder.webp",
+				"workstation-all-in-one": "/assets/placeholders/homelab-all-in-one-placeholder.webp",
+				"workstation-mini-pc": "/assets/placeholders/homelab-mini-computer-placeholder.webp",
+				"server-rack": "/assets/placeholders/homelab-server-node-placeholder.webp",
+				"server-tower": "/assets/placeholders/homelab-server-node-placeholder.webp",
+				"server-desktop": "/assets/placeholders/homelab-desktop-server-placeholder.webp",
+				"server-mini-pc": "/assets/placeholders/homelab-mini-computer-placeholder.webp",
+				desktop: "/assets/placeholders/homelab-workstation-placeholder.webp",
+				laptop: "/assets/placeholders/homelab-laptop-placeholder.webp",
+				"all-in-one": "/assets/placeholders/homelab-all-in-one-placeholder.webp",
+				tower: "/assets/placeholders/homelab-workstation-placeholder.webp",
+				rack: "/assets/placeholders/homelab-server-node-placeholder.webp",
+				"mini-pc": "/assets/placeholders/homelab-mini-computer-placeholder.webp",
+				appliance: "/assets/placeholders/homelab-network-device-placeholder.webp",
+				embedded: "/assets/placeholders/homelab-embedded-placeholder.webp",
+				smartphone: "/assets/placeholders/homelab-smartphone-placeholder.webp",
+				handheld: "/assets/placeholders/homelab-smartphone-placeholder.webp",
+				tablet: "/assets/placeholders/homelab-smartphone-placeholder.webp",
+				"mini-computer": "/assets/placeholders/homelab-mini-computer-placeholder.webp",
+				"service-applications": "/assets/placeholders/homelab-service-applications-placeholder.webp",
+				"service-automation": "/assets/placeholders/homelab-service-automation-placeholder.webp",
+				"service-development": "/assets/placeholders/homelab-service-development-placeholder.webp",
+				"service-infrastructure": "/assets/placeholders/homelab-service-infrastructure-placeholder.webp",
+				"service-media": "/assets/placeholders/homelab-service-media-placeholder.webp",
+				"service-monitoring": "/assets/placeholders/homelab-service-monitoring-placeholder.webp",
+				"service-networking": "/assets/placeholders/homelab-service-networking-placeholder.webp",
+				"service-other": "/assets/placeholders/homelab-service-generic-placeholder.webp",
+				"service-security": "/assets/placeholders/homelab-service-security-placeholder.webp",
+				"service-storage": "/assets/placeholders/homelab-service-storage-placeholder.webp",
+			} as Record<string, string>,
 		},
 		href: "/homelab",
 		sidebar: { label: "Homelab" },
+		cardFamily: "homelab",
+		landingPage: "homelab",
+		inspector: "homelab",
+		metadataFilters: ["homelab_entity", "homelab_form_factor", "homelab_lifecycle", "homelab_status", "homelab_service_category"],
+		showMetadataFilters: false,
+		cardMetadata: ["hostname", "os", "cpu", "ram", "storage", "location"],
+		inspectorMetadata: [
+			"platform", "hostname", "os", "cpu", "ram", "storage", "network", "location", "status",
+			"version", "host", "runtime", "dependencies", "ports",
+			"manufacturer", "model", "generation", "interfaces", "expansion", "drive_bays",
+			"purpose", "widgets", "sources", "refresh", "category", "references", "related", "tags",
+		],
+		inspectorSections: ["Overview", "Specifikationer", "Specifications", "Services", "Storage", "Network", "Kommentarer", "Notes", "Maintenance log", "Relaterat"],
+		statistics: { type: "summary", metrics: [{ type: "total", label: "Documents" }] },
 	},
 ] satisfies ExperienceDefinition[];
 

@@ -80,6 +80,7 @@ const { artwork, theme } = Astro.props;
 			linear-gradient(90deg, rgba(9, 15, 14, 0.9) 0%, rgba(16, 25, 22, 0.57) 40%, rgba(16, 25, 22, 0.08) 80%),
 			linear-gradient(135deg, var(--experience-artwork-start), var(--experience-artwork-end));
 		pointer-events: none;
+		transition: height 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
 	}
 
 	.experience-artwork-workspace[data-has-artwork="true"] .experience-artwork-workspace__art {
@@ -108,6 +109,19 @@ const { artwork, theme } = Astro.props;
 	@media (min-width: 768px) {
 		.experience-artwork-workspace {
 			--experience-main-gutter: 1.25rem;
+		}
+	}
+
+	@media (max-width: 767px) {
+		:global(.experience-artwork-workspace:has(.experience-discovery[data-collapsed="true"])) {
+			--experience-hero-height: 5.75rem;
+			--experience-artwork-tail: 2.25rem;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.experience-artwork-workspace__art {
+			transition-duration: 0.01ms;
 		}
 	}
 

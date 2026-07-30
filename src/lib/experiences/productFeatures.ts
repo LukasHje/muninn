@@ -357,6 +357,40 @@ function extractUsbCFeature(bullet: string) {
 	return /\busb[\s-]?c\b/i.test(bullet) ? "USB-C" : null;
 }
 
+function extractBluetoothFeature(bullet: string) {
+	const explicitlyUnavailable = [
+		/\bno\s+bluetooth\b/i,
+		/\bwithout\s+bluetooth\b/i,
+		/\b(?:does(?:n't|\s+not)|do(?:es)?\s+not)\s+(?:have|support)\s+bluetooth\b/i,
+		/\bbluetooth\s+(?:is\s+)?(?:not\s+(?:available|supported)|unavailable|unsupported)\b/i,
+		/\b(?:saknar|utan|ingen|inget)\s+bluetooth\b/i,
+		/\b(?:har|stöder|stödjer)\s+inte\s+bluetooth\b/i,
+	].some((pattern) => pattern.test(bullet));
+
+	if (explicitlyUnavailable) {
+		return "No Bluetooth";
+	}
+
+	const versionMatch = bullet.match(/\bbluetooth(?:\s+(?:version|v))?\s*(\d+(?:[.,]\d+)*)\b/i);
+	if (versionMatch) {
+		return `Bluetooth ${formatDecimalValue(versionMatch[1])}`;
+	}
+
+	return /\bbluetooth\b/i.test(bullet) ? "Bluetooth" : null;
+}
+
+function resolveBluetoothIconName(value: string) {
+	return value === "No Bluetooth" ? "bluetooth-off" : "bluetooth";
+}
+
+function extractWirelessFeature(bullet: string) {
+	if (/\bwireless\b|\btrådlös(?:t|a)?\b/i.test(bullet)) {
+		return "Wireless";
+	}
+
+	return null;
+}
+
 function extractZipperFeature(bullet: string) {
 	if (/\bYKK\b/i.test(bullet) && /\b(zipper|zippers|dragkedja|dragkedjor)\b/i.test(bullet)) {
 		return "YKK";
@@ -731,6 +765,21 @@ const productFeatureDefinitions: ProductFeatureDefinition[] = [
 		iconName: "usb",
 		priority: 88,
 		extractValue: extractUsbCFeature,
+	},
+	{
+		id: "bluetooth",
+		label: "Bluetooth",
+		iconName: "bluetooth",
+		priority: 89,
+		extractValue: extractBluetoothFeature,
+		resolveIconName: resolveBluetoothIconName,
+	},
+	{
+		id: "wireless",
+		label: "Wireless",
+		iconName: "wifi",
+		priority: 88,
+		extractValue: extractWirelessFeature,
 	},
 	{
 		id: "zipper",

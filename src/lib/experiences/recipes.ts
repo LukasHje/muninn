@@ -57,6 +57,11 @@ export interface RecipeIngredientOption extends ExperienceFilterOption {
 	icon: string;
 }
 
+export interface RecipeServingPresentation {
+	icon: "cookie" | "users";
+	label: "Pieces" | "Servings";
+}
+
 function parseBoolean(value: string | null) {
 	return ["true", "yes", "1", "done", "reviewed"].includes(value?.trim().toLocaleLowerCase("en") ?? "");
 }
@@ -92,6 +97,25 @@ function normalizeRecipeStatus(value: string | null): RecipeLifecycleStatus | nu
 	}
 
 	return null;
+}
+
+export function getRecipeServingPresentation(
+	note: LibraryItem,
+	servings: string | null
+): RecipeServingPresentation {
+	const describesPieces = /(?:^|\s)(?:ca\.?\s*)?\d+(?:[.,]\d+)?\s*(?:st\.?|stycken)(?:\s|$)/i.test(
+		servings ?? ""
+	);
+	const recipeIdentity = normalizeRecipeKindText(
+		[note.title, note.relativePath, ...note.tags, ...getNoteMetadataValues(note, "category")].join(" ")
+	);
+	const isCookieRecipe = /\b(?:cookie|cookies|biscuit|biscuits|kex|smakaka|smakakor|snittkaka|snittkakor|snittar)\b/.test(
+		recipeIdentity
+	);
+
+	return describesPieces && isCookieRecipe
+		? { icon: "cookie", label: "Pieces" }
+		: { icon: "users", label: "Servings" };
 }
 
 export function parseRecipeDurationMinutes(value: string | null) {
@@ -158,19 +182,24 @@ function stripIngredientAmount(value: string) {
 function extractIngredientLinesFromContent(content: string) {
 	const lines = content.split("\n");
 	const ingredients: string[] = [];
-	let insideIngredients = false;
+	let ingredientHeadingDepth: number | null = null;
 
 	for (const line of lines) {
 		const trimmed = line.trim();
 		const headingMatch = trimmed.match(/^(#{1,6})\s+(.+?)\s*#*$/);
 
 		if (headingMatch) {
+			const headingDepth = headingMatch[1].length;
 			const heading = normalizeRecipeText(headingMatch[2]);
-			insideIngredients = /^(ingredients?|ingredienser|ingredienserna|det har behovs|du behover)/.test(heading);
+			if (/^(ingredients?|ingredienser|ingredienserna|det har behovs|du behover)/.test(heading)) {
+				ingredientHeadingDepth = headingDepth;
+			} else if (ingredientHeadingDepth !== null && headingDepth <= ingredientHeadingDepth) {
+				ingredientHeadingDepth = null;
+			}
 			continue;
 		}
 
-		if (!insideIngredients) {
+		if (ingredientHeadingDepth === null) {
 			continue;
 		}
 

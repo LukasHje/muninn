@@ -27,9 +27,15 @@ The registry does not implement selectors, traverse the Vault, parse Markdown, o
 - Recipes: custom editorial landing page, dashboard, Recipe Card, and custom inspector
 - Books: Default Experience
 - Technology: Default Experience
-- Homelab: Default Experience
+- Homelab: custom path-aware landing page, infrastructure dashboard, Node Card, and metadata-focused inspector
 
 The first six use frontmatter selectors. A selector may accept multiple equivalent values, as Recipes does for `recipe`, `recipes`, and `recept`, and Vehicles does for `vehicle`, `vehicles`, and `fordon`. Homelab uses a path selector and demonstrates that the registry is not tied to `type` metadata.
+
+Homelab's registered presentation uses an Experience-local adapter with independent Entity, Form Factor, Lifecycle, Operational Status, and Card Kind dimensions. Explicit object frontmatter normally owns Entity; the Dashboard, Infrastructure, Knowledgebase, and Resources subtrees are intentional Documentation boundaries; numbered lifecycle folders own Lifecycle only; explicit status owns Operational Status; and Card Kind is derived solely from Entity. The registry declares separate `homelab_entity`, `homelab_form_factor`, `homelab_lifecycle`, and `homelab_status` filter keys without implementing any classification rules itself.
+
+Physical inventory entities are additionally scoped to the `07.05 Hardware_specs` inventory subtree. This path constraint prevents machine, display, UPS, and component references in operational or supporting documentation from entering Node or Specification filters; it does not infer a specific Entity from lifecycle folders.
+
+Homelab hardware may declare an optional `form_factor`. This is not an Entity dimension: `type` answers what a device is and owns behavior, while form factor answers what it physically looks like. The domain adapter resolves a stable artwork key from the Entity/form-factor pair, with generic form-factor, role/category, and Entity fallbacks. The central Experience registry only maps those keys to bundled asset paths. This separation permits an asset to evolve or a new physical variant to be registered without changing classification or card components; existing notes without form factor continue through conservative type and role defaults.
 
 ## Assets
 

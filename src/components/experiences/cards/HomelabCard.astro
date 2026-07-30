@@ -1,0 +1,56 @@
+---
+import FavoriteToggleButton from "src/components/FavoriteToggleButton.astro";
+import Icon from "src/components/Icon.astro";
+import HomelabStatusBadge from "src/components/experiences/HomelabStatusBadge.astro";
+import { getHomelabArtworkCategory, getHomelabCardPresentation, getHomelabClassification, getHomelabServiceCategory } from "src/lib/experiences/homelab";
+import type { ExperienceDefinition } from "src/lib/experiences/registry";
+import { resolveExperienceCategoryArtwork } from "src/lib/experiences/selectors";
+import type { LibraryItem } from "src/lib/vault";
+
+interface Props { definition: ExperienceDefinition; note: LibraryItem; selected?: boolean; redirectTo?: string; index?: number }
+const { definition, note, selected = false, redirectTo = Astro.url.pathname + Astro.url.search } = Astro.props;
+const card = getHomelabCardPresentation(note);
+const classification = getHomelabClassification(note);
+const serviceCategory = classification.entity === "service" ? getHomelabServiceCategory(note) : null;
+const placeholderCategory = getHomelabArtworkCategory(note);
+// Homelab cards are a curated visual index. Note-owned cover, thumbnail, and
+// body images remain available in note view but never replace category art.
+const imageUrl = resolveExperienceCategoryArtwork(
+	definition,
+	placeholderCategory,
+	serviceCategory ? "service-other" : null
+);
+const factGridColumns = card.facts[0]?.label === "OS" && card.facts.length > 1
+	? `minmax(0,1.55fr) repeat(${card.facts.length - 1},minmax(0,1fr))`
+	: `repeat(${card.facts.length},minmax(0,1fr))`;
+---
+
+<article class:list={["homelab-card group relative overflow-hidden rounded-xl border", `homelab-card--${card.kind}`]} data-selected={selected ? "true" : "false"}>
+	<div class="absolute right-3 top-3 z-40 text-sky-200"><FavoriteToggleButton noteId={note.id} isFavorite={Boolean(note.favorite)} redirectTo={redirectTo} variant="chromeless" size="sm" /></div>
+	<button type="button" class="flex h-full w-full flex-col text-left" data-experience-card={note.id} aria-controls="experience-inspector-panel" aria-label={`Inspect ${card.title}`} aria-pressed={selected ? "true" : "false"}>
+		<div class="homelab-card__cover relative aspect-video w-full overflow-hidden border-b">
+			{imageUrl ? <img src={imageUrl} alt="" class="h-full w-full object-cover transition duration-300 group-hover:scale-[1.025]" loading="lazy" /> : <div class="homelab-card__placeholder flex h-full items-center justify-center"><Icon name={card.icon} class:list={["text-sky-300/30", card.kind === "dashboard" ? "h-20 w-20" : "h-16 w-16"]} /></div>}
+			<div class:list={["absolute inset-x-0 bottom-0 bg-linear-to-t from-slate-950/75 to-transparent", card.kind === "dashboard" ? "h-32" : "h-24"]}></div>
+			<span class="homelab-card__kind absolute bottom-3 left-3">{card.kind}</span>
+		</div>
+
+		<div class="homelab-card__copy flex min-w-0 items-center justify-between gap-3 px-4 pt-4">
+			<div class="min-w-0">
+				<h2 class="truncate text-lg font-semibold tracking-[-0.035em] text-slate-100">{card.title}</h2>
+				{card.subtitle && <p class="mt-1 truncate text-xs font-medium text-slate-400">{card.subtitle}</p>}
+			</div>
+			{card.status && <div class="homelab-card__status shrink-0"><HomelabStatusBadge value={card.status} /></div>}
+		</div>
+
+		{card.kind === "documentation" && card.description && <p class="mx-4 mt-3 line-clamp-2 text-xs leading-5 text-slate-400">{card.description}</p>}
+		{card.kind === "documentation" && card.tags.length > 0 && <div class="mx-4 mt-3 flex min-w-0 gap-1.5 overflow-hidden">{card.tags.map((tag) => <span class="homelab-card__tag">{tag}</span>)}</div>}
+
+		{card.facts.length > 0 && <div class:list={["homelab-card__facts mt-4 grid border-y border-slate-700/70", card.kind === "dashboard" && "homelab-card__facts--dashboard"]} style={`grid-template-columns:${factGridColumns}`}>{card.facts.map((item, i) => <div class="relative min-w-0 px-2 py-3 text-center" title={`${item.label}: ${item.value}`}>{i > 0 && <span class="absolute left-0 top-3 bottom-3 w-px bg-slate-700/70"></span>}{item.assetIcon ? <div class="homelab-card__os-fact flex h-full min-w-0 items-center justify-center gap-2"><img src={item.assetIcon} alt="" class="h-6 w-6 shrink-0 object-contain" loading="lazy" /><div class="min-w-0 text-left leading-none"><span class="block truncate text-[11px] font-semibold leading-4 text-slate-200">{item.value}</span><p class="truncate text-[9px] uppercase leading-4 tracking-[0.12em] text-slate-500">{item.label}</p></div></div> : <><div class="flex items-center justify-center gap-1.5"><Icon name={item.icon} class="h-3.5 w-3.5 shrink-0 text-sky-400" /><span class="truncate text-[11px] font-semibold text-slate-200">{item.value}</span></div><p class="mt-1 truncate text-[9px] uppercase tracking-[0.12em] text-slate-500">{item.label}</p></>}</div>)}</div>}
+
+		<div class="mt-auto flex w-full items-center justify-between gap-3 px-4 pb-3 pt-1.5 text-[11px] font-medium text-slate-500"><span class="truncate">{card.footerPrimary}</span><span class="shrink-0">Updated {note.updatedLabel.toLocaleLowerCase("en")}</span></div>
+	</button>
+</article>
+
+<style>
+	.homelab-card{min-height:18rem;background:linear-gradient(145deg,#111923,#0d141d);border-color:rgba(71,102,126,.6);box-shadow:0 15px 35px rgba(2,8,16,.2);transition:border-color 180ms ease,box-shadow 180ms ease,transform 180ms ease}.homelab-card::after{position:absolute;z-index:30;inset:0;border:1.25px solid transparent;border-radius:inherit;content:"";pointer-events:none;transition:border-color 180ms ease}.homelab-card:hover{border-color:rgba(56,189,248,.65);transform:translateY(-1px)}.homelab-card[data-selected="true"]{box-shadow:0 15px 35px rgba(2,8,16,.2);transform:translateY(-1px)}.homelab-card[data-selected="true"]::after{border-width:1.5px;border-color:#f59e0b}.homelab-card__cover{height:7rem;aspect-ratio:auto;border-color:rgba(71,102,126,.55);background:#121d29}.homelab-card__placeholder{background-image:linear-gradient(rgba(125,211,252,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(125,211,252,.035) 1px,transparent 1px);background-size:22px 22px}.homelab-card__kind{border:1px solid rgba(125,211,252,.24);border-radius:999px;background:rgba(2,8,16,.58);padding:.2rem .48rem;font-size:8px;font-weight:750;letter-spacing:.14em;text-transform:uppercase;color:#bae6fd;backdrop-filter:blur(5px)}.homelab-card__tag{display:inline-flex;flex:none;border:1px solid rgba(71,102,126,.65);border-radius:999px;background:rgba(20,31,43,.8);padding:.24rem .5rem;font-size:9px;color:#94a3b8}.homelab-card--dashboard .homelab-card__copy{padding-top:.8rem}.homelab-card--documentation .homelab-card__placeholder{background-color:#101b26}.homelab-card--specification .homelab-card__placeholder{background-color:#121c28}.homelab-card__facts--dashboard{margin-top:.75rem}:global([data-experience-layout="list"]) .homelab-card{min-height:4.5rem}:global([data-experience-layout="list"]) .homelab-card button{display:grid;grid-template-columns:7rem minmax(0,1fr)}:global([data-experience-layout="list"]) .homelab-card__cover{height:4.5rem;aspect-ratio:auto}:global([data-experience-layout="list"]) .homelab-card__copy{height:4.5rem;padding:.65rem 3.75rem .65rem 1rem}:global([data-experience-layout="list"]) .homelab-card button>*:not(.homelab-card__cover):not(.homelab-card__copy){display:none}
+</style>

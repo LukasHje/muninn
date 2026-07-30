@@ -1,0 +1,19 @@
+---
+interface Props { value: string }
+const { value } = Astro.props;
+const normalized = value.trim().toLocaleLowerCase("en").replace(/[-_]+/g, " ");
+const displayValue = normalized.toLocaleUpperCase("en");
+const palette = normalized === "active" || normalized === "owned"
+	? { color: "#6C8061", background: "rgba(108,128,97,.16)", border: "rgba(108,128,97,.46)" }
+	: normalized === "planned" || normalized === "standby"
+		? { color: "#657986", background: "rgba(101,121,134,.2)", border: "rgba(101,121,134,.55)" }
+		: normalized === "maintenance"
+			? { color: "#B38A55", background: "rgba(179,138,85,.16)", border: "rgba(179,138,85,.46)" }
+		: normalized === "offline"
+			? { color: "#D88B87", background: "rgba(216,139,135,.14)", border: "rgba(216,139,135,.42)" }
+			: { color: "#9CA3AF", background: "rgba(107,114,128,.16)", border: "rgba(107,114,128,.42)" };
+---
+<span class="homelab-status-badge" style={`color:${palette.color};background:${palette.background};border-color:${palette.border}`}>{displayValue}</span>
+<style>
+	.homelab-status-badge{display:inline-flex;height:1.625rem;box-sizing:border-box;align-items:center;border:1px solid;border-radius:5px;padding:0 .48rem;font-size:9px;font-weight:700;line-height:1;letter-spacing:.12em;white-space:nowrap}
+</style>

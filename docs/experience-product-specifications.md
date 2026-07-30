@@ -80,6 +80,10 @@ Recognized firearm specifications include caliber, barrel length and weight. Ful
 
 Product names that communicate a supported concept should normalize to its comparable display value. For example, Carhartt `Rain Defender`, `water resistant`, `vattenresistent` and `vattenavvisande` all produce the `Water resistant` feature with the droplets icon. This remains concept recognition rather than manufacturer-specific Card logic.
 
+Supported capabilities may also preserve an explicit absence when that absence is useful for comparison. Bluetooth wording in a configured feature section normalizes to `Bluetooth` (including a supplied version) and uses the Bluetooth icon. Explicit negations such as `no Bluetooth`, `without Bluetooth`, `saknar Bluetooth` and `Bluetooth is not supported` normalize to `No Bluetooth` and use the Bluetooth-off icon. Negation matching must run before generic capability recognition.
+
+Explicit `wireless` and Swedish `trådlös` wording normalizes to the `Wireless` capability and uses the Wi-Fi icon. Wireless is independent from Bluetooth: a product may expose either or both features when both concepts are explicitly documented.
+
 ## Ownership
 
 ### Experience

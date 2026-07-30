@@ -1,6 +1,7 @@
 import type { LibraryItem } from "src/lib/vault";
 import type { ExperienceDefinition } from "src/lib/experiences/registry";
 import { getNoteMetadataValues } from "src/lib/experiences/selectors";
+import { getHomelabMetadataValues } from "src/lib/experiences/homelab";
 import {
 	experienceStatusOrder,
 	getCanonicalExperienceStatus,
@@ -60,10 +61,14 @@ export function getMetadataFilterParamName(key: string) {
 	return toFilterParamName(key);
 }
 
-export function filterExperienceNotes(notes: LibraryItem[], filterState: ExperienceFilterState) {
+function getValues(note: LibraryItem, key: string, definition?: ExperienceDefinition) {
+	return definition?.id === "homelab" ? getHomelabMetadataValues(note, key) : getNoteMetadataValues(note, key);
+}
+
+export function filterExperienceNotes(notes: LibraryItem[], filterState: ExperienceFilterState, definition?: ExperienceDefinition) {
 	return notes.filter((note) => {
 		for (const [key, expectedValue] of Object.entries(filterState.metadata)) {
-			if (!getNoteMetadataValues(note, key).includes(expectedValue)) {
+			if (!getValues(note, key, definition).includes(expectedValue)) {
 				return false;
 			}
 		}
@@ -76,7 +81,7 @@ export function filterExperienceNotes(notes: LibraryItem[], filterState: Experie
 	});
 }
 
-export function buildMetadataFilterOptions(notes: LibraryItem[], key: string): ExperienceFilterOption[] {
+export function buildMetadataFilterOptions(notes: LibraryItem[], key: string, definition?: ExperienceDefinition): ExperienceFilterOption[] {
 	const counts = new Map<string, number>();
 
 	if (key === "status") {
@@ -86,7 +91,7 @@ export function buildMetadataFilterOptions(notes: LibraryItem[], key: string): E
 	}
 
 	for (const note of notes) {
-		for (const value of new Set(getNoteMetadataValues(note, key))) {
+		for (const value of new Set(getValues(note, key, definition))) {
 			counts.set(value, (counts.get(value) ?? 0) + 1);
 		}
 	}

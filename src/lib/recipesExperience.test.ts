@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { buildMetadataFilterOptions, filterExperienceNotes } from "./experiences/filters";
-import { buildRecipeDashboardModel, getRecipeMetadata, parseRecipeDurationMinutes } from "./experiences/recipes";
+import {
+	buildRecipeDashboardModel,
+	getRecipeMetadata,
+	getRecipeServingPresentation,
+	parseRecipeDurationMinutes,
+} from "./experiences/recipes";
 import { getExperienceDefinition } from "./experiences/registry";
 import { getExperienceNotes, getNoteMetadataValues } from "./experiences/selectors";
 import { buildExperienceStatistics } from "./experiences/statistics";
@@ -133,7 +138,7 @@ test("dashboard aggregation prioritizes favorites and ratings while deriving coo
 	assert.equal(dashboard.featured[0].id, "favorite");
 	assert.equal(dashboard.quickMeals, 1);
 	assert.equal(dashboard.vegetarian, 1);
-	assert.equal(dashboard.needsReview, 1);
+	assert.equal(dashboard.needsReview, 0);
 	assert.equal(dashboard.averageTotalMinutes, 43);
 	assert.equal(dashboard.averageRating, 4.8);
 	assert.equal(dashboard.totalRecipes, 2);
@@ -191,12 +196,43 @@ test("Swedish recipe frontmatter populates cards and dashboard statistics", () =
 	assert.equal(metadata.servings, "50 st");
 	assert.equal(metadata.totalTime, "1 tim 50 min");
 	assert.equal(metadata.rating, 4.9);
+	assert.equal(metadata.reviewed, true);
 	assert.equal(metadata.status, "made");
+	assert.deepEqual(getRecipeServingPresentation(note, metadata.servings), {
+		icon: "cookie",
+		label: "Pieces",
+	});
 	assert.equal(dashboard.averageTotalMinutes, 110);
 	assert.equal(dashboard.averageRating, 4.9);
 	assert.equal(
 		dashboard.recipeKinds.find(({ value }) => value === "dessert")?.count,
 		1
+	);
+});
+
+test("serving presentation keeps the people icon for ordinary portions", () => {
+	const dinner = createRecipe("Pasta", { type: "recept", portioner: "4 portioner" });
+
+	assert.deepEqual(getRecipeServingPresentation(dinner, getRecipeMetadata(dinner).servings), {
+		icon: "users",
+		label: "Servings",
+	});
+});
+
+test("recipe review filters treat ratings as completed reviews", () => {
+	const rated = createRecipe("Rated", { type: "recept", betyg: "4.2" });
+	const unrated = createRecipe("Unrated", { type: "recept" });
+
+	assert.deepEqual(getNoteMetadataValues(rated, "reviewed"), ["true"]);
+	assert.deepEqual(getNoteMetadataValues(unrated, "reviewed"), ["false"]);
+	assert.deepEqual(
+		filterExperienceNotes([rated, unrated], {
+			metadata: { reviewed: "false" },
+			tag: null,
+			selected: null,
+			inspector: "closed",
+		}).map((note) => note.id),
+		["Unrated"]
 	);
 });
 
@@ -294,6 +330,44 @@ test("recipe dashboard derives ingredient categories from markdown ingredient se
 			{ value: "other", count: 0 },
 		]
 	);
+});
+
+test("recipe ingredients remain active across nested subsection headings", () => {
+	const cookies = createRecipe(
+		"Chokladsnittar",
+		{ type: "recept" },
+		{
+			content: [
+				"# Chokladsnittar",
+				"",
+				"## Ingredienser",
+				"",
+				"### Kakdeg",
+				"- 5 dl vetemjöl",
+				"- 2 dl strösocker",
+				"- 3 msk kakao",
+				"- 200 g rumstempererat smör",
+				"- 2 msk vatten",
+				"",
+				"### Pensling och garnering",
+				"- 1 ägg",
+				"- 2 msk pärlsocker",
+				"",
+				"## Instruktioner",
+				"1. Blanda ingredienserna.",
+			].join("\n"),
+		}
+	);
+
+	assert.deepEqual(getRecipeMetadata(cookies).ingredients, [
+		"Vetemjol",
+		"Strosocker",
+		"Coffee",
+		"Rumstempererat Smor",
+		"Water",
+		"Egg",
+		"Parlsocker",
+	]);
 });
 
 test("recipe kind filters use the dashboard categories without requiring frontmatter category values", () => {

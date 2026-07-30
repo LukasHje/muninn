@@ -150,6 +150,10 @@ function isVehicleNote(note: LibraryItem) {
 	return ["vehicle", "vehicles", "fordon"].includes(note.normalized.type.trim().toLocaleLowerCase("en"));
 }
 
+function isRecipeNote(note: LibraryItem) {
+	return ["recipe", "recipes", "recept"].includes(note.normalized.type.trim().toLocaleLowerCase("en"));
+}
+
 function cleanImageReference(value: string) {
 	return value
 		.replace(/^\[\[|\]\]$/g, "")
@@ -208,7 +212,16 @@ export function getNoteMetadataValues(note: LibraryItem, key: string): string[] 
 
 	if (key === "reviewed") {
 		const explicitReviewed = normalizeMetadataValue(note.frontmatter.reviewed)[0]?.toLocaleLowerCase("en");
-		return [["true", "yes", "1", "done", "reviewed"].includes(explicitReviewed ?? "") ? "true" : "false"];
+		const [rating] = metadataAliases.rating.flatMap((metadataKey) =>
+			normalizeMetadataValue(note.frontmatter[metadataKey] ?? note.normalized.metadata[metadataKey])
+		);
+		const numericRating = rating ? Number.parseFloat(rating.replace(",", ".")) : Number.NaN;
+		const hasRecipeRating = isRecipeNote(note) && Number.isFinite(numericRating);
+		return [
+			hasRecipeRating || ["true", "yes", "1", "done", "reviewed"].includes(explicitReviewed ?? "")
+				? "true"
+				: "false",
+		];
 	}
 
 	if (key === "vehicle_status") {
@@ -320,6 +333,19 @@ export function getInspectorImage(
 		resolveConfiguredImage(note, "thumbnail") ??
 		note.imageUrl ??
 		placeholderThumbnail
+	);
+}
+
+export function resolveExperienceCategoryArtwork(
+	definition: ExperienceDefinition,
+	category: string | null,
+	fallbackCategory: string | null = null
+) {
+	const artwork = definition.assets.placeholderThumbnailsByCategory;
+	return (
+		(category ? artwork?.[category] : null)
+		?? (fallbackCategory ? artwork?.[fallbackCategory] : null)
+		?? definition.assets.placeholderThumbnail
 	);
 }
 

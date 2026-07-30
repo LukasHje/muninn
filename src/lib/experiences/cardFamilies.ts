@@ -1,1 +1,1 @@
-export type ExperienceCardFamily = "product" | "recipe" | "vehicle" | "generic-note";
+export type ExperienceCardFamily = "product" | "recipe" | "vehicle" | "homelab" | "generic-note";

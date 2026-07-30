@@ -198,6 +198,26 @@ test("supports DataviewJS collection helpers and markdown-producing output metho
 	]);
 });
 
+test("keeps consecutive Markdown list items from dv.span on separate lines", async () => {
+	const result = await executeDataviewJs(
+		`
+		dv.span("- **First** — 10 days");
+		dv.span("- **Second** — 20 days");
+		`,
+		[],
+		note
+	);
+
+	assert.equal(result.type, "blocks");
+	if (result.type !== "blocks") {
+		return;
+	}
+
+	assert.deepEqual(result.blocks, [
+		{ type: "markdown", markdown: "- **First** — 10 days\n- **Second** — 20 days" },
+	]);
+});
+
 test("passes DataviewJS-generated markdown back through the document pipeline", async () => {
 	const result = await executeDataviewJs(
 		`
