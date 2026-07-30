@@ -21,7 +21,8 @@ if (!noteId) {
 }
 
 const libraryItems = await getLibraryItems();
-const note = getExperienceNotes(libraryItems, definition).find(
+const experienceNotes = getExperienceNotes(libraryItems, definition);
+const note = experienceNotes.find(
 	(item) => item.id === noteId || item.slugPath === noteId
 );
 
@@ -40,5 +41,6 @@ const inspector = buildExperienceInspectorModel(note, definition, redirectTo);
 		sections={inspector.sections}
 		noteHref={inspector.noteHref}
 		redirectTo={inspector.redirectTo}
+		experienceNotes={experienceNotes}
 	/>
 </div>

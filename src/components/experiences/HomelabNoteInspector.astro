@@ -1,0 +1,41 @@
+---
+import FavoriteToggleButton from "src/components/FavoriteToggleButton.astro";
+import Icon from "src/components/Icon.astro";
+import InspectorHeader from "src/components/experiences/InspectorHeader.astro";
+import MetadataRow from "src/components/experiences/MetadataRow.astro";
+import type { InspectorSection } from "src/lib/experiences/inspector";
+import { buildHomelabRelations, getHomelabCardPresentation, getHomelabInspectorMetadataEntries } from "src/lib/experiences/homelab";
+import type { ExperienceDefinition } from "src/lib/experiences/registry";
+import { getInspectorImage, getNoteSummary, isPlaceholderExperienceImage } from "src/lib/experiences/selectors";
+import type { LibraryItem } from "src/lib/vault";
+
+interface Props { definition: ExperienceDefinition; note: LibraryItem; sections: InspectorSection[]; noteHref: string; redirectTo: string; experienceNotes?: LibraryItem[] }
+const { definition, note, noteHref, redirectTo, experienceNotes = [] } = Astro.props;
+const card = getHomelabCardPresentation(note);
+const metadataEntries = getHomelabInspectorMetadataEntries(note, definition.inspectorMetadata);
+const imageUrl = getInspectorImage(note, definition);
+const summary = getNoteSummary(note);
+const isPlaceholderImage = isPlaceholderExperienceImage(imageUrl, definition);
+const relations = buildHomelabRelations(note, experienceNotes);
+---
+
+<div class="homelab-inspector px-5 pb-8 md:px-6">
+	<InspectorHeader title={card.title}>
+		<Fragment slot="leading"><button type="button" data-experience-close class="homelab-inspector__action" aria-label="Close inspector" title="Close inspector"><Icon name="arrow-left" class="h-6 w-6" /></button></Fragment>
+		<Fragment slot="actions"><div class="flex items-center gap-2"><div data-experience-inspector-favorite><FavoriteToggleButton noteId={note.id} isFavorite={Boolean(note.favorite)} redirectTo={redirectTo} size="md" variant="chromeless" /></div><a href={noteHref} data-experience-open-note data-note-href={noteHref} class="homelab-inspector__action" aria-label="Open full note" title="Open full note"><Icon name="square-arrow-up-right" class="h-6 w-6" /></a></div></Fragment>
+	</InspectorHeader>
+	<div class="mt-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-[.14em] text-sky-700"><Icon name={card.icon} class="h-4 w-4" /><span>{card.kind}</span></div>
+
+	<div class="grid gap-4 pt-4 md:grid-cols-[minmax(0,1fr)_15.5rem] md:items-start">
+		<div class="flex min-h-52 items-center justify-center overflow-hidden rounded-[10px] border border-slate-300 bg-slate-100 p-5">{imageUrl ? <img src={imageUrl} alt="" class:list={["max-h-72 w-full object-contain", isPlaceholderImage && "opacity-75 mix-blend-multiply"]} /> : <Icon name={card.icon} class="h-16 w-16 text-sky-700/45" />}</div>
+		{metadataEntries.length > 0 && <div class="overflow-hidden rounded-[10px] border border-slate-300 bg-white/65"><dl class="divide-y divide-slate-200 px-4 py-2">{metadataEntries.map((entry) => <MetadataRow metadataKey={entry.key} icon={entry.icon} label={entry.label} value={entry.value} />)}</dl></div>}
+	</div>
+	<div class="my-6 border-t border-slate-300" aria-hidden="true"></div>
+	{summary && <p class="text-sm leading-8 text-slate-700">{summary}</p>}
+	{relations.length > 0 && <div class="homelab-relations">{relations.map((group) => <section><h3>{group.label}</h3><div>{group.items.map((item) => <a href={item.href} data-experience-open-note data-note-href={item.href}><span>{item.title}</span><small>{item.kind}</small><Icon name="chevron-right" class="h-3.5 w-3.5" /></a>)}</div></section>)}</div>}
+</div>
+
+<style>
+	.homelab-inspector__action{display:inline-flex;height:3rem;width:3rem;align-items:center;justify-content:center;color:#475569;transition:color 180ms ease}.homelab-inspector__action:hover{color:#0369a1}
+	.homelab-relations{display:grid;gap:.75rem;margin-top:1.25rem}.homelab-relations section{overflow:hidden;border:1px solid #cbd5e1;border-radius:10px;background:rgba(255,255,255,.58)}.homelab-relations h3{padding:.65rem .8rem;border-bottom:1px solid #e2e8f0;font-size:10px;font-weight:750;text-transform:uppercase;letter-spacing:.12em;color:#0369a1}.homelab-relations section>div{display:grid}.homelab-relations a{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:.55rem;padding:.62rem .8rem;border-top:1px solid #e2e8f0;color:#334155;transition:background 160ms,color 160ms}.homelab-relations a:first-child{border-top:0}.homelab-relations a:hover{background:rgba(14,165,233,.08);color:#0369a1}.homelab-relations a span{overflow:hidden;font-size:12px;font-weight:650;text-overflow:ellipsis;white-space:nowrap}.homelab-relations a small{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8}
+</style>

@@ -27,9 +27,11 @@ The registry does not implement selectors, traverse the Vault, parse Markdown, o
 - Recipes: custom editorial landing page, dashboard, Recipe Card, and custom inspector
 - Books: Default Experience
 - Technology: Default Experience
-- Homelab: Default Experience
+- Homelab: custom path-aware landing page, infrastructure dashboard, Node Card, and metadata-focused inspector
 
 The first six use frontmatter selectors. A selector may accept multiple equivalent values, as Recipes does for `recipe`, `recipes`, and `recept`, and Vehicles does for `vehicle`, `vehicles`, and `fordon`. Homelab uses a path selector and demonstrates that the registry is not tied to `type` metadata.
+
+Homelab's registered presentation uses an Experience-local adapter with independent Entity, Lifecycle, Operational Status, and Card Kind dimensions. Explicit object frontmatter owns Entity; numbered lifecycle folders own Lifecycle only; explicit status owns Operational Status; and Card Kind is derived solely from Entity. The registry declares separate `homelab_entity`, `homelab_lifecycle`, and `homelab_status` filter keys without implementing any classification rules itself.
 
 ## Assets
 

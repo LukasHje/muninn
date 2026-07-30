@@ -1,7 +1,9 @@
 ---
 import Icon from "src/components/Icon.astro";
+import ExperienceBrowserControls from "src/components/experiences/ExperienceBrowserControls.astro";
 import type { ExperienceFilterState } from "src/lib/experiences/filters";
 import type { ExperienceDefinition } from "src/lib/experiences/registry";
+import type { ExperienceSortField, ExperienceSortOrder } from "src/lib/experiences/sorting";
 import { buildVehicleDashboardModel, getVehicleCategoryIcon } from "src/lib/experiences/vehicles";
 import type { LibraryItem } from "src/lib/vault";
 
@@ -9,14 +11,15 @@ interface Props {
 	definition: ExperienceDefinition;
 	notes: LibraryItem[];
 	filterState: ExperienceFilterState;
+	sortBy: ExperienceSortField;
+	sortOrder: ExperienceSortOrder;
+	layout: "grid" | "list";
 }
 
-const { notes, filterState } = Astro.props;
+const { notes, filterState, sortBy, sortOrder, layout } = Astro.props;
 const dashboard = buildVehicleDashboardModel(notes);
 const path = Astro.url.pathname;
 const baseParams = Astro.url.searchParams;
-const sortBy = baseParams.get("sort") === "title" ? "title" : "updated";
-const layout = baseParams.get("layout") === "list" ? "list" : "grid";
 const vehicleFilterKeys = ["vehicle_status", "vehicle_category", "drivetrain", "fuel"];
 
 function buildHref(mutator: (params: URLSearchParams) => void) {
@@ -44,18 +47,6 @@ function buildClearHref() {
 		for (const key of vehicleFilterKeys) {
 			params.delete(`filter-${key}`);
 		}
-	});
-}
-
-function buildSortHref(value: "updated" | "title") {
-	return buildHref((params) => {
-		params.set("sort", value);
-	});
-}
-
-function buildLayoutHref(value: "grid" | "list") {
-	return buildHref((params) => {
-		params.set("layout", value);
 	});
 }
 
@@ -223,23 +214,10 @@ const hasAnyFilter = vehicleFilterKeys.some((key) => Boolean(filterState.metadat
 			}
 		</div>
 
+		<span class="vehicles-filter-divider vehicles-filter-divider--sort" aria-hidden="true"></span>
+
 		<div class="vehicles-filter-controls">
-			<div class="vehicles-sort-menu">
-				<button type="button" class="vehicles-control-button">
-					Sort: {sortBy === "title" ? "Title (A–Z)" : "Recently Updated"}
-					<Icon name="chevron-down" class="h-3.5 w-3.5" />
-				</button>
-				<div class="vehicles-sort-menu__items">
-					<a href={buildSortHref("updated")} aria-current={sortBy === "updated" ? "true" : "false"}>Recently Updated</a>
-					<a href={buildSortHref("title")} aria-current={sortBy === "title" ? "true" : "false"}>Title (A–Z)</a>
-				</div>
-			</div>
-			<a href={buildLayoutHref("grid")} aria-current={layout === "grid" ? "true" : "false"} class="vehicles-icon-toggle" aria-label="Grid view">
-				<Icon name="layout-grid" class="h-4 w-4" />
-			</a>
-			<a href={buildLayoutHref("list")} aria-current={layout === "list" ? "true" : "false"} class="vehicles-icon-toggle" aria-label="List view">
-				<Icon name="layout-list" class="h-4 w-4" />
-			</a>
+			<ExperienceBrowserControls sortBy={sortBy} sortOrder={sortOrder} layout={layout} />
 		</div>
 	</div>
 </section>
@@ -268,13 +246,11 @@ const hasAnyFilter = vehicleFilterKeys.some((key) => Boolean(filterState.metadat
 		scrollbar-color: rgba(151, 107, 56, 0.34) transparent;
 	}
 
-	.vehicles-stats-row::-webkit-scrollbar,
-	.vehicles-category-scroll::-webkit-scrollbar {
+	.vehicles-stats-row::-webkit-scrollbar {
 		height: 4px;
 	}
 
-	.vehicles-stats-row::-webkit-scrollbar-thumb,
-	.vehicles-category-scroll::-webkit-scrollbar-thumb {
+	.vehicles-stats-row::-webkit-scrollbar-thumb {
 		border-radius: 999px;
 		background: rgba(151, 107, 56, 0.34);
 	}
@@ -427,13 +403,15 @@ const hasAnyFilter = vehicleFilterKeys.some((key) => Boolean(filterState.metadat
 		overflow-x: auto;
 		overscroll-behavior-x: contain;
 		padding-bottom: 0.1rem;
-		scrollbar-width: thin;
-		scrollbar-color: rgba(151, 107, 56, 0.34) transparent;
+		scrollbar-width: none;
+		-ms-overflow-style: none;
 	}
 
-	.vehicles-filter-pill,
-	.vehicles-control-button,
-	.vehicles-icon-toggle {
+	.vehicles-category-scroll::-webkit-scrollbar {
+		display: none;
+	}
+
+	.vehicles-filter-pill {
 		display: inline-flex;
 		height: 2.35rem;
 		flex-shrink: 0;
@@ -450,17 +428,12 @@ const hasAnyFilter = vehicleFilterKeys.some((key) => Boolean(filterState.metadat
 		transition: border-color 180ms ease, background 180ms ease, color 180ms ease, box-shadow 180ms ease;
 	}
 
-	.vehicles-filter-pill svg,
-	.vehicles-control-button svg,
-	.vehicles-icon-toggle svg {
+	.vehicles-filter-pill svg {
 		color: rgb(151 107 56);
 	}
 
 	.vehicles-filter-pill:hover,
-	.vehicles-filter-pill[aria-current="true"],
-	.vehicles-icon-toggle:hover,
-	.vehicles-icon-toggle[aria-current="true"],
-	.vehicles-control-button:hover {
+	.vehicles-filter-pill[aria-current="true"] {
 		border-color: rgba(182, 127, 55, 0.56);
 		background: rgba(255, 246, 229, 0.95);
 		color: rgb(15 23 42);
@@ -479,52 +452,15 @@ const hasAnyFilter = vehicleFilterKeys.some((key) => Boolean(filterState.metadat
 		background: rgba(148, 116, 78, 0.22);
 	}
 
+	.vehicles-filter-divider--sort {
+		margin-left: auto;
+	}
+
 	.vehicles-filter-controls {
 		display: flex;
 		flex-shrink: 0;
 		align-items: center;
 		gap: 0.45rem;
-	}
-
-	.vehicles-sort-menu {
-		position: relative;
-	}
-
-	.vehicles-sort-menu__items {
-		position: absolute;
-		right: 0;
-		top: calc(100% + 0.35rem);
-		z-index: 100;
-		display: none;
-		min-width: 12rem;
-		overflow: hidden;
-		border: 1px solid rgba(215, 196, 168, 0.92);
-		border-radius: 8px;
-		background: rgba(255, 253, 249, 0.98);
-		box-shadow: 0 14px 30px rgba(87, 55, 30, 0.12);
-	}
-
-	.vehicles-sort-menu:hover .vehicles-sort-menu__items,
-	.vehicles-sort-menu:focus-within .vehicles-sort-menu__items {
-		display: grid;
-	}
-
-	.vehicles-sort-menu__items a {
-		padding: 0.65rem 0.8rem;
-		font-size: 0.76rem;
-		font-weight: 650;
-		color: rgb(71 85 105);
-	}
-
-	.vehicles-sort-menu__items a:hover,
-	.vehicles-sort-menu__items a[aria-current="true"] {
-		background: rgba(255, 246, 229, 0.95);
-		color: rgb(15 23 42);
-	}
-
-	.vehicles-icon-toggle {
-		width: 2.35rem;
-		padding: 0;
 	}
 
 	@media (max-width: 767px) {
@@ -536,6 +472,10 @@ const hasAnyFilter = vehicleFilterKeys.some((key) => Boolean(filterState.metadat
 		.vehicles-filter-left,
 		.vehicles-filter-controls {
 			width: 100%;
+		}
+
+		.vehicles-filter-divider--sort {
+			display: none;
 		}
 
 		.vehicles-category-scroll {

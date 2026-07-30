@@ -36,7 +36,33 @@ Examples:
 - Recipes → `recipe`
 - fallback browsing → `generic-note`
 
-`product`, `recipe`, `vehicle`, and `generic-note` are implemented today. Journey and Book Cards describe intended future families; Travel and Books use `generic-note` until their custom families exist.
+`product`, `recipe`, `vehicle`, `homelab`, and `generic-note` are implemented today. Journey and Book Cards describe intended future families; Travel and Books use `generic-note` until their custom families exist.
+
+## Homelab Card Contract
+
+The `homelab` family delegates to Node Card only for machine entities such as Server, NAS, Workstation, Mini PC, Router, Switch, VM, and Raspberry Pi. Current or Planned folders never imply a machine entity. Node Card presents a cover, operational-status badge, title/role, up to four OS/CPU/RAM/storage-or-network facts, placement, and updated time. Its adapter compacts raw specifications into comparable facts: CPU descriptions prefer core count, RAM and storage prefer capacity, and network descriptions prefer the fastest documented wired link. Missing fields are omitted. Present but non-specific RAM, storage, or network values render as `TBD` instead of leaking ambiguous raw prose into the card.
+
+CPU product tiers such as Intel `i5` and AMD `Ryzen 5` must never be interpreted as core counts. Explicit core/thread notation has priority, followed by a small Homelab-local table for documented CPU models whose physical core counts are known. Unrecognized models retain a compact model name rather than guessing.
+
+Homelab iteration 2 implements five internal card kinds behind the single registered `homelab` Card Family:
+
+- Node for physical and virtual machines; the iteration 1 hierarchy remains intact.
+- Service for a software service root or service index, with platform, host, version, runtime, storage, network, or port facts when present.
+- Specification for parts, archived specifications, upgrade candidates, and hardware-specification filenames, with datasheet-oriented facts.
+- Dashboard for explicitly configured dashboards and dashboard/overview/topology artifacts inferred from their folder and filename.
+- Documentation for configuration pages, guides, references, and every non-machine fallback.
+
+All five kinds share the same card frame, dimensions, image boundary, hover behavior, favorite action, footer, glass surface, and inspector-selection contract. They vary only their information hierarchy. Card Kind is derived from Entity and cannot be overridden independently: object identity, organization, operational state, and presentation remain separate. Service subdocuments such as configuration pages remain Documentation entities even when they live below a service root; the service root note or its Index receives Service entity and Service Card.
+
+Homelab category artwork is selected after note-owned images. Machine entities may use hardware-category artwork, Services use their derived service category with `Other` as the generic fallback, Specification Cards use the shared Specification artwork, and Documentation uses the shared Documentation artwork. A note image always takes precedence over category artwork.
+
+The shared Homelab grid card uses a compact fixed-height preview rather than the general 16:9 card image. This keeps the complete title, facts, and footer visible within the Library viewport. Dashboard images retain their richer visual treatment inside the same height boundary; list layout keeps its smaller shared thumbnail contract.
+
+When a Homelab card exposes Operational Status, its badge belongs at the right edge of the title-and-role row and is vertically centered against that copy block. Lifecycle may supply a last-resort status fallback, but it does not choose the card. Status must not overlay the compact preview image.
+
+Homelab status badges are compact text-only badges without a leading indicator dot. Their local palette is green `#6C8061` for active/owned, blue `#657986` for planned, restrained light red for offline, and neutral gray for archived/retired. Other Experience status badges retain their own presentation.
+
+Service Operational Status is Homelab-local. Common aliases normalize to active, offline, maintenance, retired, planned, or archived, but the global Experience mapping from `active` to `owned` must never be applied to Homelab services. A service's Lifecycle never changes Service Card rendering. The Homelab inspector therefore resolves status through the Homelab adapter.
 
 ## Responsibilities
 

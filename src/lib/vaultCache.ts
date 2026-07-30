@@ -1,3 +1,4 @@
+import { invalidateDataviewJsCache } from "src/lib/dataviewJs";
 import { invalidateLegacyVaultAssetIndexCache } from "src/lib/resolveVaultAsset";
 import { invalidateVaultDataCache } from "src/lib/vault";
 import { invalidateVaultAssetIndexCache } from "src/lib/vaultAssetIndex";
@@ -10,6 +11,7 @@ import { invalidateVaultAssetIndexCache } from "src/lib/vaultAssetIndex";
  */
 export function invalidateVaultCaches() {
 	invalidateVaultDataCache();
+	invalidateDataviewJsCache();
 	invalidateVaultAssetIndexCache();
 	invalidateLegacyVaultAssetIndexCache();
 }

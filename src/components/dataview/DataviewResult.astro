@@ -2,6 +2,7 @@
 import { ui } from "src/i18n";
 import { formatUiDateTime } from "src/i18n/format";
 import type { DataviewLiteResult } from "src/lib/dataviewLite";
+import Icon from "src/components/Icon.astro";
 
 interface Props {
 	result: DataviewLiteResult;
@@ -106,8 +107,10 @@ function formatDate(timestamp: number) {
 					class="code-copy-button"
 					data-copy-code
 					data-copy-value={result.query}
+					aria-label={ui.common.copy}
+					title={ui.common.copy}
 				>
-					{ui.common.copy}
+					<Icon name="copy" class="code-copy-button__icon" />
 				</button>
 			</div>
 			<pre class="code-block__pre"><code>{result.query.replace(/\n$/, "")}</code></pre>

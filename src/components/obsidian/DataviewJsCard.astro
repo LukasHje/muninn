@@ -1,5 +1,6 @@
 ---
 import { ui } from "src/i18n";
+import Icon from "src/components/Icon.astro";
 
 interface Props {
 	code: string;
@@ -19,8 +20,10 @@ const { code } = Astro.props;
 			class="code-copy-button"
 			data-copy-code
 			data-copy-value={code}
+			aria-label={ui.common.copy}
+			title={ui.common.copy}
 		>
-			{ui.common.copy}
+			<Icon name="copy" class="code-copy-button__icon" />
 		</button>
 	</div>
 	<pre class="code-block__pre"><code>{code.replace(/\n$/, "")}</code></pre>

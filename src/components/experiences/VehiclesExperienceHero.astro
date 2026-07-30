@@ -3,6 +3,7 @@ import type { ExperienceDefinition } from "src/lib/experiences/registry";
 
 interface Props {
 	definition: ExperienceDefinition;
+	notes?: import("src/lib/vault").LibraryItem[];
 }
 
 const { definition } = Astro.props;

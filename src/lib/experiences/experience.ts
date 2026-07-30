@@ -7,6 +7,12 @@ import {
 	getExperienceFilterState,
 } from "src/lib/experiences/filters";
 import { getExperienceNotes } from "src/lib/experiences/selectors";
+import {
+	getExperienceSortState,
+	sortExperienceNotes,
+	type ExperienceSortField,
+	type ExperienceSortOrder,
+} from "src/lib/experiences/sorting";
 import { buildExperienceStatistics } from "src/lib/experiences/statistics";
 
 export interface ExperienceViewModel {
@@ -19,7 +25,8 @@ export interface ExperienceViewModel {
 	statistics: ReturnType<typeof buildExperienceStatistics>;
 	metadataOptions: Record<string, ReturnType<typeof buildMetadataFilterOptions>>;
 	tagOptions: ReturnType<typeof buildTagFilterOptions>;
-	sortBy: "updated" | "title";
+	sortBy: ExperienceSortField;
+	sortOrder: ExperienceSortOrder;
 	layout: "grid" | "list";
 }
 
@@ -30,15 +37,9 @@ export function buildExperienceViewModel(
 ): ExperienceViewModel {
 	const notes = getExperienceNotes(items, definition);
 	const filterState = getExperienceFilterState(searchParams, definition);
-	const sortBy = searchParams.get("sort")?.trim() === "title" ? "title" : "updated";
+	const sortState = getExperienceSortState(searchParams);
 	const layout = searchParams.get("layout")?.trim() === "list" ? "list" : "grid";
-	const filteredNotes = filterExperienceNotes(notes, filterState).sort((left, right) => {
-		if (sortBy === "title") {
-			return left.title.localeCompare(right.title, "sv");
-		}
-
-		return right.updatedAt - left.updatedAt;
-	});
+	const filteredNotes = sortExperienceNotes(filterExperienceNotes(notes, filterState, definition), sortState);
 	const selectedNote = filterState.selected
 		? filteredNotes.find((note) => note.id === filterState.selected || note.slugPath === filterState.selected) ?? null
 		: null;
@@ -52,10 +53,11 @@ export function buildExperienceViewModel(
 		selectedNote,
 		statistics: buildExperienceStatistics(notes, definition),
 		metadataOptions: Object.fromEntries(
-			definition.metadataFilters.map((key) => [key, buildMetadataFilterOptions(notes, key)])
+			definition.metadataFilters.map((key) => [key, buildMetadataFilterOptions(notes, key, definition)])
 		),
 		tagOptions: buildTagFilterOptions(notes),
-		sortBy,
+		sortBy: sortState.field,
+		sortOrder: sortState.order,
 		layout,
 	};
 }

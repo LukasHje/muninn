@@ -197,6 +197,8 @@ Its height accounts for the vertical padding applied by `MainLayout`. Within the
 - inspector content scrolls independently
 - the outer Experience canvas hides overflow
 
+Below `768px`, the fixed Experience discovery chrome initializes expanded and may collapse into one compact row. `ExperienceView` owns this behavior for every Experience and includes the hero, statistics, filters, sorting/layout controls, and optional dashboard in the collapsible region. Collapsing only releases vertical space to the existing note browser; it must not change URL state, filter state, result state, or scroll ownership. Wider viewports always show the complete discovery chrome.
+
 Every Experience landing page is hosted by the shared `ExperienceArtworkWorkspace`. The workspace renders registered hero artwork from the main workspace edge, beneath the transparent Experience content, and lets the image fade through the fixed discovery chrome before the note browser. The artwork layer must not be implemented inside an individual hero, as a pseudo-element on `experience-page`, or in a way that alters scroll ownership.
 
 Experiences without registered artwork use the same layer structure with a theme-derived fallback background. Custom landing pages may change their text and dashboard composition, but they must not create a second artwork workspace or own the registered hero image.

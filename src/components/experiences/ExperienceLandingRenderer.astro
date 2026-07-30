@@ -4,6 +4,7 @@ import ExperienceArtworkWorkspace from "src/components/experiences/ExperienceArt
 import GearExperienceLanding from "src/components/experiences/GearExperienceLanding.astro";
 import RecipesExperienceLanding from "src/components/experiences/RecipesExperienceLanding.astro";
 import VehiclesExperienceLanding from "src/components/experiences/VehiclesExperienceLanding.astro";
+import HomelabExperienceLanding from "src/components/experiences/HomelabExperienceLanding.astro";
 import type { ExperienceViewModel } from "src/lib/experiences/experience";
 
 type Props = ExperienceViewModel;
@@ -13,6 +14,7 @@ const landingPageComponents = {
 	gear: GearExperienceLanding,
 	recipes: RecipesExperienceLanding,
 	vehicles: VehiclesExperienceLanding,
+	homelab: HomelabExperienceLanding,
 };
 const LandingPage = props.definition.landingPage
 	? landingPageComponents[props.definition.landingPage]

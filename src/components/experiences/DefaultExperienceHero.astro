@@ -3,10 +3,12 @@ import Icon from "src/components/Icon.astro";
 import ExperienceStatistics from "src/components/experiences/ExperienceStatistics.astro";
 import type { ExperienceDefinition } from "src/lib/experiences/registry";
 import type { ExperienceStatistic } from "src/lib/experiences/statistics";
+import type { LibraryItem } from "src/lib/vault";
 
 interface Props {
 	definition: ExperienceDefinition;
 	statistics: ExperienceStatistic[];
+	notes?: LibraryItem[];
 }
 
 const { definition, statistics } = Astro.props;

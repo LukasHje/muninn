@@ -17,6 +17,7 @@ The function lives in `src/lib/vaultCache.ts` and is the single invalidation ent
 Invalidation:
 
 - clears the cached vault snapshot and parsed note metadata
+- clears structured frontmatter pages used by DataviewJS
 - clears note lookup data
 - clears the current and legacy vault asset indexes
 - performs no filesystem scan
@@ -37,6 +38,7 @@ The current registry is:
 | Cache owner | Invalidator | Responsibility |
 | --- | --- | --- |
 | `src/lib/vault.ts` | `invalidateVaultDataCache()` | Vault snapshot, parsed notes, note lookup |
+| `src/lib/dataviewJs.ts` | `invalidateDataviewJsCache()` | Structured frontmatter pages used by DataviewJS scripts |
 | `src/lib/vaultAssetIndex.ts` | `invalidateVaultAssetIndexCache()` | Current asset index |
 | `src/lib/resolveVaultAsset.ts` | `invalidateLegacyVaultAssetIndexCache()` | Legacy asset lookup index |
 

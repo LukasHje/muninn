@@ -1,0 +1,28 @@
+---
+import ExperienceLayoutControls from "src/components/experiences/ExperienceLayoutControls.astro";
+import ExperienceSortControls from "src/components/experiences/ExperienceSortControls.astro";
+import type { ExperienceSortField, ExperienceSortOrder } from "src/lib/experiences/sorting";
+
+interface Props {
+	sortBy: ExperienceSortField;
+	sortOrder: ExperienceSortOrder;
+	layout: "grid" | "list";
+	className?: string;
+}
+
+const { sortBy, sortOrder, layout, className } = Astro.props;
+---
+
+<div class:list={["experience-browser-controls", className]}>
+	<ExperienceSortControls sortBy={sortBy} sortOrder={sortOrder} />
+	<ExperienceLayoutControls layout={layout} />
+</div>
+
+<style>
+	.experience-browser-controls {
+		display: inline-flex;
+		flex-shrink: 0;
+		align-items: center;
+		gap: var(--experience-browser-controls-gap, 0.45rem);
+	}
+</style>
