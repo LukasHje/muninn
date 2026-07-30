@@ -1,6 +1,14 @@
 # Muninn
 
-Muninn is an Astro-based reader for an Obsidian vault. The application never needs to know where the vault exists on the host machine. Outside Docker it reads from `VAULT_PATH`, and inside Docker it only reads from `/vault`.
+Muninn is an Astro-based, read-only interface for an Obsidian vault. It combines a searchable Library with focused, data-rich Experiences that surface useful information from your notes. Outside Docker, Muninn reads the vault location from `VAULT_PATH`; inside Docker, the vault is always mounted at `/vault`.
+
+<p align="center">
+  <img
+    src="./docs/assets/muninn-mainpage-hero.png"
+    alt="Muninn home dashboard with vault statistics and recent notes"
+    width="1600"
+  />
+</p>
 
 Important:
 
@@ -78,3 +86,35 @@ The image is an Astro Node standalone server, not a static nginx image. Muninn n
 - `npm run start` runs the built Astro Node standalone server.
 - `npm run preview` previews the built app locally.
 - `npm run update-os-icons` downloads the curated OS SVG sources, optimizes them with SVGO, and regenerates the local offline OS asset registry. Read more: `docs/os-asset-registry`
+
+## Screenshots
+
+### Library browser
+
+The Library browser provides a fast way to search, filter, and sort every note in your vault. Results combine relevant excerpts, metadata, and tags so you can quickly identify the note you are looking for.
+
+<p align="center">
+  <img
+    src="./docs/assets/muninn-overview.png"
+    alt="Muninn Library browser showing filtered search results"
+    width="1600"
+  />
+</p>
+
+_Search results in the Library browser._
+
+> Matching words and tags are highlighted using familiar search semantics inspired by Obsidian and VS Code.
+
+### Experience browser
+
+Experiences turn selected groups of notes into focused, themed browsing surfaces. Each Experience can combine its own artwork, statistics, filters, card design, and inspector while the underlying Markdown notes remain the source of truth.
+
+<p align="center">
+  <img
+    src="./docs/assets/muninn-experience-page.png"
+    alt="Muninn Vehicles Experience with statistics, filters, and vehicle cards"
+    width="1600"
+  />
+</p>
+
+_The Vehicles Experience demonstrates how Muninn can derive useful statistics and card details from both structured frontmatter and information found within notes. Important specifications become immediately visible while the complete notes remain available through the inspector and standard note reader._
