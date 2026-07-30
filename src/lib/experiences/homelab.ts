@@ -13,6 +13,9 @@ export type HomelabEntity =
 	| "switch"
 	| "vm"
 	| "raspberry-pi"
+	| "smartphone"
+	| "tablet"
+	| "printer"
 	| "display"
 	| "ups"
 	| "part"
@@ -21,8 +24,10 @@ export type HomelabEntity =
 	| "documentation"
 	| "specification";
 export type HomelabLifecycle = "current" | "planned" | "to-upgrade" | "archived";
-export type HomelabOperationalStatus = "active" | "offline" | "maintenance" | "planned" | "retired" | "archived";
+export type HomelabOperationalStatus = "active" | "standby" | "offline" | "maintenance" | "planned" | "retired" | "archived";
 export type HomelabNodeCategory = "server" | "nas" | "raspberry-pi" | "router" | "switch" | "vm" | "workstation";
+/** Open normalized presentation value. Adding a form factor extends the artwork registry, not the Entity model. */
+export type HomelabFormFactor = string;
 export type HomelabServiceCategory =
 	| "applications"
 	| "media"
@@ -36,6 +41,29 @@ export type HomelabServiceCategory =
 	| "infrastructure"
 	| "other";
 
+const serviceCategoryAliases: Record<string, HomelabServiceCategory> = {
+	application: "applications",
+	applications: "applications",
+	"self-hosted-application": "applications",
+	"self-hosted-applications": "applications",
+	media: "media",
+	utility: "utilities",
+	utilities: "utilities",
+	monitor: "monitoring",
+	monitoring: "monitoring",
+	network: "networking",
+	networking: "networking",
+	storage: "storage",
+	development: "development",
+	automation: "automation",
+	security: "security",
+	infrastructure: "infrastructure",
+	generic: "other",
+	"generic-service": "other",
+	uncategorized: "other",
+	other: "other",
+};
+
 export interface HomelabClassification {
 	entity: HomelabEntity;
 	lifecycle: HomelabLifecycle | null;
@@ -44,6 +72,7 @@ export interface HomelabClassification {
 }
 
 export interface HomelabItem extends HomelabClassification {
+	formFactor: HomelabFormFactor | null;
 	title: string;
 	subtitle: string | null;
 	placement: string | null;
@@ -79,10 +108,73 @@ export interface HomelabCardPresentation {
 export interface HomelabRelationItem { title: string; href: string; kind: HomelabCardKind }
 export interface HomelabRelationGroup { label: string; items: HomelabRelationItem[] }
 
-const nodeTypes = new Set([
-	"server", "nas", "workstation", "mini-pc", "router", "switch", "vm", "raspberry-pi",
+const nodeTypes = new Set<HomelabEntity>([
+	"server", "nas", "workstation", "mini-pc", "router", "switch", "vm", "raspberry-pi", "smartphone", "tablet", "printer",
 ]);
+const hardwareInventoryTypes = new Set<HomelabEntity>([
+	...nodeTypes, "display", "ups", "part", "specification",
+]);
+
+interface HomelabFormFactorDefinition {
+	id: string;
+	aliases?: readonly string[];
+	fallbackArtwork: string;
+}
+
+const formFactorArtworkRegistry: readonly HomelabFormFactorDefinition[] = [
+	{ id: "desktop", aliases: ["desktop-pc", "desktop-computer"], fallbackArtwork: "desktop" },
+	{ id: "laptop", aliases: ["notebook"], fallbackArtwork: "laptop" },
+	{ id: "all-in-one", aliases: ["all-in-one-computer", "aio", "imac"], fallbackArtwork: "all-in-one" },
+	{ id: "tower", aliases: ["tower-server", "tower-pc"], fallbackArtwork: "tower" },
+	{ id: "rack", aliases: ["rackmount", "rack-mounted"], fallbackArtwork: "rack" },
+	{ id: "mini-pc", aliases: ["mini-computer", "small-form-factor", "sff"], fallbackArtwork: "mini-pc" },
+	{ id: "tablet", aliases: ["slate"], fallbackArtwork: "tablet" },
+	{ id: "handheld", aliases: ["phone", "mobile"], fallbackArtwork: "handheld" },
+	{ id: "appliance", aliases: ["network-appliance"], fallbackArtwork: "appliance" },
+	{ id: "embedded", aliases: ["embedded-device", "edge-device", "edge", "iot"], fallbackArtwork: "embedded" },
+] as const;
+
+const entityFormFactorArtworkRegistry: Readonly<Record<string, string>> = {
+	"server:rack": "server-rack",
+	"server:tower": "server-tower",
+	"server:desktop": "server-desktop",
+	"server:mini-pc": "server-mini-pc",
+	"workstation:desktop": "workstation-desktop",
+	"workstation:tower": "workstation-desktop",
+	"workstation:laptop": "workstation-laptop",
+	"workstation:all-in-one": "workstation-all-in-one",
+	"workstation:mini-pc": "workstation-mini-pc",
+	"smartphone:handheld": "smartphone",
+	"tablet:tablet": "tablet",
+};
+
+const nodeCategoryArtworkRegistry: Readonly<Record<HomelabNodeCategory, string>> = {
+	server: "server-tower",
+	nas: "nas",
+	"raspberry-pi": "mini-computer",
+	router: "network",
+	switch: "network",
+	vm: "server",
+	workstation: "workstation-desktop",
+};
+
+const entityArtworkRegistry: Partial<Record<HomelabEntity, string>> = {
+	server: "server-tower",
+	nas: "nas",
+	workstation: "workstation-desktop",
+	"mini-pc": "mini-computer",
+	"raspberry-pi": "mini-computer",
+	router: "network",
+	switch: "network",
+	vm: "server",
+	smartphone: "smartphone",
+	tablet: "handheld",
+	printer: "specification",
+};
 const partTypes = new Set(["part", "cpu", "processor", "ram", "memory", "ssd", "hdd", "disk", "psu", "nic", "fan", "motherboard", "hba", "gpu"]);
+const documentationRootPattern = /(?:^|\/)07\.(?:00 dashboard|01 infrastructure|04 knowledgebase|97 resources)(?:\/|$)/;
+const hardwareInventoryPattern = /(?:^|\/)07\.05 hardware[_ ]specs(?:\/|$)/;
+const servicesRootPattern = /(?:^|\/)07\.02 services(?:\/|$)/;
 
 function normalized(value: string) {
 	return value.normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("en");
@@ -199,6 +291,7 @@ function normalizeEntity(value: string | null): HomelabEntity | null {
 		nas: "nas", storage: "nas", workstation: "workstation", desktop: "workstation", "dev-station": "workstation", laptop: "workstation",
 		"mini-pc": "mini-pc", minipc: "mini-pc", router: "router", firewall: "router", switch: "switch",
 		vm: "vm", "virtual-machine": "vm", "raspberry-pi": "raspberry-pi", rpi: "raspberry-pi",
+		smartphone: "smartphone", phone: "smartphone", mobile: "smartphone", tablet: "tablet", printer: "printer",
 		display: "display", monitor: "display", ups: "ups", service: "service", application: "service",
 		dashboard: "dashboard", documentation: "documentation", document: "documentation", governance: "documentation", note: "documentation", reference: "documentation",
 		specification: "specification", spec: "specification",
@@ -207,23 +300,45 @@ function normalizeEntity(value: string | null): HomelabEntity | null {
 	return aliases[entity] ?? null;
 }
 
+export function getHomelabFormFactor(note: LibraryItem): HomelabFormFactor | null {
+	const value = frontmatterFirst(note, "form_factor", "form-factor", "formFactor");
+	if (!value) return null;
+	const candidate = normalized(value).replace(/[ _]+/g, "-");
+	return formFactorArtworkRegistry.find((definition) => definition.id === candidate || definition.aliases?.includes(candidate))?.id ?? null;
+}
+
 function isServiceRoot(note: LibraryItem) {
 	const parts = note.relativePath.split("/");
 	return parts.length === 3 || (/^index\.md$/i.test(parts.at(-1) ?? "") && (parts.length === 4 || /overview/i.test(parts.at(-2) ?? "")));
 }
 
 function inferEntity(note: LibraryItem): HomelabEntity {
-	const explicit = normalizeEntity(frontmatterFirst(note, "entity", "type"));
-	if (explicit) return explicit;
 	const path = normalized(note.relativePath);
+	const isHardwareSpecification = hardwareInventoryPattern.test(path);
+	// These Homelab areas are semantic documentation boundaries. Notes here
+	// describe systems; they are never the systems themselves, regardless of
+	// machine vocabulary, folder labels, or object-like metadata.
+	if (documentationRootPattern.test(path)) return "documentation";
+	const explicit = normalizeEntity(frontmatterFirst(note, "entity", "type"));
+	if (explicit) {
+		if (hardwareInventoryTypes.has(explicit) && !isHardwareSpecification) return "documentation";
+		return explicit;
+	}
 	const filename = normalized(note.relativePath.split("/").at(-1) ?? note.title);
 	const signal = normalized(`${note.title} ${first(note, "category", "role") ?? ""} ${note.content.slice(0, 1600)}`);
-	if (/parts.database/.test(path)) return "part";
-	if (/\bmonitor\b|\bdisplay\b/.test(`${filename} ${signal}`)) return "display";
-	if (/\bups\b|uninterruptible power/.test(`${filename} ${signal}`)) return "ups";
-	if (/\b(hba|nic|motherboard|processor|cpu|ram|memory|ssd|hdd|disk|psu|fan|gpu)\b/.test(filename)) return "part";
+	if (isHardwareSpecification && /parts.database/.test(path)) return "part";
+	// A display mention in documentation, dashboards, or exporter source does
+	// not make the note a physical display. Without explicit frontmatter, only
+	// the note identity (its filename) is strong enough for this entity guess.
+	if (isHardwareSpecification && /\bmonitor\b|\bdisplay\b|\bscreen\b|\bskarm\b/.test(filename)) return "display";
+	if (isHardwareSpecification && (/\bups\b|uninterruptible power|(?:backup system.*\bapc\b|\bapc\b.*backup system)/.test(`${filename} ${signal}`))) return "ups";
+	if (isHardwareSpecification && /\b(hba|nic|motherboard|processor|cpu|ram|memory|ssd|hdd|disk|psu|fan|gpu)\b/.test(filename)) return "part";
 	if (!/(?:^|\/)07\.99 inspo\//.test(path) && (/dashboard|diagram|rack layout|network overview|infrastructure overview|inventory|topology|\bpad\b/.test(filename))) return "dashboard";
-	if (/\/07\.02 services\//.test(path)) return isServiceRoot(note) ? "service" : "documentation";
+	if (servicesRootPattern.test(path)) return isServiceRoot(note) ? "service" : "documentation";
+	// Physical and virtual Node identities belong exclusively to the hardware
+	// inventory. Machine-like vocabulary elsewhere describes a system and must
+	// not promote ordinary Homelab documentation into a Node Card.
+	if (!isHardwareSpecification) return "documentation";
 	if (/\bnas\b|truenas|network attached storage/.test(signal)) return "nas";
 	if (/raspberry|\brpi\b/.test(signal)) return "raspberry-pi";
 	if (/\bmini[ -]?pc\b|\bnuc\b/.test(signal)) return "mini-pc";
@@ -259,6 +374,7 @@ function inferLifecycle(note: LibraryItem): HomelabLifecycle | null {
 function normalizeOperationalStatus(value: string | null, entity: HomelabEntity): HomelabOperationalStatus | null {
 	const status = normalized(value ?? "").replace(/[ _]+/g, "-");
 	if (["active", "online", "running", "up"].includes(status)) return "active";
+	if (["standby", "idle", "ready"].includes(status)) return "standby";
 	if (["offline", "down", "stopped"].includes(status)) return "offline";
 	if (["maintenance", "servicing"].includes(status)) return "maintenance";
 	if (["retired", "deprecated"].includes(status)) return "retired";
@@ -299,6 +415,7 @@ export function getHomelabCardKind(note: LibraryItem) {
 const homelabStatusColors: Record<string, string> = {
 	active: "#6C8061",
 	owned: "#6C8061",
+	standby: "#657986",
 	planned: "#657986",
 	maintenance: "#B38A55",
 	offline: "#D88B87",
@@ -342,10 +459,8 @@ export function getHomelabServiceCategory(note: LibraryItem): HomelabServiceCate
 	const explicit = first(note, "service_category", "category");
 	if (explicit) {
 		const category = normalized(explicit).replace(/\s+/g, "-");
-		if (["application", "applications", "self-hosted-application", "self-hosted-applications"].includes(category)) return "applications";
-		if (["generic", "generic-service", "uncategorized"].includes(category)) return "other";
-		const supported: HomelabServiceCategory[] = ["applications", "media", "utilities", "monitoring", "networking", "storage", "development", "automation", "security", "infrastructure", "other"];
-		if (supported.includes(category as HomelabServiceCategory)) return category as HomelabServiceCategory;
+		const resolvedCategory = serviceCategoryAliases[category];
+		if (resolvedCategory) return resolvedCategory;
 	}
 	const signal = normalized(`${getHomelabServiceName(note)} ${note.title} ${note.tags.join(" ")} ${note.content.slice(0, 1200)}`);
 	if (/immich|jellyfin|plex|emby|photoprism|media server|teamspeak/.test(signal)) return "media";
@@ -366,6 +481,7 @@ export function getHomelabItem(note: LibraryItem): HomelabItem {
 	const role = first(note, "role", "usecase", "description");
 	return {
 		...classification,
+		formFactor: getHomelabFormFactor(note),
 		title: note.title.replace(/^(?:zzzold_)?spec(?:ification)?s?(?:-sheet)?\s*[-–]\s*/i, ""),
 		subtitle: compact(role, 52) ?? ({ server: "Compute node", nas: "Storage node", router: "Network node", switch: "Network node", vm: "Virtual machine", workstation: "Workstation", "mini-pc": "Mini PC", "raspberry-pi": "Raspberry Pi" } as Partial<Record<HomelabEntity, string>>)[classification.entity] ?? null,
 		placement: compact(first(note, "location", "placement", "rack"), 34),
@@ -453,6 +569,10 @@ export function getHomelabCardPresentation(note: LibraryItem): HomelabCardPresen
 export function getHomelabMetadataValues(note: LibraryItem, key: string) {
 	const classification = getHomelabClassification(note);
 	if (key === "homelab_entity" || key === "homelab_kind") return [classification.entity];
+	if (key === "homelab_form_factor") {
+		const formFactor = classification.cardKind === "node" ? getHomelabFormFactor(note) : null;
+		return formFactor ? [formFactor] : [];
+	}
 	if (key === "homelab_lifecycle") return classification.lifecycle ? [classification.lifecycle] : [];
 	if (key === "homelab_status") return classification.operationalStatus ? [classification.operationalStatus] : [];
 	if (key === "homelab_service_category") {
@@ -462,10 +582,37 @@ export function getHomelabMetadataValues(note: LibraryItem, key: string) {
 	return getNoteMetadataValues(note, key);
 }
 
-function inferNodeCategory(note: LibraryItem): HomelabNodeCategory {
+export function getHomelabNodeCategory(note: LibraryItem): HomelabNodeCategory {
 	const entity = getHomelabClassification(note).entity;
 	if (["nas", "raspberry-pi", "router", "switch", "vm", "workstation"].includes(entity)) return entity as HomelabNodeCategory;
+	const signal = normalized([
+		note.title,
+		first(note, "role", "usecase"),
+		first(note, "os", "operating_system"),
+		first(note, "platform", "motherboard"),
+	].filter(Boolean).join(" "));
+	if (/\bnas\b|truenas|\bzfs\b|media[ -]?tank|network attached storage/.test(signal)) return "nas";
+	if (/raspberry|\brpi\b|\bcm4\b/.test(signal)) return "raspberry-pi";
 	return "server";
+}
+
+/** Resolves the registry key used by Homelab's curated artwork collection. */
+export function getHomelabArtworkCategory(note: LibraryItem): string | null {
+	const classification = getHomelabClassification(note);
+	if (classification.cardKind === "node") {
+		const formFactor = getHomelabFormFactor(note);
+		if (formFactor) {
+			const exact = entityFormFactorArtworkRegistry[`${classification.entity}:${formFactor}`];
+			if (exact) return exact;
+			return formFactorArtworkRegistry.find((definition) => definition.id === formFactor)?.fallbackArtwork ?? null;
+		}
+		const roleOverride = getHomelabNodeCategory(note);
+		return nodeCategoryArtworkRegistry[roleOverride] ?? entityArtworkRegistry[classification.entity] ?? null;
+	}
+	if (classification.cardKind === "specification") return "specification";
+	if (classification.entity === "documentation") return "documentation";
+	const serviceCategory = getHomelabServiceCategory(note);
+	return serviceCategory ? `service-${serviceCategory}` : null;
 }
 
 const platformPatterns: Array<[string, RegExp]> = [
@@ -566,11 +713,13 @@ export function buildHomelabDashboardModel(notes: LibraryItem[]) {
 	for (const item of items) cardKindCounts.set(item.cardKind, (cardKindCounts.get(item.cardKind) ?? 0) + 1);
 	const entityCounts = new Map<HomelabEntity, number>();
 	for (const item of items) entityCounts.set(item.entity, (entityCounts.get(item.entity) ?? 0) + 1);
+	const formFactorCounts = new Map<HomelabFormFactor, number>();
+	for (const item of nodeNotes) if (item.formFactor) formFactorCounts.set(item.formFactor, (formFactorCounts.get(item.formFactor) ?? 0) + 1);
 	const lifecycleCounts = new Map<HomelabLifecycle, number>();
 	for (const item of items) if (item.lifecycle) lifecycleCounts.set(item.lifecycle, (lifecycleCounts.get(item.lifecycle) ?? 0) + 1);
 	const nodeCategories = new Map<HomelabNodeCategory, number>();
 	for (const note of notes.filter((item) => getHomelabCardKind(item) === "node")) {
-		const category = inferNodeCategory(note);
+		const category = getHomelabNodeCategory(note);
 		nodeCategories.set(category, (nodeCategories.get(category) ?? 0) + 1);
 	}
 	const platformCounts = new Map<string, number>();
@@ -597,6 +746,7 @@ export function buildHomelabDashboardModel(notes: LibraryItem[]) {
 		totalDocumentation: cardKindCounts.get("documentation") ?? 0,
 		activeServices,
 		entities: [...entityCounts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "en")).map(([entity, count]) => ({ entity, count })),
+		formFactors: [...formFactorCounts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "en")).map(([formFactor, count]) => ({ formFactor, label: titleCase(formFactor), count })),
 		lifecycles: [...lifecycleCounts].sort((a, b) => b[1] - a[1]).map(([lifecycle, count]) => ({ lifecycle, count })),
 		serviceSplit: [...serviceCategoryCounts.entries()]
 			.sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0], "en"))

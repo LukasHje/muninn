@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildHomelabDashboardModel, buildHomelabRelations, formatHomelabCpu, formatHomelabMemory, formatHomelabNetwork, formatHomelabStorage, getHomelabCardPresentation, getHomelabClassification, getHomelabInspectorMetadataEntries, getHomelabNode, getHomelabMetadataValues, getHomelabServiceCategory } from "src/lib/experiences/homelab";
+import { buildHomelabDashboardModel, buildHomelabRelations, formatHomelabCpu, formatHomelabMemory, formatHomelabNetwork, formatHomelabStorage, getHomelabArtworkCategory, getHomelabCardPresentation, getHomelabClassification, getHomelabFormFactor, getHomelabInspectorMetadataEntries, getHomelabNode, getHomelabNodeCategory, getHomelabMetadataValues, getHomelabServiceCategory } from "src/lib/experiences/homelab";
 import type { LibraryItem } from "src/lib/vault";
 
 function note(relativePath: string, frontmatter: LibraryItem["frontmatter"] = {}): LibraryItem {
@@ -36,6 +36,72 @@ test("Homelab node cards render a resolved local OS asset and preserve inline re
 	assert.equal(ubuntuOs.assetIcon, "/assets/os/ubuntu.svg");
 });
 
+test("Homelab derives node artwork category without overriding frontmatter entity", () => {
+	const titan = note("07 Mitt Homelab/07.05 Hardware_specs/07.05.02 Planned/spec-sheet - Titan (Media Server).md", {
+		type: "server", role: "NAS / media-tank (ZFS storage)", os: "TrueNAS SCALE",
+	});
+	const charon = note("07 Mitt Homelab/07.05 Hardware_specs/07.05.01 Current/spec-sheet - Charon.md", {
+		type: "server", platform: "rpi_cm4_8gb", os: "Raspberry Pi OS Lite",
+	});
+	assert.equal(getHomelabClassification(titan).entity, "server");
+	assert.equal(getHomelabNodeCategory(titan), "nas");
+	assert.equal(getHomelabClassification(charon).entity, "server");
+	assert.equal(getHomelabNodeCategory(charon), "raspberry-pi");
+});
+
+test("Homelab keeps device type independent from physical form factor", () => {
+	const desktop = note("07 Mitt Homelab/07.05 Hardware_specs/07.05.01 Current/Desktop.md", { type: "workstation", form_factor: "desktop" });
+	const laptop = note("07 Mitt Homelab/07.05 Hardware_specs/07.05.01 Current/Laptop.md", { type: "workstation", form_factor: "notebook" });
+	const allInOne = note("07 Mitt Homelab/07.05 Hardware_specs/07.05.01 Current/Studio computer.md", { type: "workstation", form_factor: "all_in_one" });
+	for (const item of [desktop, laptop, allInOne]) {
+		assert.equal(getHomelabClassification(item).entity, "workstation");
+		assert.equal(getHomelabClassification(item).cardKind, "node");
+	}
+	assert.equal(getHomelabFormFactor(laptop), "laptop");
+	assert.deepEqual(getHomelabMetadataValues(laptop, "homelab_form_factor"), ["laptop"]);
+	assert.deepEqual(getHomelabMetadataValues(note("07 Mitt Homelab/07.04 Knowledgebase/Laptop guide.md", { form_factor: "laptop" }), "homelab_form_factor"), []);
+	assert.equal(getHomelabArtworkCategory(desktop), "workstation-desktop");
+	assert.equal(getHomelabArtworkCategory(laptop), "workstation-laptop");
+	assert.equal(getHomelabArtworkCategory(allInOne), "workstation-all-in-one");
+});
+
+test("Homelab artwork prefers form factor before role overrides and preserves legacy fallbacks", () => {
+	const towerNas = note("07 Mitt Homelab/07.05 Hardware_specs/07.05.01 Current/Tower NAS.md", { type: "server", form_factor: "tower", role: "NAS with ZFS" });
+	const rackServer = note("07 Mitt Homelab/07.05 Hardware_specs/07.05.01 Current/Rack server.md", { type: "server", form_factor: "rackmount" });
+	const piWorkstation = note("07 Mitt Homelab/07.05 Hardware_specs/07.05.01 Current/Pi workstation.md", { type: "workstation", form_factor: "mini-pc" });
+	const legacyNas = note("07 Mitt Homelab/07.05 Hardware_specs/07.05.01 Current/Legacy NAS.md", { type: "server", role: "NAS with ZFS" });
+	assert.equal(getHomelabArtworkCategory(towerNas), "server-tower");
+	assert.equal(getHomelabArtworkCategory(rackServer), "server-rack");
+	assert.equal(getHomelabArtworkCategory(piWorkstation), "workstation-mini-pc");
+	assert.equal(getHomelabArtworkCategory(legacyNas), "nas");
+});
+
+test("Homelab artwork resolves from both entity and form factor", () => {
+	const server = (formFactor: string) => note(`07 Mitt Homelab/07.05 Hardware_specs/07.05.01 Current/Server ${formFactor}.md`, { type: "server", form_factor: formFactor });
+	const workstation = (formFactor: string) => note(`07 Mitt Homelab/07.05 Hardware_specs/07.05.01 Current/Workstation ${formFactor}.md`, { type: "workstation", form_factor: formFactor });
+	assert.equal(getHomelabArtworkCategory(server("rack")), "server-rack");
+	assert.equal(getHomelabArtworkCategory(server("tower")), "server-tower");
+	assert.equal(getHomelabArtworkCategory(server("desktop")), "server-desktop");
+	assert.equal(getHomelabArtworkCategory(server("mini-pc")), "server-mini-pc");
+	assert.equal(getHomelabArtworkCategory(workstation("tower")), "workstation-desktop");
+	assert.equal(getHomelabArtworkCategory(workstation("laptop")), "workstation-laptop");
+	assert.equal(getHomelabArtworkCategory(workstation("all-in-one")), "workstation-all-in-one");
+	assert.equal(getHomelabArtworkCategory(workstation("mini-pc")), "workstation-mini-pc");
+	assert.equal(getHomelabArtworkCategory(note("07 Mitt Homelab/07.05 Hardware_specs/07.05.01 Current/Phone.md", { type: "smartphone", form_factor: "handheld" })), "smartphone");
+	assert.equal(getHomelabArtworkCategory(note("07 Mitt Homelab/07.05 Hardware_specs/07.05.01 Current/Tablet.md", { type: "tablet", form_factor: "tablet" })), "tablet");
+});
+
+test("Homelab resolves embedded edge devices without changing their entity", () => {
+	const satellite = note("07 Mitt Homelab/07.05 Hardware_specs/07.05.01 Current/AI satellite.md", {
+		type: "server",
+		form_factor: "edge-device",
+		role: "Distributed AI satellite",
+	});
+	assert.equal(getHomelabClassification(satellite).entity, "server");
+	assert.equal(getHomelabFormFactor(satellite), "embedded");
+	assert.equal(getHomelabArtworkCategory(satellite), "embedded");
+});
+
 test("Homelab derives lifecycle, but not entity, from its numbered folder structure", () => {
 	const service = note("07 Mitt Homelab/07.02 Services/Grafana/Dashboards/Overview.md");
 	const planned = note("07 Mitt Homelab/07.05 Hardware_specs/07.05.02 Planned/spec-sheet - Titan.md", { cpu: "Ryzen", ram: "64 GB" });
@@ -46,7 +112,7 @@ test("Homelab derives lifecycle, but not entity, from its numbered folder struct
 	assert.equal(getHomelabNode(planned).operationalStatus, "planned");
 });
 
-test("Homelab selects every iteration 2 card kind with frontmatter priority", () => {
+test("Homelab selects every iteration 2 card kind within documentation boundaries", () => {
 	assert.equal(getHomelabNode(note("07 Mitt Homelab/07.02 Services/Jellyfin.md")).cardKind, "service");
 	assert.equal(getHomelabNode(note("07 Mitt Homelab/07.02 Services/Grafana/Index.md")).cardKind, "service");
 	assert.equal(getHomelabNode(note("07 Mitt Homelab/07.02 Services/Grafana/Configuration.md")).cardKind, "documentation");
@@ -54,9 +120,9 @@ test("Homelab selects every iteration 2 card kind with frontmatter priority", ()
 	assert.equal(getHomelabNode(note("07 Mitt Homelab/07.02 Services/Exporters/README_exporter.md")).cardKind, "documentation");
 	assert.equal(getHomelabNode(note("07 Mitt Homelab/07.99 Inspo/Mother of dashboards.md")).cardKind, "documentation");
 	assert.equal(getHomelabNode(note("07 Mitt Homelab/07.05 Hardware_specs/07.05.98 Parts_Database/hdd.md", { type: "part" })).cardKind, "specification");
-	assert.equal(getHomelabNode(note("07 Mitt Homelab/07.00 Dashboard/Homelab Architecture (PAD).md")).cardKind, "dashboard");
+	assert.equal(getHomelabNode(note("07 Mitt Homelab/07.00 Dashboard/Homelab Architecture (PAD).md")).cardKind, "documentation");
 	assert.equal(getHomelabNode(note("07 Mitt Homelab/07.04 Knowledgebase/VLAN Guide.md")).cardKind, "documentation");
-	assert.equal(getHomelabNode(note("07 Mitt Homelab/07.04 Knowledgebase/VLAN Guide.md", { type: "dashboard" })).cardKind, "dashboard");
+	assert.equal(getHomelabNode(note("07 Mitt Homelab/07.04 Knowledgebase/VLAN Guide.md", { type: "dashboard" })).cardKind, "documentation");
 });
 
 test("Homelab keeps entity, lifecycle, operational status and card kind independent", () => {
@@ -78,6 +144,90 @@ test("Homelab inventory and lifecycle folders never promote components to nodes"
 	assert.equal(getHomelabClassification(currentKeyboard).entity, "part");
 	assert.equal(getHomelabClassification(inventoryHba).entity, "part");
 	assert.equal(getHomelabClassification(archivedDisplay).entity, "display");
+});
+
+test("Homelab scopes UPS specifications to Hardware_specs inventory", () => {
+	const currentUps = note("07 Mitt Homelab/07.05 Hardware_specs/07.05.01 Current/spec-sheet - Backup System (UPS).md", { type: "ups" });
+	const archivedApc = note("07 Mitt Homelab/07.05 Hardware_specs/07.05.99 Archived_Specs/zzzOLD_specs - backup system (APC).md");
+	const explicitGuide = note("07 Mitt Homelab/07.03 Operations/UPS replacement guide.md", { type: "ups" });
+	const incidentalGuide = note("07 Mitt Homelab/07.03 Operations/APC backup system notes.md");
+	assert.deepEqual(getHomelabClassification(currentUps), { entity: "ups", lifecycle: "current", operationalStatus: "active", cardKind: "specification" });
+	assert.deepEqual(getHomelabClassification(archivedApc), { entity: "ups", lifecycle: "archived", operationalStatus: "archived", cardKind: "specification" });
+	for (const item of [explicitGuide, incidentalGuide]) {
+		assert.equal(getHomelabClassification(item).entity, "documentation");
+		assert.equal(getHomelabClassification(item).cardKind, "documentation");
+	}
+});
+
+test("Homelab does not classify notes as displays from incidental content mentions", () => {
+	const index = note("07 Mitt Homelab/07.00 Dashboard/07.00.00 Index.md");
+	index.content = "A dashboard displaying all nodes and monitoring services.";
+	const exporter = note("07 Mitt Homelab/07.02 Services/Monitoring/Exporters/jellyfin_exporter.py.md");
+	exporter.content = "Monitor exporter health and display collected metrics.";
+	const inspiration = note("07 Mitt Homelab/07.99 Inspo/Cabinet server and tablet.md");
+	inspiration.content = "A wall-mounted display beside the rack.";
+	assert.equal(getHomelabClassification(index).entity, "documentation");
+	assert.equal(getHomelabClassification(exporter).entity, "documentation");
+	assert.equal(getHomelabClassification(inspiration).entity, "documentation");
+});
+
+test("Homelab Knowledgebase is always documentation", () => {
+	const truenasGuide = note("07 Mitt Homelab/07.04 Knowledgebase/TrueNAS/SMB Guide.md");
+	truenasGuide.content = "TrueNAS NAS server storage configuration.";
+	const piGuide = note("07 Mitt Homelab/07.04 Knowledgebase/Raspberry Pi Fan Setup.md", { type: "raspberry-pi" });
+	assert.deepEqual(getHomelabClassification(truenasGuide), {
+		entity: "documentation", lifecycle: null, operationalStatus: null, cardKind: "documentation",
+	});
+	assert.deepEqual(getHomelabClassification(piGuide), {
+		entity: "documentation", lifecycle: null, operationalStatus: null, cardKind: "documentation",
+	});
+});
+
+test("Homelab Infrastructure is always documentation", () => {
+	const firewall = note("07 Mitt Homelab/07.01 Infrastructure/Firewall.md");
+	firewall.content = "OPNsense router and TrueNAS firewall design.";
+	const topology = note("07 Mitt Homelab/07.01 Infrastructure/network-topology.md", { type: "dashboard" });
+	assert.equal(getHomelabClassification(firewall).entity, "documentation");
+	assert.equal(getHomelabClassification(topology).entity, "documentation");
+	assert.equal(getHomelabClassification(topology).cardKind, "documentation");
+});
+
+test("Homelab Dashboard and Resources folders are always documentation", () => {
+	const architecture = note("07 Mitt Homelab/07.00 Dashboard/Homelab Architecture.md", { type: "dashboard" });
+	const serverNames = note("07 Mitt Homelab/07.97 Resources/server names.md");
+	serverNames.content = "Naming examples for NAS and server nodes.";
+	for (const item of [architecture, serverNames]) {
+		assert.equal(getHomelabClassification(item).entity, "documentation");
+		assert.equal(getHomelabClassification(item).cardKind, "documentation");
+	}
+});
+
+test("Homelab nodes can only originate from Hardware_specs", () => {
+	const hardwareNode = note("07 Mitt Homelab/07.05 Hardware_specs/07.05.01 Current/Atlas.md", { type: "nas" });
+	const misplacedExplicitNode = note("07 Mitt Homelab/07.99 Inspo/Example server.md", { type: "server" });
+	const machineLikeNote = note("07 Mitt Homelab/07.03 Operations/TrueNAS recovery.md");
+	machineLikeNote.content = "TrueNAS NAS hostname atlas with CPU and RAM details.";
+	assert.equal(getHomelabClassification(hardwareNode).cardKind, "node");
+	for (const item of [misplacedExplicitNode, machineLikeNote]) {
+		assert.equal(getHomelabClassification(item).entity, "documentation");
+		assert.equal(getHomelabClassification(item).cardKind, "documentation");
+	}
+});
+
+test("Homelab classification precedence matrix preserves folder invariants", () => {
+	const cases: Array<[string, LibraryItem, string, string]> = [
+		["documentation boundary beats explicit server", note("07 Mitt Homelab/07.01 Infrastructure/Server design.md", { type: "server" }), "documentation", "documentation"],
+		["service root beats machine semantics", note("07 Mitt Homelab/07.02 Services/TrueNAS Agent.md", { type: "service", category: "network" }), "service", "service"],
+		["service subtree cannot become a node", note("07 Mitt Homelab/07.02 Services/Grafana/Server setup.md", { type: "server" }), "documentation", "documentation"],
+		["hardware inventory permits explicit nodes", note("07 Mitt Homelab/07.05 Hardware_specs/07.05.02 Planned/Titan.md", { type: "server" }), "server", "node"],
+		["parts inventory beats server vocabulary", note("07 Mitt Homelab/07.05 Hardware_specs/07.05.98 Parts_Database/NIC.md"), "part", "specification"],
+	];
+	cases[4][1].content = "Server network adapter for a TrueNAS node.";
+	for (const [message, item, entity, cardKind] of cases) {
+		const classification = getHomelabClassification(item);
+		assert.equal(classification.entity, entity, message);
+		assert.equal(classification.cardKind, cardKind, message);
+	}
 });
 
 test("Homelab entity priority uses explicit frontmatter rather than globally inferred note type", () => {
@@ -126,6 +276,7 @@ test("Homelab derives a split from unique service types", () => {
 	assert.equal(getHomelabServiceCategory(pihole), "utilities");
 	assert.equal(getHomelabServiceCategory(note("07 Mitt Homelab/07.02 Services/Nextcloud.md")), "applications");
 	assert.equal(getHomelabServiceCategory(note("07 Mitt Homelab/07.02 Services/Paperless.md", { category: "Self-hosted Applications" })), "applications");
+	assert.equal(getHomelabServiceCategory(note("07 Mitt Homelab/07.02 Services/Pi-hole/Pi-hole + Unbound.md", { type: "service", category: "network" })), "networking");
 	assert.equal(getHomelabServiceCategory(note("07 Mitt Homelab/07.02 Services/Woodpecker CI.md")), "development");
 	assert.equal(getHomelabServiceCategory(note("07 Mitt Homelab/07.02 Services/ESPHome.md")), "automation");
 	assert.equal(getHomelabServiceCategory(note("07 Mitt Homelab/07.02 Services/Custom Tool.md", { category: "Generic Service" })), "other");
@@ -158,10 +309,14 @@ test("Homelab service identity ignores organizational category folders", () => {
 
 test("Homelab service lifecycle never canonicalizes active as owned", () => {
 	const active = note("07 Mitt Homelab/07.02 Services/Immich.md", { status: "active" });
+	const standby = note("07 Mitt Homelab/07.02 Services/Forgejo.md", { status: "standby" });
 	const offline = note("07 Mitt Homelab/07.02 Services/Jellyfin.md", { status: "offline" });
 	const archived = note("07 Mitt Homelab/07.02 Services/Old App.md", { status: "archived" });
 	const invalid = note("07 Mitt Homelab/07.02 Services/Owned App.md", { status: "owned" });
 	assert.equal(getHomelabNode(active).operationalStatus, "active");
+	assert.equal(getHomelabNode(standby).operationalStatus, "standby");
+	assert.deepEqual(getHomelabMetadataValues(standby, "homelab_status"), ["standby"]);
+	assert.equal(getHomelabInspectorMetadataEntries(standby, ["status"])[0]?.value, "Standby");
 	assert.equal(getHomelabNode(offline).operationalStatus, "offline");
 	assert.equal(getHomelabNode(archived).operationalStatus, "archived");
 	assert.equal(getHomelabNode(invalid).operationalStatus, null);
@@ -189,18 +344,20 @@ test("Homelab compacts raw node specifications into comparable card facts", () =
 test("Homelab iteration 3 aggregates card kinds, distributions and conditional storage", () => {
 	const model = buildHomelabDashboardModel([
 		note("07 Mitt Homelab/07.05 Hardware_specs/07.05.01 Current/spec-sheet - Atlas.md", { type: "nas", hostname: "atlas", os: "TrueNAS SCALE" }),
-		note("07 Mitt Homelab/07.05 Hardware_specs/07.05.01 Current/spec-sheet - Pi.md", { type: "raspberry-pi", os: "Linux" }),
+		note("07 Mitt Homelab/07.05 Hardware_specs/07.05.01 Current/spec-sheet - Pi.md", { type: "raspberry-pi", os: "Linux", form_factor: "mini-pc" }),
+		note("07 Mitt Homelab/07.05 Hardware_specs/07.05.01 Current/Field workstation.md", { type: "workstation", form_factor: "laptop" }),
 		note("07 Mitt Homelab/07.02 Services/Jellyfin.md", { platform: "Docker", status: "active" }),
 		note("07 Mitt Homelab/07.05 Hardware_specs/07.05.98 Parts_Database/disk.md", { type: "part", category: "storage", capacity: "12 TB", quantity: "2", pool: "tank", vdev: "raidz1" }),
 		note("07 Mitt Homelab/07.04 Knowledgebase/VLAN Guide.md"),
 	]);
-	assert.equal(model.totalNodes, 2);
+	assert.equal(model.totalNodes, 3);
 	assert.equal(model.totalServices, 1);
 	assert.equal(model.totalSpecifications, 1);
 	assert.equal(model.totalDocumentation, 1);
-	assert.deepEqual(model.lifecycles, [{ lifecycle: "current", count: 2 }]);
+	assert.deepEqual(model.lifecycles, [{ lifecycle: "current", count: 3 }]);
 	assert.ok(model.entities.some((item) => item.entity === "part" && item.count === 1));
-	assert.deepEqual(model.nodeDistribution, [{ value: "nas", label: "NAS", count: 1 }, { value: "raspberry-pi", label: "Raspberry Pi", count: 1 }]);
+	assert.deepEqual(model.formFactors, [{ formFactor: "laptop", label: "Laptop", count: 1 }, { formFactor: "mini-pc", label: "Mini Pc", count: 1 }]);
+	assert.deepEqual(model.nodeDistribution, [{ value: "nas", label: "NAS", count: 1 }, { value: "raspberry-pi", label: "Raspberry Pi", count: 1 }, { value: "workstation", label: "Workstation", count: 1 }]);
 	assert.ok(model.platformDistribution.some((item) => item.label === "Docker" && item.count === 1));
 	assert.deepEqual(model.documentationCoverage, [{ label: "Networking", count: 1 }]);
 	assert.deepEqual(model.storageOverview, { pools: 1, arrays: 1, nas: 1, totalStorage: "24 TB" });

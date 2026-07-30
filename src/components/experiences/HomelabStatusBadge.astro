@@ -5,7 +5,7 @@ const normalized = value.trim().toLocaleLowerCase("en").replace(/[-_]+/g, " ");
 const displayValue = normalized.toLocaleUpperCase("en");
 const palette = normalized === "active" || normalized === "owned"
 	? { color: "#6C8061", background: "rgba(108,128,97,.16)", border: "rgba(108,128,97,.46)" }
-	: normalized === "planned"
+	: normalized === "planned" || normalized === "standby"
 		? { color: "#657986", background: "rgba(101,121,134,.2)", border: "rgba(101,121,134,.55)" }
 		: normalized === "maintenance"
 			? { color: "#B38A55", background: "rgba(179,138,85,.16)", border: "rgba(179,138,85,.46)" }

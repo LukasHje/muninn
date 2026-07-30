@@ -25,6 +25,7 @@ const nodeGradient = distributionGradient(model.nodeDistribution, nodeTotal);
 const maxPlatform = Math.max(...model.platformDistribution.map((item) => item.count), 1);
 const maxCoverage = Math.max(...model.documentationCoverage.map((item) => item.count), 1);
 function href(key: string, value: string | null) { const p = new URLSearchParams(Astro.url.searchParams); value ? p.set(`filter-${key}`, value) : p.delete(`filter-${key}`); p.delete("selected"); p.delete("inspector"); return `${Astro.url.pathname}?${p.toString()}#experience-library`; }
+function hardwareFilterHref(key: "homelab_entity" | "homelab_form_factor" | null, value: string | null) { const p = new URLSearchParams(Astro.url.searchParams); p.delete("filter-homelab_entity"); p.delete("filter-homelab_form_factor"); if (key && value) p.set(`filter-${key}`, value); p.delete("selected"); p.delete("inspector"); return `${Astro.url.pathname}?${p.toString()}#experience-library`; }
 ---
 <section class="homelab-dashboard" aria-label="Homelab overview">
 	<div class="homelab-stats-row">
@@ -37,7 +38,7 @@ function href(key: string, value: string | null) { const p = new URLSearchParams
 	</div>
 
 	<div class="homelab-controls-row">
-		<nav class="homelab-filter-panel" aria-label="Homelab filters"><a href={href("homelab_entity", null)} class:list={["filter", !filterState.metadata.homelab_entity && "active"]}><Icon name="layout-grid" class="h-3.5 w-3.5" />All</a>{model.entities.map((item) => <a href={href("homelab_entity", item.entity)} class:list={["filter", filterState.metadata.homelab_entity === item.entity && "active"]}>{item.entity} <span>{item.count}</span></a>)}</nav>
+		<nav class="homelab-filter-panel" aria-label="Homelab filters"><a href={hardwareFilterHref(null, null)} class:list={["filter", !filterState.metadata.homelab_entity && !filterState.metadata.homelab_form_factor && "active"]}><Icon name="layout-grid" class="h-3.5 w-3.5" />All</a>{model.entities.map((item) => <a href={hardwareFilterHref("homelab_entity", item.entity)} class:list={["filter", filterState.metadata.homelab_entity === item.entity && "active"]}>{item.entity} <span>{item.count}</span></a>)}{model.formFactors.map((item) => <a href={hardwareFilterHref("homelab_form_factor", item.formFactor)} class:list={["filter", filterState.metadata.homelab_form_factor === item.formFactor && "active"]}>{item.label} <span>{item.count}</span></a>)}</nav>
 		<div class="homelab-browser-controls"><ExperienceBrowserControls sortBy={sortBy} sortOrder={sortOrder} layout={layout} /></div>
 	</div>
 </section>

@@ -77,3 +77,4 @@ The image is an Astro Node standalone server, not a static nginx image. Muninn n
 - `npm run build` builds the production server output.
 - `npm run start` runs the built Astro Node standalone server.
 - `npm run preview` previews the built app locally.
+- `npm run update-os-icons` downloads the curated OS SVG sources, optimizes them with SVGO, and regenerates the local offline OS asset registry. Read more: `docs/os-asset-registry`

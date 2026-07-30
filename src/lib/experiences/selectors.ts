@@ -323,6 +323,19 @@ export function getInspectorImage(
 	);
 }
 
+export function resolveExperienceCategoryArtwork(
+	definition: ExperienceDefinition,
+	category: string | null,
+	fallbackCategory: string | null = null
+) {
+	const artwork = definition.assets.placeholderThumbnailsByCategory;
+	return (
+		(category ? artwork?.[category] : null)
+		?? (fallbackCategory ? artwork?.[fallbackCategory] : null)
+		?? definition.assets.placeholderThumbnail
+	);
+}
+
 export function isPlaceholderExperienceImage(imageUrl: string | null, definition: ExperienceDefinition) {
 	const placeholders = [
 		definition.assets.placeholderThumbnail,

@@ -4,18 +4,23 @@ import Icon from "src/components/Icon.astro";
 import InspectorHeader from "src/components/experiences/InspectorHeader.astro";
 import MetadataRow from "src/components/experiences/MetadataRow.astro";
 import type { InspectorSection } from "src/lib/experiences/inspector";
-import { buildHomelabRelations, getHomelabCardPresentation, getHomelabInspectorMetadataEntries } from "src/lib/experiences/homelab";
+import { buildHomelabRelations, getHomelabArtworkCategory, getHomelabCardPresentation, getHomelabClassification, getHomelabInspectorMetadataEntries, getHomelabServiceCategory } from "src/lib/experiences/homelab";
 import type { ExperienceDefinition } from "src/lib/experiences/registry";
-import { getInspectorImage, getNoteSummary, isPlaceholderExperienceImage } from "src/lib/experiences/selectors";
+import { getNoteSummary, resolveExperienceCategoryArtwork } from "src/lib/experiences/selectors";
 import type { LibraryItem } from "src/lib/vault";
 
 interface Props { definition: ExperienceDefinition; note: LibraryItem; sections: InspectorSection[]; noteHref: string; redirectTo: string; experienceNotes?: LibraryItem[] }
 const { definition, note, noteHref, redirectTo, experienceNotes = [] } = Astro.props;
 const card = getHomelabCardPresentation(note);
 const metadataEntries = getHomelabInspectorMetadataEntries(note, definition.inspectorMetadata);
-const imageUrl = getInspectorImage(note, definition);
+const classification = getHomelabClassification(note);
+const serviceCategory = classification.entity === "service" ? getHomelabServiceCategory(note) : null;
+const imageUrl = resolveExperienceCategoryArtwork(
+	definition,
+	getHomelabArtworkCategory(note),
+	serviceCategory ? "service-other" : null
+);
 const summary = getNoteSummary(note);
-const isPlaceholderImage = isPlaceholderExperienceImage(imageUrl, definition);
 const relations = buildHomelabRelations(note, experienceNotes);
 ---
 
@@ -26,9 +31,9 @@ const relations = buildHomelabRelations(note, experienceNotes);
 	</InspectorHeader>
 	<div class="mt-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-[.14em] text-sky-700"><Icon name={card.icon} class="h-4 w-4" /><span>{card.kind}</span></div>
 
-	<div class="grid gap-4 pt-4 md:grid-cols-[minmax(0,1fr)_15.5rem] md:items-start">
-		<div class="flex min-h-52 items-center justify-center overflow-hidden rounded-[10px] border border-slate-300 bg-slate-100 p-5">{imageUrl ? <img src={imageUrl} alt="" class:list={["max-h-72 w-full object-contain", isPlaceholderImage && "opacity-75 mix-blend-multiply"]} /> : <Icon name={card.icon} class="h-16 w-16 text-sky-700/45" />}</div>
-		{metadataEntries.length > 0 && <div class="overflow-hidden rounded-[10px] border border-slate-300 bg-white/65"><dl class="divide-y divide-slate-200 px-4 py-2">{metadataEntries.map((entry) => <MetadataRow metadataKey={entry.key} icon={entry.icon} label={entry.label} value={entry.value} />)}</dl></div>}
+	<div class="homelab-inspector__content">
+		<div class="homelab-inspector__artwork">{imageUrl ? <img src={imageUrl} alt="" loading="lazy" /> : <Icon name={card.icon} class="h-16 w-16 text-sky-700/45" />}</div>
+		{metadataEntries.length > 0 && <div class="homelab-inspector__metadata"><dl class="divide-y divide-slate-200 px-4 py-2">{metadataEntries.map((entry) => <MetadataRow metadataKey={entry.key} icon={entry.icon} label={entry.label} value={entry.value} />)}</dl></div>}
 	</div>
 	<div class="my-6 border-t border-slate-300" aria-hidden="true"></div>
 	{summary && <p class="text-sm leading-8 text-slate-700">{summary}</p>}
@@ -37,5 +42,9 @@ const relations = buildHomelabRelations(note, experienceNotes);
 
 <style>
 	.homelab-inspector__action{display:inline-flex;height:3rem;width:3rem;align-items:center;justify-content:center;color:#475569;transition:color 180ms ease}.homelab-inspector__action:hover{color:#0369a1}
+	.homelab-inspector__content{display:grid;gap:.85rem;padding-top:1rem}
+	.homelab-inspector__artwork{display:flex;width:100%;aspect-ratio:16/7;max-height:15rem;align-items:center;justify-content:center;overflow:hidden;border:1px solid #cbd5e1;border-radius:10px;background:#101b26}
+	.homelab-inspector__artwork img{width:100%;height:100%;object-fit:cover}
+	.homelab-inspector__metadata{width:100%;overflow:hidden;border:1px solid #cbd5e1;border-radius:10px;background:rgba(255,255,255,.65)}
 	.homelab-relations{display:grid;gap:.75rem;margin-top:1.25rem}.homelab-relations section{overflow:hidden;border:1px solid #cbd5e1;border-radius:10px;background:rgba(255,255,255,.58)}.homelab-relations h3{padding:.65rem .8rem;border-bottom:1px solid #e2e8f0;font-size:10px;font-weight:750;text-transform:uppercase;letter-spacing:.12em;color:#0369a1}.homelab-relations section>div{display:grid}.homelab-relations a{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:.55rem;padding:.62rem .8rem;border-top:1px solid #e2e8f0;color:#334155;transition:background 160ms,color 160ms}.homelab-relations a:first-child{border-top:0}.homelab-relations a:hover{background:rgba(14,165,233,.08);color:#0369a1}.homelab-relations a span{overflow:hidden;font-size:12px;font-weight:650;text-overflow:ellipsis;white-space:nowrap}.homelab-relations a small{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8}
 </style>

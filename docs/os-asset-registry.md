@@ -23,6 +23,8 @@ os: TrueNAS SCALE Dragonfish 24.04
 
 Both forms resolve to the TrueNAS asset. If both an inline suffix and `os_version` exist, non-duplicate details are retained.
 
+Individual registry entries may suppress incidental inline suffixes when they are not useful card metadata. CachyOS uses this policy, so values such as `CachyOS (x86_64)` and other inline architecture notes display simply as `CachyOS`. A separately supplied `os_version` remains visible.
+
 ## Updating assets
 
 Run this explicitly during development:
@@ -31,7 +33,7 @@ Run this explicitly during development:
 npm run update-os-icons
 ```
 
-The utility in `scripts/update-os-icons.ts` downloads curated Simple Icons artwork where it is available, uses bundled curated artwork where an appropriate upstream icon is unavailable, optimizes all SVGs with SVGO, writes both asset directories, regenerates `src/lib/os-registry.ts`, and prints a concise report. Review and commit both asset copies and the generated registry.
+The utility in `scripts/update-os-icons.ts` downloads curated Simple Icons artwork where it is available, may use an explicit official project-owned SVG source such as CachyOS when Simple Icons has no entry, and uses bundled curated artwork where an appropriate upstream icon is unavailable. It optimizes all SVGs with SVGO, writes both asset directories, regenerates `src/lib/os-registry.ts`, and prints a concise report. Review and commit both asset copies and the generated registry.
 
 This command is deliberately absent from `prebuild`, startup, and runtime paths. Production builds use only committed local files.
 
