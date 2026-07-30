@@ -125,8 +125,9 @@ The `recipe` family uses an editorial hierarchy optimized for meal discovery:
 - a 4:3 cover or shared image fallback
 - the shared favorite control over the image
 - title followed by at most two category or cuisine tags
-- one compact facts row for rating, servings, and cooking or total time
+- one compact facts row for rating, servings, and cooking or total time; cookie recipes expressed as pieces use the cookie icon instead of the people icon
 - an optional lifecycle footer for the normalized `Made` or `To try` recipe status
+- a compact list presentation at every viewport size with a full-height, cropped cover at left, the same information hierarchy in the center, and the favorite action in the top-right corner
 
 Grid cards deliberately omit the note summary. The full note and contextual inspector remain responsible for descriptive content.
 

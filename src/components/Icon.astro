@@ -37,6 +37,22 @@ const viewBox = specialViewBoxes[name] ?? "0 0 24 24";
 			<path d="M5.5 9.5V20h13V9.5"></path>
 		</>
 	)}
+	{name === "bluetooth" && <path d="m7 7 10 10-5 5V2l5 5L7 17"></path>}
+	{name === "bluetooth-off" && (
+		<>
+			<path d="m17 17-5 5V12l-5 5"></path>
+			<path d="m2 2 20 20"></path>
+			<path d="M14.5 9.5 17 7l-5-5v4.5"></path>
+		</>
+	)}
+	{name === "wifi" && (
+		<>
+			<path d="M12 20h.01"></path>
+			<path d="M2 8.82a15 15 0 0 1 20 0"></path>
+			<path d="M5 12.859a10 10 0 0 1 14 0"></path>
+			<path d="M8.5 16.429a5 5 0 0 1 7 0"></path>
+		</>
+	)}
 	{name === "file-text" && (
 		<>
 			<path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7z"></path>

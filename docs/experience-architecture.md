@@ -109,7 +109,9 @@ An Experience may provide a dashboard through the named `dashboard` slot in `Exp
 
 The dashboard is part of the fixed Experience chrome. The existing Library workspace remains the only vertical scroll owner. On narrow screens, dashboard widgets scroll horizontally so they do not consume unbounded vertical space. In a short landscape viewport, the optional dashboard may be omitted and the hero compressed to protect a usable Library scroll region; discovery chrome must never reduce the Library to zero height.
 
-On phone-sized viewports, `ExperienceView` owns one shared discovery-panel toggle around the hero, statistics, filters, browser controls, and optional dashboard. The expanded panel exposes a top-right collapse action; the collapsed presentation is a single compact row that restores the complete panel. This is presentation state only: it must not enter the URL, reset filters, replace domain controls, or introduce another scroll owner. Individual Experiences may style their content inside the panel, but must not implement a separate mobile collapse controller.
+On phone-sized viewports, `ExperienceView` owns one shared discovery-panel toggle around the hero, statistics, filters, browser controls, and optional dashboard. The expanded Hero exposes a top-right collapse action. Collapsing compresses that same atmospheric Hero into a 70–100 pixel dashboard header: registered artwork remains cropped behind a dark gradient, while title, up to three summary statistics, and the full-width `Overview & Filters` affordance remain visible. It must never be replaced by a separate white accordion or disclosure card. This is presentation state only: it must not enter the URL, reset filters, replace domain controls, or introduce another scroll owner. Individual Experiences may style their content inside the panel, but must not implement a separate mobile collapse controller.
+
+The compact preference is session-scoped per Experience so filter, sorting, layout, and inspector navigation within the same Experience retain the chosen Hero size. Navigating to another application surface clears that Experience preference; returning later starts expanded.
 
 Recipes uses a compact seven-metric overview followed by a cuisine percentage distribution instead of the general widget carousel. The overview may overflow horizontally on narrow screens, but remains fixed Experience chrome and does not acquire vertical scroll ownership.
 
@@ -133,7 +135,7 @@ The URL contract is:
 - `order=asc|desc`
 - `layout=grid|list`
 
-The shared controller exposes two sort buttons. Its date button cycles through updated newest, updated oldest, created newest, and created oldest. The alphabetical button toggles between A–Z and Z–A. Grid and list buttons switch the shared Experience card-list layout. Browser-control navigation preserves active filters while clearing inspector selection and transient Experience scroll state.
+The shared controller exposes two sort buttons. Its date button cycles through updated newest, updated oldest, created newest, and created oldest. The alphabetical button toggles between A–Z and Z–A. Grid and list buttons switch the existing card-list presentation in place without refreshing or rerendering the Experience page; the URL parameter is replaced so reloads retain the selected layout. The toggle preserves active filters while clearing inspector selection and transient Experience scroll state.
 
 ## Boundaries
 

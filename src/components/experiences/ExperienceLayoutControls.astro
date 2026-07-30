@@ -24,6 +24,7 @@ function buildLayoutHref(value: "grid" | "list") {
 	<a
 		href={buildLayoutHref("grid")}
 		class="experience-layout-button"
+		data-experience-layout-option="grid"
 		aria-current={layout === "grid" ? "true" : undefined}
 		aria-label="Grid view"
 		title="Grid view"
@@ -33,6 +34,7 @@ function buildLayoutHref(value: "grid" | "list") {
 	<a
 		href={buildLayoutHref("list")}
 		class="experience-layout-button"
+		data-experience-layout-option="list"
 		aria-current={layout === "list" ? "true" : undefined}
 		aria-label="List view"
 		title="List view"

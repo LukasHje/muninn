@@ -101,6 +101,8 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 	data-initial-selected={initialInspectorNote?.id ?? ""}
 	data-inspector-endpoint={inspectorEndpoint}
 	data-experience-total-count={totalFilteredNotes}
+	data-experience-id={definition.id}
+	data-experience-card-family={definition.cardFamily}
 >
 	<div class="experience-canvas" data-experience-workspace>
 		<div class="experience-discovery" data-experience-discovery data-collapsed="false">
@@ -113,21 +115,34 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 				aria-label={`Collapse ${definition.title} overview and filters`}
 				hidden
 			>
-				<span aria-hidden="true">&minus;</span>
+				<Icon name="chevron-down" class="h-4 w-4 rotate-180" />
 			</button>
 
 			<button
 				type="button"
-				class="experience-discovery-summary"
+				class="experience-discovery-compact"
 				data-experience-discovery-expand
 				aria-controls={discoveryContentId}
 				aria-expanded="false"
 				aria-label={`Expand ${definition.title} overview and filters`}
-				hidden
 			>
-				<span class="experience-discovery-summary-title">{definition.title}</span>
-				<span class="experience-discovery-summary-label">Overview &amp; filters</span>
-				<Icon name="chevron-down" class="h-4 w-4" />
+				<span class="experience-discovery-compact-main">
+					<span class="experience-discovery-compact-title">{definition.title}</span>
+					<span class="experience-discovery-compact-statistics">
+						{
+							statistics.slice(0, 3).map((statistic) => (
+								<span>
+									<strong>{statistic.value}</strong>
+									{statistic.label}
+								</span>
+							))
+						}
+					</span>
+				</span>
+				<span class="experience-discovery-compact-action">
+					<span>Overview &amp; Filters</span>
+					<Icon name="chevron-down" class="h-4 w-4" />
+				</span>
 			</button>
 
 			<div
@@ -316,6 +331,7 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 
 			const workspace = root.querySelector("[data-experience-workspace]");
 			const notesScroll = root.querySelector(".experience-notes-scroll");
+				const cardList = root.querySelector("[data-experience-card-list]");
 				const inspector = root.querySelector("[data-experience-inspector-root]");
 				const backdrop = root.querySelector("[data-experience-inspector-backdrop]");
 				const inspectorPanelsRoot = root.querySelector("[data-experience-inspector-panels]");
@@ -349,40 +365,71 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 				discoveryCollapse instanceof HTMLButtonElement &&
 				discoveryExpand instanceof HTMLButtonElement
 			) {
-				let isDiscoveryCollapsed = false;
+				const experienceId = root.dataset.experienceId ?? "";
+				const discoveryStorageKey = `muninn:experience-discovery:${experienceId}`;
+				let isDiscoveryCollapsed = sessionStorage.getItem(discoveryStorageKey) === "collapsed";
 
 				const syncDiscoveryPresentation = () => {
 					const isMobile = mobileDiscoveryQuery.matches;
-					const hideContent = isMobile && isDiscoveryCollapsed;
+					const compact = isMobile && isDiscoveryCollapsed;
 
-					discovery.dataset.collapsed = hideContent ? "true" : "false";
-					discoveryContent.hidden = hideContent;
-					discoveryCollapse.hidden = !isMobile || hideContent;
-					discoveryExpand.hidden = !isMobile || !hideContent;
-					discoveryCollapse.setAttribute("aria-expanded", hideContent ? "false" : "true");
-					discoveryExpand.setAttribute("aria-expanded", hideContent ? "false" : "true");
+					discovery.dataset.collapsed = compact ? "true" : "false";
+					discoveryContent.setAttribute("aria-hidden", compact ? "true" : "false");
+					discoveryContent.inert = compact;
+					discoveryCollapse.hidden = !isMobile || compact;
+					discoveryCollapse.setAttribute("aria-expanded", compact ? "false" : "true");
+					discoveryExpand.setAttribute("aria-expanded", compact ? "false" : "true");
+					discoveryExpand.setAttribute("aria-hidden", compact ? "false" : "true");
 				};
 
 				const collapseDiscovery = () => {
 					isDiscoveryCollapsed = true;
+					sessionStorage.setItem(discoveryStorageKey, "collapsed");
 					syncDiscoveryPresentation();
 					requestAnimationFrame(() => discoveryExpand.focus());
 				};
 
 				const expandDiscovery = () => {
 					isDiscoveryCollapsed = false;
+					sessionStorage.setItem(discoveryStorageKey, "expanded");
 					syncDiscoveryPresentation();
 					requestAnimationFrame(() => discoveryCollapse.focus());
 				};
 
+				const clearDiscoveryStateWhenLeaving = (event: Event) => {
+					const target = event.target;
+					if (!(target instanceof Element)) {
+						return;
+					}
+					const link = target.closest("a[href]");
+					if (!(link instanceof HTMLAnchorElement)) {
+						return;
+					}
+					const destination = new URL(link.href, window.location.origin);
+					if (
+						destination.origin === window.location.origin &&
+						destination.pathname !== window.location.pathname
+					) {
+						const experienceRootPath = `/${experienceId}`;
+						if (
+							destination.pathname !== experienceRootPath &&
+							!destination.pathname.startsWith(`${experienceRootPath}/`)
+						) {
+							sessionStorage.removeItem(discoveryStorageKey);
+						}
+					}
+				};
+
 				discoveryCollapse.addEventListener("click", collapseDiscovery);
 				discoveryExpand.addEventListener("click", expandDiscovery);
+				document.addEventListener("click", clearDiscoveryStateWhenLeaving);
 				mobileDiscoveryQuery.addEventListener("change", syncDiscoveryPresentation);
 				syncDiscoveryPresentation();
 
 				removeDiscoveryListeners = () => {
 					discoveryCollapse.removeEventListener("click", collapseDiscovery);
 					discoveryExpand.removeEventListener("click", expandDiscovery);
+					document.removeEventListener("click", clearDiscoveryStateWhenLeaving);
 					mobileDiscoveryQuery.removeEventListener("change", syncDiscoveryPresentation);
 				};
 			}
@@ -398,6 +445,42 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 			Array.from(root.querySelectorAll("[data-favorite-toggle]")).filter(
 				(form) => form instanceof HTMLFormElement && form.dataset.favoriteNoteId === noteId
 			);
+
+		const setExperienceLayout = (layout: "grid" | "list") => {
+			if (!(cardList instanceof HTMLElement)) {
+				return;
+			}
+
+			const isRecipe = root.dataset.experienceCardFamily === "recipe";
+			cardList.dataset.experienceLayout = layout;
+			cardList.classList.toggle("grid-cols-1", layout === "list");
+			cardList.classList.toggle("gap-2.5", layout === "list");
+			cardList.classList.toggle("gap-4", layout === "grid" && isRecipe);
+			cardList.classList.toggle("gap-5", layout === "grid" && !isRecipe);
+			cardList.classList.toggle("md:grid-cols-2", layout === "grid");
+			cardList.classList.toggle("xl:grid-cols-4", layout === "grid" && isRecipe);
+			cardList.classList.toggle("xl:grid-cols-3", layout === "grid" && !isRecipe);
+
+			for (const option of root.querySelectorAll("[data-experience-layout-option]")) {
+				if (!(option instanceof HTMLAnchorElement)) {
+					continue;
+				}
+
+				const active = option.dataset.experienceLayoutOption === layout;
+				if (active) {
+					option.setAttribute("aria-current", "true");
+				} else {
+					option.removeAttribute("aria-current");
+				}
+			}
+
+			const url = new URL(window.location.href);
+			url.searchParams.set("layout", layout);
+			url.searchParams.delete("selected");
+			url.searchParams.delete("inspector");
+			url.searchParams.delete("experienceScroll");
+			window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+		};
 
 		const buildReturnTo = () => {
 			const url = new URL(window.location.pathname + window.location.search, window.location.origin);
@@ -635,6 +718,17 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 				return;
 			}
 
+			const layoutOption = target.closest("[data-experience-layout-option]");
+			if (layoutOption instanceof HTMLAnchorElement) {
+				const nextLayout = layoutOption.dataset.experienceLayoutOption;
+				if (nextLayout === "grid" || nextLayout === "list") {
+					event.preventDefault();
+					closeInspector();
+					setExperienceLayout(nextLayout);
+				}
+				return;
+			}
+
 			const card = target.closest("[data-experience-card]");
 			if (!(card instanceof HTMLButtonElement)) {
 				return;
@@ -726,7 +820,7 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 	}
 
 	.experience-discovery-collapse,
-	.experience-discovery-summary {
+	.experience-discovery-compact {
 		display: none;
 	}
 
@@ -881,6 +975,14 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 	}
 
 	@media (max-width: 767px) {
+		.experience-discovery {
+			overflow: hidden;
+			border-radius: 1rem;
+			transition:
+				min-height 360ms cubic-bezier(0.2, 0.8, 0.2, 1),
+				box-shadow 280ms ease;
+		}
+
 		.experience-discovery-collapse {
 			position: absolute;
 			top: 0.65rem;
@@ -894,9 +996,6 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 			border-radius: 0.85rem;
 			background: rgba(15, 23, 42, 0.58);
 			color: white;
-			font-size: 1.45rem;
-			font-weight: 600;
-			line-height: 1;
 			box-shadow: 0 5px 16px rgba(15, 23, 42, 0.14);
 		}
 
@@ -904,39 +1003,112 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 			display: inline-flex;
 		}
 
-		.experience-discovery-summary {
-			min-height: 2.75rem;
+		.experience-discovery-compact {
+			position: absolute;
+			inset: 0;
+			z-index: 25;
+			min-height: 5.75rem;
 			width: 100%;
 			align-items: center;
-			gap: 0.6rem;
-			border: 1px solid #ddd4c8;
-			border-radius: 0.9rem;
-			background: rgba(250, 247, 241, 0.92);
-			padding: 0.45rem 0.65rem 0.45rem 0.85rem;
-			color: #475569;
-			box-shadow: 0 5px 16px rgba(15, 23, 42, 0.05);
+			justify-content: space-between;
+			gap: 0.9rem;
+			border: 1px solid rgba(255, 255, 255, 0.22);
+			border-radius: 1rem;
+			background:
+				linear-gradient(90deg, rgba(10, 17, 17, 0.82), rgba(20, 29, 27, 0.48)),
+				rgba(23, 31, 29, 0.28);
+			padding: 0.8rem 0.85rem 0.75rem;
+			color: white;
+			box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
 			text-align: left;
+			backdrop-filter: blur(3px);
+			opacity: 0;
+			pointer-events: none;
+			transform: translateY(0.5rem);
+			transition:
+				opacity 220ms ease,
+				transform 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
 		}
 
-		.experience-discovery-summary:not([hidden]) {
+		.experience-discovery[data-collapsed="true"] {
+			min-height: 5.75rem;
+		}
+
+		.experience-discovery[data-collapsed="true"] .experience-discovery-compact {
 			display: flex;
+			opacity: 1;
+			pointer-events: auto;
+			transform: translateY(0);
 		}
 
-		.experience-discovery-summary-title {
+		.experience-discovery-compact-main {
+			display: flex;
 			min-width: 0;
+			flex: 1;
+			flex-direction: column;
+			gap: 0.45rem;
+		}
+
+		.experience-discovery-compact-title {
 			overflow: hidden;
-			color: #0f172a;
-			font-size: 0.875rem;
-			font-weight: 700;
+			font-family: Georgia, "Times New Roman", serif;
+			font-size: 1.2rem;
+			font-weight: 600;
+			letter-spacing: -0.025em;
+			line-height: 1;
 			text-overflow: ellipsis;
 			white-space: nowrap;
 		}
 
-		.experience-discovery-summary-label {
-			margin-left: auto;
-			font-size: 0.75rem;
-			font-weight: 600;
+		.experience-discovery-compact-statistics {
+			display: flex;
+			min-width: 0;
+			gap: 0.75rem;
+			overflow: hidden;
+			color: rgba(255, 255, 255, 0.68);
+			font-size: 0.68rem;
+			line-height: 1;
+			text-transform: uppercase;
 			white-space: nowrap;
+		}
+
+		.experience-discovery-compact-statistics span {
+			display: inline-flex;
+			align-items: baseline;
+			gap: 0.25rem;
+		}
+
+		.experience-discovery-compact-statistics strong {
+			color: white;
+			font-size: 0.82rem;
+		}
+
+		.experience-discovery-compact-action {
+			display: inline-flex;
+			flex-shrink: 0;
+			align-items: center;
+			gap: 0.35rem;
+			color: rgba(255, 255, 255, 0.82);
+			font-size: 0.7rem;
+			font-weight: 650;
+			white-space: nowrap;
+		}
+
+		.experience-discovery-content {
+			max-height: 70rem;
+			opacity: 1;
+			transform: translateY(0);
+			transition:
+				max-height 420ms cubic-bezier(0.2, 0.8, 0.2, 1),
+				opacity 180ms ease,
+				transform 360ms cubic-bezier(0.2, 0.8, 0.2, 1);
+		}
+
+		.experience-discovery[data-collapsed="true"] .experience-discovery-content {
+			max-height: 0;
+			overflow: hidden;
+			opacity: 0;
+			transform: translateY(-1rem);
 		}
 
 		.experience-filter-row {
@@ -1023,6 +1195,9 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 
 	@media (prefers-reduced-motion: reduce) {
 		.experience-canvas,
+		.experience-discovery,
+		.experience-discovery-content,
+		.experience-discovery-compact,
 		.experience-inspector-backdrop,
 		.experience-inspector-panel {
 			transition-duration: 0.01ms;

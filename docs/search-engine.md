@@ -391,6 +391,8 @@ Search logic belongs to the engine.
 
 Presentation belongs to the UI.
 
+On mobile, the Sidebar Quick Search input uses a minimum 16px font size to avoid iOS Safari's automatic focused-input viewport zoom. Quick Search navigation must also blur the input and close its portaled popover before navigation, allowing focus and visual viewport state to settle before the next Application Shell view is rendered. Do not disable user scaling or pinch zoom to solve this browser behavior.
+
 The engine should never know whether results are displayed as:
 
 - cards

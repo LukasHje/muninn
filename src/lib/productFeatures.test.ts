@@ -75,3 +75,66 @@ test("normalizes Rain Defender and Swedish water-repellent wording as water resi
 		priority: 95,
 	});
 });
+
+test("distinguishes Bluetooth support from explicit Bluetooth absence", () => {
+	const supported = createGearNote(`
+## Key features
+
+- Bluetooth 5.3 connectivity
+`);
+	const unsupported = createGearNote(`
+## Key features
+
+- Saknar Bluetooth
+`);
+
+	assert.deepEqual(extractProductFeatures(supported, ["Key features"])[0], {
+		id: "bluetooth",
+		label: "Bluetooth",
+		value: "Bluetooth 5.3",
+		iconName: "bluetooth",
+		priority: 89,
+	});
+	assert.deepEqual(extractProductFeatures(unsupported, ["Key features"])[0], {
+		id: "bluetooth",
+		label: "Bluetooth",
+		value: "No Bluetooth",
+		iconName: "bluetooth-off",
+		priority: 89,
+	});
+});
+
+test("Bluetooth negation takes precedence over generic Bluetooth recognition", () => {
+	const note = createGearNote(`
+## Specifications
+
+| Connectivity | Bluetooth is not supported |
+`);
+
+	const feature = extractProductFeatures(note, ["Specifications"])[0];
+	assert.equal(feature?.value, "No Bluetooth");
+	assert.equal(feature?.iconName, "bluetooth-off");
+});
+
+test("normalizes English and Swedish wireless wording for Gear spec bars", () => {
+	const englishNote = createGearNote(`
+## Key features
+
+- Wireless ergonomic mouse
+`);
+	const swedishNote = createGearNote(`
+## Key features
+
+- Trådlös anslutning
+`);
+
+	for (const note of [englishNote, swedishNote]) {
+		assert.deepEqual(extractProductFeatures(note, ["Key features"])[0], {
+			id: "wireless",
+			label: "Wireless",
+			value: "Wireless",
+			iconName: "wifi",
+			priority: 88,
+		});
+	}
+});

@@ -141,6 +141,14 @@ export default function initQuickSearch() {
 			}
 		};
 
+		const navigateFromSearch = (href: string) => {
+			// Release iOS Safari's focused-input visual viewport before the next
+			// Application Shell view replaces the current page.
+			input.blur();
+			setOpen(false);
+			requestAnimationFrame(() => window.location.assign(href));
+		};
+
 		const ensureDocuments = async () => {
 			if (documents.length > 0) {
 				return documents;
@@ -287,13 +295,13 @@ export default function initQuickSearch() {
 				const visibleResults = results.slice(0, MAX_VISIBLE_RESULTS);
 				if (activeIndex >= 0 && visibleResults[activeIndex]) {
 					event.preventDefault();
-					window.location.assign(visibleResults[activeIndex].href);
+					navigateFromSearch(visibleResults[activeIndex].href);
 					return;
 				}
 
 				if (input.value.trim()) {
 					event.preventDefault();
-					window.location.assign(showAll.href);
+					navigateFromSearch(showAll.href);
 				}
 				return;
 			}
@@ -304,6 +312,22 @@ export default function initQuickSearch() {
 				setOpen(false);
 				input.blur();
 			}
+		});
+
+		popover.addEventListener("click", (event) => {
+			if (
+				event.button !== 0
+				|| event.metaKey
+				|| event.ctrlKey
+				|| event.shiftKey
+				|| event.altKey
+			) return;
+			const target = event.target;
+			if (!(target instanceof Element)) return;
+			const link = target.closest<HTMLAnchorElement>("a[href]");
+			if (!link) return;
+			event.preventDefault();
+			navigateFromSearch(link.href);
 		});
 
 		document.addEventListener("keydown", (event) => {
