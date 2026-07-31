@@ -11,8 +11,8 @@ export type ExperienceId =
 	| "technology"
 	| "homelab";
 
-export type ExperienceLandingPage = "gear" | "recipes" | "vehicles" | "homelab";
-export type ExperienceInspector = "gear" | "recipes" | "vehicles" | "homelab";
+export type ExperienceLandingPage = "gear" | "recipes" | "vehicles" | "books" | "homelab";
+export type ExperienceInspector = "gear" | "recipes" | "vehicles" | "books" | "homelab";
 
 export type ExperienceStatisticMetric =
 	| { type: "total"; label: string; helper?: string }
@@ -115,7 +115,7 @@ export const experienceDefinitions = [
 		},
 		assets: {
 			heroArtwork: "/experiences/gear/experiences-heroart-gear-v2.webp",
-			placeholderThumbnail: "/assets/experiences/gear/placeholder-thumbnail.webp",
+			placeholderThumbnail: "/experiences/gear/gear-placeholder-thumbnail.webp",
 		},
 		href: "/gear",
 		libraryHref: "/notes?category=gear",
@@ -258,9 +258,9 @@ export const experienceDefinitions = [
 		...defaultExperienceConfig,
 		id: "books",
 		title: "Books",
-		description: "Books, reading notes, references, and ideas gathered from the library.",
-		selector: { type: "frontmatter", field: "type", value: "books" },
-		theme: "slate",
+		description: "A personal library of stories, ideas, highlights, and reading notes.",
+		selector: { type: "frontmatter", field: "type", value: ["book", "books", "bok", "böcker"] },
+		theme: "amber",
 		icons: { sidebar: "books", hero: "books" },
 		assets: {
 			heroArtwork: "/experiences/books/experiences-heroart-books-v2.webp",
@@ -268,6 +268,19 @@ export const experienceDefinitions = [
 		},
 		href: "/books",
 		sidebar: { label: "Books" },
+		cardFamily: "book",
+		landingPage: "books",
+		inspector: "books",
+		featureSections: ["Description", "Overview", "Summary", "Review", "Highlights", "Reading notes", "Notes"],
+		metadataFilters: [],
+		showMetadataFilters: false,
+		cardMetadata: ["author", "publication_year", "genres"],
+		inspectorMetadata: ["author", "publication_year", "publisher", "language", "pages", "format", "series", "isbn", "tags"],
+		inspectorSections: ["Description", "Overview", "Summary", "Review", "Highlights", "Reading notes", "Notes"],
+		statistics: {
+			type: "summary",
+			metrics: [{ type: "total", label: "Books" }],
+		},
 	},
 	{
 		...defaultExperienceConfig,

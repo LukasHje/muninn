@@ -431,7 +431,7 @@ Users should immediately recognize the subject matter.
 
 The application should remain cohesive.
 
-The Library Browser should never be replaced.
+The shared Library Browser remains the default. A first-class domain Experience may replace its visual result composition when it preserves the shared selection, inspector, shell, note-navigation, and scroll-ownership contracts. Books uses its shelf system as the Library Browser rather than placing a second browser beside it.
 
 Everything remains markdown-first.
 
@@ -445,7 +445,7 @@ Food magazine.
 
 Books
 
-Private encyclopedia.
+Private digital bookshelf.
 
 Technology
 

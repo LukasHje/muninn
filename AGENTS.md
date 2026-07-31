@@ -98,15 +98,27 @@ The production image must preserve the documented builder/runtime boundary. Vaul
 
 ### Domains and Experiences
 
+- docs/knowledge-vs-experience-state.md
 - docs/domain-language.md
 - docs/experience-architecture.md
 - docs/experience-registry.md
 - docs/experience-card-families.md
 - docs/experience-product-specifications.md
 - docs/experiences.md
+- docs/books-experience.md
 - docs/recipe-experience.md
 
 Read the relevant documents before changing domain inference, Experience discovery or registration, shared Experience layouts, inspector behaviour, card families, or product specification extraction.
+
+### Knowledge State and Experience State
+
+When implementing a feature, first determine whether its data belongs to Knowledge State or Experience State.
+
+If information represents knowledge that should remain portable, editable inside Obsidian, and synchronized through normal vault workflows, it belongs in the vault. The vault is the source of truth and Muninn must treat it as read-only.
+
+If information only enriches how the user interacts with Muninn, it belongs to Experience State. Experience State must never modify Markdown, frontmatter, properties, or other vault files.
+
+Future Experiences should default to this ownership model unless a strong architectural reason for an exception is documented before implementation. Read `docs/knowledge-vs-experience-state.md` before introducing fields, persistence, progress tracking, favorites, ratings, collections, history, bookmarks, or other stateful Experience behavior.
 
 ---
 

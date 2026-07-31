@@ -36,7 +36,7 @@ Examples:
 - Recipes → `recipe`
 - fallback browsing → `generic-note`
 
-`product`, `recipe`, `vehicle`, `homelab`, and `generic-note` are implemented today. Journey and Book Cards describe intended future families; Travel and Books use `generic-note` until their custom families exist.
+`product`, `recipe`, `vehicle`, `book`, `homelab`, and `generic-note` are implemented today. Journey Cards remain an intended future family; Travel uses `generic-note` until its custom family exists.
 
 ## Homelab Card Contract
 
@@ -132,6 +132,12 @@ The `recipe` family uses an editorial hierarchy optimized for meal discovery:
 Grid cards deliberately omit the note summary. The full note and contextual inspector remain responsible for descriptive content.
 
 It consumes normalized recipe metadata from `src/lib/experiences/recipes.ts`. Cards must omit absent values rather than invent defaults, and they must retain the shared `data-experience-card` selection contract so the generic browser can open the Recipe inspector.
+
+## Book Card Contract
+
+The `book` family represents standing books rather than generic note panels. Cover artwork dominates a narrow 2:3 volume, with a dark attached footer for title, author, reading status, optional progress, and a finished-book rating. Missing cover art receives a deterministic cloth-bound placeholder derived from the title; remote cover failure must reveal that fallback rather than a broken image.
+
+Book Cards are rendered into non-scrolling Home shelf rows or the wrapping Library catalogue. They retain the shared `data-experience-card` selection contract so the Experience workspace owns inspector selection. Durable status, progress, rating, and favorite presentation comes exclusively from Muninn's Local Experience State service and never from a component write to frontmatter.
 
 ## Vehicle Card Contract
 

@@ -5,6 +5,7 @@ import GearExperienceLanding from "src/components/experiences/GearExperienceLand
 import RecipesExperienceLanding from "src/components/experiences/RecipesExperienceLanding.astro";
 import VehiclesExperienceLanding from "src/components/experiences/VehiclesExperienceLanding.astro";
 import HomelabExperienceLanding from "src/components/experiences/HomelabExperienceLanding.astro";
+import BooksExperienceLanding from "src/components/experiences/BooksExperienceLanding.astro";
 import type { ExperienceViewModel } from "src/lib/experiences/experience";
 
 type Props = ExperienceViewModel;
@@ -14,6 +15,7 @@ const landingPageComponents = {
 	gear: GearExperienceLanding,
 	recipes: RecipesExperienceLanding,
 	vehicles: VehiclesExperienceLanding,
+	books: BooksExperienceLanding,
 	homelab: HomelabExperienceLanding,
 };
 const LandingPage = props.definition.landingPage

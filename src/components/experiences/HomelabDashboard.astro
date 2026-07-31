@@ -24,7 +24,23 @@ const serviceGradient = distributionGradient(model.serviceSplit, serviceTotal);
 const nodeGradient = distributionGradient(model.nodeDistribution, nodeTotal);
 const maxPlatform = Math.max(...model.platformDistribution.map((item) => item.count), 1);
 const maxCoverage = Math.max(...model.documentationCoverage.map((item) => item.count), 1);
-function href(key: string, value: string | null) { const p = new URLSearchParams(Astro.url.searchParams); value ? p.set(`filter-${key}`, value) : p.delete(`filter-${key}`); p.delete("selected"); p.delete("inspector"); return `${Astro.url.pathname}?${p.toString()}#experience-library`; }
+function href(key: string, value: string | null) {
+	const p = new URLSearchParams(Astro.url.searchParams);
+	const queryKey = `filter-${key}`;
+	const isSelected = value !== null && p.get(queryKey) === value;
+
+	if (value && !isSelected) {
+		p.set(queryKey, value);
+	} else {
+		p.delete(queryKey);
+	}
+
+	p.delete("selected");
+	p.delete("inspector");
+	p.delete("experienceScroll");
+	const query = p.toString();
+	return `${Astro.url.pathname}${query ? `?${query}` : ""}#experience-library`;
+}
 function hardwareFilterHref(key: "homelab_entity" | "homelab_form_factor" | null, value: string | null) { const p = new URLSearchParams(Astro.url.searchParams); p.delete("filter-homelab_entity"); p.delete("filter-homelab_form_factor"); if (key && value) p.set(`filter-${key}`, value); p.delete("selected"); p.delete("inspector"); return `${Astro.url.pathname}?${p.toString()}#experience-library`; }
 ---
 <section class="homelab-dashboard" aria-label="Homelab overview">
