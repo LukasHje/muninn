@@ -84,7 +84,7 @@ function protectCoverImages(container: ParentNode) {
 		image.dataset.coverProtected = "true";
 		const hideBrokenCover = () => { image.hidden = true; };
 		image.addEventListener("error", hideBrokenCover, { once: true });
-		if (image.complete && image.naturalWidth === 0) hideBrokenCover();
+		if (image.isConnected && image.complete && image.naturalWidth === 0) hideBrokenCover();
 	}
 }
 
