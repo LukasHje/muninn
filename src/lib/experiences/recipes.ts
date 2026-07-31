@@ -5,7 +5,6 @@ import type { LibraryItem } from "src/lib/vault";
 
 export interface RecipeMetadata {
 	ingredients: string[];
-	ingredientGroups: ExperienceFilterOption[];
 	prepTime: string | null;
 	cookTime: string | null;
 	totalTime: string | null;
@@ -33,7 +32,6 @@ export interface RecipeDashboardModel {
 	featured: LibraryItem[];
 	recent: LibraryItem[];
 	categories: ExperienceFilterOption[];
-	ingredients: RecipeIngredientOption[];
 	collections: ExperienceFilterOption[];
 	quickMeals: number;
 	vegetarian: number;
@@ -41,7 +39,6 @@ export interface RecipeDashboardModel {
 	averageTotalMinutes: number | null;
 	averageRating: number | null;
 	mostCommonCuisine: string | null;
-	mostCommonIngredient: string | null;
 	recipeKinds: RecipeKindCount[];
 	cuisineSplit: RecipeCuisineShare[];
 }
@@ -50,10 +47,6 @@ export interface RecipeKindCount {
 	value: RecipeKind;
 	label: string;
 	count: number;
-	icon: string;
-}
-
-export interface RecipeIngredientOption extends ExperienceFilterOption {
 	icon: string;
 }
 
@@ -147,14 +140,6 @@ function normalizeRecipeText(value: string) {
 	return normalizeRecipeKindText(value);
 }
 
-function titleCase(value: string) {
-	return value
-		.split(" ")
-		.filter(Boolean)
-		.map((part) => part.charAt(0).toLocaleUpperCase("en") + part.slice(1))
-		.join(" ");
-}
-
 function cleanMarkdownIngredientLine(line: string) {
 	return line
 		.trim()
@@ -165,17 +150,6 @@ function cleanMarkdownIngredientLine(line: string) {
 		.replace(/\*\*|__|`/g, "")
 		.replace(/\([^)]*\)/g, " ")
 		.replace(/\s+/g, " ")
-		.trim();
-}
-
-function stripIngredientAmount(value: string) {
-	return value
-		.replace(
-			/^(?:ca\.?|cirka|about|approx\.?)?\s*(?:\d+(?:[.,/]\d+)?|[¼½¾⅓⅔⅛⅜⅝⅞]+)\s*(?:x\s*)?(?:dl|cl|ml|l|g|kg|mg|oz|ounce|ounces|tbsp|tsk|msk|tsp|tablespoons?|teaspoons?|st|st\.|pcs?|paket|package|packages|burk|cans?|klyftor?|dash|nypa|pinch)?\s+/i,
-			""
-		)
-		.replace(/^(?:dash|pinch|nypa)\s+(?:of\s+)?/i, "")
-		.replace(/\s+(?:for|to)\s+(?:the\s+)?(?:rim|garnish|serving).*$/i, "")
 		.trim();
 }
 
@@ -218,94 +192,11 @@ function extractIngredientLinesFromContent(content: string) {
 	return ingredients;
 }
 
-const ingredientCategoryMatchers: Array<{ label: string; icon: string; match: RegExp }> = [
-	{ label: "Beer", icon: "beer", match: /\b(beer|ol|öl|lager|ipa|stout|porter|ale)\b/ },
-	{ label: "Wine", icon: "wine", match: /\b(wine|vin|red wine|rott vin|rött vin|white wine|vitt vin|rose|rosé|champagne|prosecco)\b/ },
-	{ label: "Water", icon: "glass-water", match: /\b(water|vatten|mineral water|mineralvatten|sparkling water|kolsyrat vatten)\b/ },
-	{ label: "Soda", icon: "cup-soda", match: /\b(soda|läsk|lask|cola|tonic|lemonade|sprite|fanta)\b/ },
-	{ label: "Cocktail", icon: "martini", match: /\b(cocktail|drink|shot|martini|margarita|mojito|negroni)\b/ },
-	{ label: "Alcohol", icon: "bottle-wine", match: /\b(vodka|whisk(?:y|ey)|rum|rom|gin|tequila|mezcal|liqueur|likor|likör|brandy|bourbon|cognac|vermouth|bacardi|fireball)\b/ },
-	{ label: "Coffee", icon: "coffee", match: /\b(coffee|kaffe|espresso|cold brew|tea|te|chai|hot chocolate|varm choklad|cocoa|kakao)\b/ },
-	{ label: "Shrimp", icon: "shrimp", match: /\b(shrimp|prawn|rakor|raka|räkor|räka)\b/ },
-	{ label: "Seafood", icon: "shrimp", match: /\b(lobster|hummer|crab|krabba|mussel|musslor|scallop|pilgrimsmussla)\b/ },
-	{ label: "Fish", icon: "fish", match: /\b(fish|fisk|salmon|lax|cod|torsk|tuna|tonfisk|herring|sill)\b/ },
-	{ label: "Chicken", icon: "drumstick", match: /\b(chicken|kyckling|turkey|kalkon)\b/ },
-	{ label: "Beef", icon: "beef", match: /\b(beef|notkott|nötkött|hogrev|högrev|lamb|lamm|far|får)\b/ },
-	{ label: "Pork", icon: "ham", match: /\b(pork|flask|fläsk|bacon|ham|skinka)\b/ },
-	{ label: "Egg", icon: "egg", match: /\b(egg|eggs|agg|ägg)\b/ },
-	{ label: "Milk", icon: "milk", match: /\b(milk|mjolk|mjölk|cream|gradde|grädde|yogurt|yoghurt|creme fraiche|crème fraîche)\b/ },
-	{ label: "Apple", icon: "apple", match: /\b(apple|apples|applen|äpple|äpplen|apple juice|appeljuice|äppeljuice|cider)\b/ },
-	{ label: "Banana", icon: "banana", match: /\b(banana|banan|bananas|bananer)\b/ },
-	{ label: "Citrus", icon: "citrus", match: /\b(citrus|orange|apelsin|lemon|citron|lime|grapefruit)\b/ },
-	{ label: "Juice", icon: "blender", match: /\b(juice|smoothie|must|nectar)\b/ },
-	{ label: "Berries", icon: "cherry", match: /\b(berries|bar|bär|strawberry|strawberries|jordgubb|jordgubbar|raspberry|raspberries|hallon|blueberry|blueberries|blabar|blåbär|lingon|cherry|cherries|korsbar|körsbär)\b/ },
-	{ label: "Fruit", icon: "apple", match: /\b(fruit|frukt|pear|paron|päron)\b/ },
-	{ label: "Nuts", icon: "nut", match: /\b(nut|nuts|not|nöt|notter|nötter|almond|almonds|mandel|mandlar|hazelnut|hazelnuts|hasselnot|hasselnöt|hasselnotter|hasselnötter|walnut|walnuts|valnot|valnöt|valnotter|valnötter|cashew|cashews|peanut|peanuts|jordnot|jordnöt|jordnotter|jordnötter|pistachio|pistachios|pecan|pecans)\b/ },
-	{ label: "Spices", icon: "chili-pepper", match: /\b(chili|chilli|chile|pepper|peppar|spice|spices|krydda|kryddor|paprika|cayenne|jalapeno|jalapeño|sriracha|tabasco|hot sauce)\b/ },
-	{ label: "Vegetables", icon: "carrot", match: /\b(carrot|morot|morotter|morötter|onion|lok|lök|garlic|vitlok|vitlök|tomato|tomat|potato|potatis)\b/ },
-	{ label: "Leafy greens", icon: "leafy-green", match: /\b(lettuce|sallad|spinach|spenat|kale|gronkal|grönkål|ruccola|arugula)\b/ },
-	{ label: "Soup", icon: "soup", match: /\b(soup|soppa|gryta|stew)\b/ },
-	{ label: "Breakfast", icon: "croissant", match: /\b(breakfast|frukost|croissant|granola|pancake|pannkaka|waffle|vaffla|våffla)\b/ },
-	{ label: "Cake", icon: "cake", match: /\b(cake|kaka|tarta|tårta|muffin|cupcake)\b/ },
-	{ label: "Cookies", icon: "cookie", match: /\b(cookie|cookies|biscuit|biscuits|kex|smakaka|småkaka|smakakor|småkakor)\b/ },
-	{ label: "Dessert", icon: "ice-cream-bowl", match: /\b(dessert|ice cream|glass|vanilla|vanilj|chocolate|choklad)\b/ },
-	{ label: "Sandwich", icon: "sandwich", match: /\b(sandwich|macka|smorgas|smörgås|toast)\b/ },
-	{ label: "Pizza", icon: "pizza", match: /\b(pizza|mozzarella|pepperoni)\b/ },
-	{ label: "Burger", icon: "hamburger", match: /\b(burger|hamburger|cheeseburger)\b/ },
-	{ label: "Cinnamon", icon: "shopping-basket", match: /\b(cinnamon|kanel)\b/ },
-	{ label: "Ice", icon: "snowflake", match: /\b(ice|is|ice cubes|isbitar|krossad is|crushed ice|frozen|fryst)\b/ },
-	{ label: "Sugar", icon: "candy-cane", match: /\b(sugar|socker|candy|godis|syrup|sirap)\b/ },
-	{ label: "Wheat", icon: "wheat", match: /\b(wheat|vete|flour|mjol|mjöl|bread|brod|bröd|pasta)\b/ },
-];
-
-function getIngredientIcon(label: string) {
-	return ingredientCategoryMatchers.find((matcher) => matcher.label === label)?.icon ?? "shopping-basket";
-}
-
-function getIngredientCategory(value: string) {
-	const cleaned = stripIngredientAmount(value);
-	const normalized = normalizeRecipeText(cleaned);
-	const matched = ingredientCategoryMatchers.find(({ match }) => match.test(normalized));
-
-	if (matched) {
-		return matched.label;
-	}
-
-	const fallback = normalized
-		.replace(/\b(fresh|ground|chopped|hackad|hackade|finhackad|finhackade|skivad|skivade)\b/g, "")
-		.replace(/\s+/g, " ")
-		.trim();
-
-	return fallback ? titleCase(fallback) : null;
-}
-
-function buildRecipeIngredientGroups(note: LibraryItem) {
-	const rawIngredients = [
+function getRawRecipeIngredients(note: LibraryItem) {
+	return [
 		...getNoteMetadataValues(note, "ingredients"),
 		...extractIngredientLinesFromContent(note.content),
 	];
-
-	return Array.from(new Set(rawIngredients.map(getIngredientCategory).filter(Boolean) as string[]));
-}
-
-function buildRecipeIngredientOptions(notes: LibraryItem[]) {
-	const counts = new Map<string, number>();
-
-	for (const note of notes) {
-		for (const ingredient of buildRecipeIngredientGroups(note)) {
-			counts.set(ingredient, (counts.get(ingredient) ?? 0) + 1);
-		}
-	}
-
-	return Array.from(counts.entries())
-		.sort((left, right) => {
-			if (left[1] !== right[1]) {
-				return right[1] - left[1];
-			}
-
-			return left[0].localeCompare(right[0], "sv");
-		})
-		.map(([value, count]) => ({ value, label: value, count, icon: getIngredientIcon(value) }));
 }
 
 function isFeaturedRecipe(metadata: RecipeMetadata) {
@@ -360,11 +251,10 @@ function buildCuisineSplit(options: ExperienceFilterOption[]): RecipeCuisineShar
 }
 
 export function getRecipeMetadata(note: LibraryItem): RecipeMetadata {
-	const ingredientGroups = buildRecipeIngredientGroups(note);
+	const ingredients = getRawRecipeIngredients(note);
 
 	return {
-		ingredients: ingredientGroups,
-		ingredientGroups: ingredientGroups.map((value) => ({ value, label: value, count: 1 })),
+		ingredients,
 		prepTime: getNoteMetadataValue(note, "prep_time"),
 		cookTime: getNoteMetadataValue(note, "cook_time"),
 		totalTime: getNoteMetadataValue(note, "total_time"),
@@ -401,7 +291,6 @@ export function buildRecipeDashboardModel(notes: LibraryItem[]): RecipeDashboard
 		.map(({ metadata: item }) => parseRecipeDurationMinutes(item.totalTime ?? item.cookTime))
 		.filter((value): value is number => value !== null);
 	const categories = buildMetadataFilterOptions(notes, "category");
-	const ingredients = buildRecipeIngredientOptions(notes);
 	const collections = buildMetadataFilterOptions(notes, "collection");
 	const cuisines = buildMetadataFilterOptions(notes, "cuisine");
 	const ratings = metadata
@@ -419,7 +308,6 @@ export function buildRecipeDashboardModel(notes: LibraryItem[]): RecipeDashboard
 			.slice(0, 3),
 		recent: [...notes].sort((left, right) => right.updatedAt - left.updatedAt).slice(0, 4),
 		categories: categories.slice(0, 6),
-		ingredients,
 		collections: collections.slice(0, 6),
 		quickMeals: metadata.filter(({ metadata: item }) => {
 			const duration = parseRecipeDurationMinutes(item.totalTime ?? item.cookTime);
@@ -438,7 +326,6 @@ export function buildRecipeDashboardModel(notes: LibraryItem[]): RecipeDashboard
 				? Math.round((ratings.reduce((sum, value) => sum + value, 0) / ratings.length) * 10) / 10
 				: null,
 		mostCommonCuisine: cuisines[0]?.label ?? null,
-		mostCommonIngredient: ingredients[0]?.label ?? null,
 		recipeKinds: buildRecipeKindCounts(metadata),
 		cuisineSplit: buildCuisineSplit(cuisines),
 	};

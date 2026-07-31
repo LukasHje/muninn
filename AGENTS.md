@@ -104,6 +104,7 @@ The production image must preserve the documented builder/runtime boundary. Vaul
 - docs/experience-card-families.md
 - docs/experience-product-specifications.md
 - docs/experiences.md
+- docs/recipe-experience.md
 
 Read the relevant documents before changing domain inference, Experience discovery or registration, shared Experience layouts, inspector behaviour, card families, or product specification extraction.
 

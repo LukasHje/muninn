@@ -729,6 +729,21 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 				return;
 			}
 
+			const experienceNavigation = target.closest("a[href]");
+			if (
+				experienceNavigation instanceof HTMLAnchorElement &&
+				cardList instanceof HTMLElement &&
+				(experienceNavigation.origin === window.location.origin) &&
+				experienceNavigation.pathname === window.location.pathname
+			) {
+				const activeLayout = cardList.dataset.experienceLayout;
+				if (activeLayout === "grid" || activeLayout === "list") {
+					const destination = new URL(experienceNavigation.href);
+					destination.searchParams.set("layout", activeLayout);
+					experienceNavigation.href = `${destination.pathname}${destination.search}${destination.hash}`;
+				}
+			}
+
 			const card = target.closest("[data-experience-card]");
 			if (!(card instanceof HTMLButtonElement)) {
 				return;

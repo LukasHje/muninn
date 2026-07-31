@@ -106,13 +106,32 @@ const plannedVehicleMetadataFallbacks: Record<string, string> = {
 };
 
 function normalizeVehicleStatus(value: string | null) {
-	const normalized = value?.trim().toLocaleLowerCase("en") ?? "";
+	const normalized = value
+		?.trim()
+		.toLocaleLowerCase("en")
+		.replace(/[-_]+/g, " ")
+		.replace(/\s+/g, " ") ?? "";
 
 	if (!normalized) {
 		return null;
 	}
 
-	if (["owned", "own", "active", "current", "ägda", "ägd", "agda", "agd"].includes(normalized)) {
+	if (
+		[
+			"owned",
+			"own",
+			"active",
+			"current",
+			"previously owned",
+			"formerly owned",
+			"ägda",
+			"ägd",
+			"agda",
+			"agd",
+			"tidigare ägd",
+			"tidigare agd",
+		].includes(normalized)
+	) {
 		return "owned";
 	}
 

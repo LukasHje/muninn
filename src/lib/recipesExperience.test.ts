@@ -10,6 +10,7 @@ import {
 import { getExperienceDefinition } from "./experiences/registry";
 import { getExperienceNotes, getNoteMetadataValues } from "./experiences/selectors";
 import { buildExperienceStatistics } from "./experiences/statistics";
+import { buildInspectorSections } from "./experiences/inspector";
 import type { LibraryItem } from "./vault";
 
 function createRecipe(
@@ -145,7 +146,6 @@ test("dashboard aggregation prioritizes favorites and ratings while deriving coo
 	assert.equal(dashboard.favoriteRecipes, 1);
 	assert.equal(dashboard.ratedRecipes, 2);
 	assert.equal(dashboard.mostCommonCuisine, "Italian");
-	assert.equal(dashboard.mostCommonIngredient, "Vegetables");
 	assert.deepEqual(dashboard.cuisineSplit, [
 		{ value: "Italian", label: "Italian", count: 2, percentage: 100 },
 	]);
@@ -275,7 +275,7 @@ test("recipe dashboard treats highly rated recipes as featured without requiring
 	assert.deepEqual(dashboard.featured.map((note) => note.id), ["rated"]);
 });
 
-test("recipe dashboard derives ingredient categories from markdown ingredient sections", () => {
+test("recipe classification does not rewrite ingredients from markdown sections", () => {
 	const cocktail = createRecipe(
 		"cocktail",
 		{ type: "recept", kategori: "drink", betyg: "4.8", portioner: "1" },
@@ -306,21 +306,19 @@ test("recipe dashboard derives ingredient categories from markdown ingredient se
 
 	assert.equal(getRecipeMetadata(cocktail).rating, 4.8);
 	assert.deepEqual(getRecipeMetadata(cocktail).categories, ["drink"]);
-	assert.deepEqual(
-		dashboard.ingredients.map(({ label, count, icon }) => ({ label, count, icon })),
-		[
-			{ label: "Alcohol", count: 1, icon: "bottle-wine" },
-			{ label: "Apple", count: 1, icon: "apple" },
-			{ label: "Berries", count: 1, icon: "cherry" },
-			{ label: "Cinnamon", count: 1, icon: "shopping-basket" },
-			{ label: "Cookies", count: 1, icon: "cookie" },
-			{ label: "Ice", count: 1, icon: "snowflake" },
-			{ label: "Milk", count: 1, icon: "milk" },
-			{ label: "Nuts", count: 1, icon: "nut" },
-			{ label: "Spices", count: 1, icon: "chili-pepper" },
-			{ label: "Wheat", count: 1, icon: "wheat" },
-		]
-	);
+	assert.deepEqual(getRecipeMetadata(cocktail).ingredients, [
+		"1 ounce vanilla vodka",
+		"1 ounce Fireball Cinnamon Whisky",
+		"4 ounces apple juice",
+		"dash of ground cinnamon",
+		"2 dl wheat flour",
+		"1 dl milk",
+		"1 dl blueberries",
+		"1 tbsp almonds",
+		"2 cookies",
+		"ice",
+		"chili flakes",
+	]);
 	assert.deepEqual(
 		dashboard.recipeKinds.map(({ value, count }) => ({ value, count })),
 		[
@@ -360,14 +358,31 @@ test("recipe ingredients remain active across nested subsection headings", () =>
 	);
 
 	assert.deepEqual(getRecipeMetadata(cookies).ingredients, [
-		"Vetemjol",
-		"Strosocker",
-		"Coffee",
-		"Rumstempererat Smor",
-		"Water",
-		"Egg",
-		"Parlsocker",
+		"5 dl vetemjöl",
+		"2 dl strösocker",
+		"3 msk kakao",
+		"200 g rumstempererat smör",
+		"2 msk vatten",
+		"1 ägg",
+		"2 msk pärlsocker",
 	]);
+	const definition = getExperienceDefinition("recipes");
+	assert.ok(definition);
+	assert.deepEqual(buildInspectorSections(cookies, definition)[0], {
+		title: "Ingredienser",
+		content: [
+			"### Kakdeg",
+			"- 5 dl vetemjöl",
+			"- 2 dl strösocker",
+			"- 3 msk kakao",
+			"- 200 g rumstempererat smör",
+			"- 2 msk vatten",
+			"",
+			"### Pensling och garnering",
+			"- 1 ägg",
+			"- 2 msk pärlsocker",
+		].join("\n"),
+	});
 });
 
 test("recipe kind filters use the dashboard categories without requiring frontmatter category values", () => {
