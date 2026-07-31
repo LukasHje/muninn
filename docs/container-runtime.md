@@ -52,10 +52,12 @@ Runtime data is outside the image:
 | Container path | Access | Owner | Purpose |
 | --- | --- | --- | --- |
 | `/vault` | read-only | deployment | Obsidian vault content |
-| `/state` | read-write | Muninn | favorites and scratchpad state |
+| `/state` | read-write | Muninn | favorites, scratchpad state, and persistent remote artwork caches |
 | `/tmp` | temporary | container | bounded process temporary space |
 
 The host vault must be readable by UID/GID 1000 and the state path must be writable by it. The root filesystem is read-only in the supplied Compose service. Logs go to stdout/stderr; Muninn does not require a `/logs` mount. The old `/app/public/vault-assets` cache mount is not a runtime input: assets are streamed from `/vault` by the application route.
+
+ISBN-derived Books covers are stored below `/state/book-covers`. They are runtime enrichment data, not release-image assets or vault attachments. The cache is populated lazily on the first cover request, validates content type and size before committing an atomic file, and continues serving the last successful copy while the application is offline. Deployments that want covers to survive container replacement must preserve the existing `/state` mount.
 
 ## Build context
 

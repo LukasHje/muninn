@@ -7,6 +7,7 @@ export const APP_STATE_DIR =
 		: path.join(process.cwd(), "data", "local-state");
 
 export const SCRATCHPAD_STATE_DIR = path.join(APP_STATE_DIR, "scratchpad");
+export const BOOK_COVER_STATE_DIR = path.join(APP_STATE_DIR, "book-covers");
 
 export async function ensureAppStateDir() {
 	await mkdir(APP_STATE_DIR, { recursive: true });

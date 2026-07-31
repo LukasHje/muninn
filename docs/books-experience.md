@@ -8,6 +8,8 @@ Read `knowledge-vs-experience-state.md` before changing this Experience.
 
 Vault-owned Knowledge State includes title, author, bibliographic metadata, cover references, description, reviews, highlights, links, and authored reading notes. Muninn reads this data and never modifies the vault.
 
+Remote ISBN cover artwork is application-managed enrichment derived from that bibliographic Knowledge State. Muninn proxies Open Library ISBN covers through `/book-covers/{isbn}` and persists validated image responses under its application state directory. The cache never writes into the vault. A cached cover remains available when the upstream service or internet connection is unavailable; an uncached or invalid response falls back to the generated cloth-bound cover.
+
 Muninn-owned Experience State includes reading status, personal rating, progress, started and finished dates, favorites, recently opened state, and Books UI preferences. Interactive controls write only through the Local Experience State service.
 
 Existing vault fields that resemble Experience State may be displayed as authored metadata for compatibility, but the Books UI does not use frontmatter as its write target.
@@ -49,6 +51,7 @@ An absent state represents an unread, uncategorized book. Rating uses an integer
 ### Shared objects
 
 - Book Cards resemble standing books and let cover artwork provide the identity. They never repeat title or author beneath a real cover; a slim status overlay, optional personal rating, and reading-progress line are the only chrome attached to the cover.
+- Vault-local cover artwork is served from the vault asset pipeline. ISBN-derived remote artwork is requested only through Muninn's persistent cover route; Book Cards and the inspector must use the same resolved cover URL and fallback behavior.
 - The Books inspector is a dark, book-first object rather than the generic metadata inspector. Cover, identity, local status, rating, progress, and primary actions form one compact header; authored Notes and a restrained two-column Information section follow below.
 
 ## Interaction Contract

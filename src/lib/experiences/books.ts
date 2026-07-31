@@ -55,7 +55,7 @@ export function getBookMetadata(note: LibraryItem): BookMetadata {
 		coverUrl:
 			note.imageUrl ??
 			authoredCover ??
-			(isbn ? `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false` : null),
+			(isbn ? `/book-covers/${isbn}` : null),
 		description: note.excerpt,
 	};
 }
