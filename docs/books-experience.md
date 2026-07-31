@@ -10,6 +10,8 @@ Vault-owned Knowledge State includes title, author, bibliographic metadata, cove
 
 Remote ISBN cover artwork is application-managed enrichment derived from that bibliographic Knowledge State. Muninn proxies Open Library ISBN covers through `/book-covers/{isbn}` and persists validated image responses under its application state directory. The cache never writes into the vault. A cached cover remains available when the upstream service or internet connection is unavailable; an uncached or invalid response falls back to the generated cloth-bound cover.
 
+Cover lookup failures use a persistent negative cache so browsing cannot repeatedly fan out to the upstream service. A definite missing cover is retried after seven days, an invalid image response after 24 hours, and a network or upstream failure after 15 minutes. Successful cached covers are checked before negative entries and remain available indefinitely. Vault Reload does not clear either cache or trigger bulk cover discovery; visible books populate the cache lazily.
+
 Muninn-owned Experience State includes reading status, personal rating, progress, started and finished dates, favorites, recently opened state, and Books UI preferences. Interactive controls write only through the Local Experience State service.
 
 Existing vault fields that resemble Experience State may be displayed as authored metadata for compatibility, but the Books UI does not use frontmatter as its write target.

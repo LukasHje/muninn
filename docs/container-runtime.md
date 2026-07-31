@@ -59,6 +59,8 @@ The host vault must be readable by UID/GID 1000 and the state path must be writa
 
 ISBN-derived Books covers are stored below `/state/book-covers`. They are runtime enrichment data, not release-image assets or vault attachments. The cache is populated lazily on the first cover request, validates content type and size before committing an atomic file, and continues serving the last successful copy while the application is offline. Deployments that want covers to survive container replacement must preserve the existing `/state` mount.
 
+Negative lookup results are stored beside the artwork to prevent repeated upstream traffic: missing covers cool down for seven days, invalid image responses for 24 hours, and transient network failures for 15 minutes. These records expire lazily on the next request and are independent of vault-cache invalidation.
+
 ## Build context
 
 `.dockerignore` excludes repository metadata, editor state, documentation, tests, reports, screenshots, local data, generated output, local dependencies, and generated vault assets. The Dockerfile also uses explicit `COPY` instructions rather than copying the repository root.
