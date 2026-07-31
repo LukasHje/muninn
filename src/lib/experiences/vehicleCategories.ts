@@ -17,14 +17,6 @@ function titleCase(value: string) {
 export function getVehicleCategory(value: string) {
 	const normalized = normalizeCategory(value);
 
-	if (normalized.includes("bicycle") || normalized === "bike" || normalized.includes("cycle")) {
-		return "Bicycle";
-	}
-
-	if (normalized.includes("moped")) {
-		return "Moped";
-	}
-
 	if (
 		normalized.includes("motorcycle")
 		|| normalized.includes("motorbike")
@@ -32,6 +24,19 @@ export function getVehicleCategory(value: string) {
 		|| normalized === "cruiser"
 	) {
 		return "Motorcycle";
+	}
+
+	if (normalized.includes("moped")) {
+		return "Moped";
+	}
+
+	if (
+		normalized.includes("bicycle")
+		|| normalized === "bike"
+		|| normalized === "cycle"
+		|| normalized.includes("tricycle")
+	) {
+		return "Bicycle";
 	}
 
 	if (normalized.includes("semi truck") || normalized.includes("semitruck")) {

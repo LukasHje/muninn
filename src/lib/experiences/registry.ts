@@ -226,7 +226,7 @@ export const experienceDefinitions = [
 		cardFamily: "recipe",
 		landingPage: "recipes",
 		inspector: "recipes",
-		featureSections: ["Ingredients", "Instructions", "Method", "Directions", "Notes", "Review"],
+		featureSections: ["Ingredients", "Ingredienser", "Instructions", "Instruktioner", "Method", "Directions", "Notes", "Anteckningar", "Review"],
 		metadataFilters: ["recipe_kind", "favorite", "reviewed", "cuisine"],
 		showMetadataFilters: false,
 		cardMetadata: ["total_time", "cook_time", "difficulty", "cuisine"],
@@ -242,7 +242,7 @@ export const experienceDefinitions = [
 			"rating",
 			"tags",
 		],
-		inspectorSections: ["Ingredients", "Instructions", "Method", "Directions", "Notes", "Review"],
+		inspectorSections: ["Ingredients", "Ingredienser", "Instructions", "Instruktioner", "Method", "Directions", "Notes", "Anteckningar", "Review"],
 		statistics: {
 			type: "summary",
 			metrics: [

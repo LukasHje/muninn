@@ -148,6 +148,23 @@ test("vehicle status filters present planned and wishlist as the same state", ()
 	}).map((note) => note.id), ["planned", "wishlist"]);
 });
 
+test("owned filters include previously owned vehicles", () => {
+	const notes = [
+		createVehicle("current", { type: "vehicle", status: "owned" }),
+		createVehicle("previous", { type: "vehicle", status: "previously-owned" }),
+		createVehicle("planned", { type: "vehicle", status: "planned" }),
+	];
+
+	assert.deepEqual(getNoteMetadataValues(notes[1], "vehicle_status"), ["owned"]);
+	assert.deepEqual(filterExperienceNotes(notes, {
+		metadata: { vehicle_status: "owned" },
+		tag: null,
+		selected: null,
+		inspector: "closed",
+	}).map((note) => note.id), ["current", "previous"]);
+	assert.equal(buildVehicleDashboardModel(notes).owned, 2);
+});
+
 test("title sorting presents vehicles in ascending A to Z order", () => {
 	const definition = getExperienceDefinition("vehicles");
 	assert.ok(definition);
@@ -260,6 +277,7 @@ test("vehicle categories group related body-style variants for filtering", () =>
 	const notes = [
 		createVehicle("cargo-bike", { type: "vehicle", body_style: "expedition-cargo-bicycle" }),
 		createVehicle("touring-bike", { type: "vehicle", body_style: "touring bicycle" }),
+		createVehicle("motorcycle", { type: "vehicle", body_style: "Motorcycle" }),
 		createVehicle("moped", { type: "vehicle", body_style: "Moped" }),
 		createVehicle("wagon", { type: "vehicle", body_style: "Crossover Wagon" }),
 	];
@@ -273,11 +291,13 @@ test("vehicle categories group related body-style variants for filtering", () =>
 
 	assert.equal(getVehicleCategory("expedition-cargo-bicycle"), "Bicycle");
 	assert.equal(getVehicleCategory("touring bicycle"), "Bicycle");
+	assert.equal(getVehicleCategory("Motorcycle"), "Motorcycle");
 	assert.equal(getVehicleCategory("Crossover Wagon"), "Station Wagon");
 	assert.deepEqual(bicycleNotes.map((note) => note.id), ["cargo-bike", "touring-bike"]);
 	assert.deepEqual(dashboard.categories.map(({ value, count }) => ({ value, count })), [
 		{ value: "Bicycle", count: 2 },
 		{ value: "Moped", count: 1 },
+		{ value: "Motorcycle", count: 1 },
 		{ value: "Station Wagon", count: 1 },
 	]);
 });

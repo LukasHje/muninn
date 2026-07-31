@@ -4,7 +4,11 @@ import ExperienceBrowserControls from "src/components/experiences/ExperienceBrow
 import type { ExperienceFilterState } from "src/lib/experiences/filters";
 import type { ExperienceDefinition } from "src/lib/experiences/registry";
 import type { ExperienceSortField, ExperienceSortOrder } from "src/lib/experiences/sorting";
-import { buildVehicleDashboardModel, getVehicleCategoryIcon } from "src/lib/experiences/vehicles";
+import {
+	buildVehicleDashboardModel,
+	getVehicleCategory,
+	getVehicleCategoryIcon,
+} from "src/lib/experiences/vehicles";
 import type { LibraryItem } from "src/lib/vault";
 
 interface Props {
@@ -158,7 +162,10 @@ const hasAnyFilter = vehicleFilterKeys.some((key) => Boolean(filterState.metadat
 			<p class="vehicles-stat-label">Body styles</p>
 			<div class="vehicles-body-list">
 				{bodyStyleSummary.map((item) => (
-					<a href={buildFilterHref("body_style", item.value)} class="vehicles-plain-row">
+					<a
+						href={buildFilterHref("vehicle_category", getVehicleCategory(item.value))}
+						class="vehicles-plain-row"
+					>
 						<span>{item.label}</span>
 						<strong>{item.count}</strong>
 					</a>
@@ -227,7 +234,7 @@ const hasAnyFilter = vehicleFilterKeys.some((key) => Boolean(filterState.metadat
 		position: relative;
 		z-index: 20;
 		display: grid;
-		gap: 0.75rem;
+		gap: 0.4rem;
 		min-width: 0;
 	}
 
@@ -237,11 +244,13 @@ const hasAnyFilter = vehicleFilterKeys.some((key) => Boolean(filterState.metadat
 			repeat(4, 7.35rem)
 			minmax(15rem, 1.35fr)
 			minmax(10.5rem, 1fr);
-		gap: 0.65rem;
+		height: 5.8rem;
+		gap: 0.5rem;
 		min-width: 0;
 		overflow-x: auto;
+		overflow-y: hidden;
 		overscroll-behavior-x: contain;
-		padding-bottom: 0.25rem;
+		padding-bottom: 0.15rem;
 		scrollbar-width: thin;
 		scrollbar-color: rgba(151, 107, 56, 0.34) transparent;
 	}
@@ -257,12 +266,13 @@ const hasAnyFilter = vehicleFilterKeys.some((key) => Boolean(filterState.metadat
 
 	.vehicles-stat-card {
 		display: flex;
-		min-height: 7.45rem;
+		height: 5.65rem;
+		min-height: 5.65rem;
 		flex-direction: column;
 		border: 1px solid rgba(215, 196, 168, 0.9);
 		border-radius: 10px;
 		background: linear-gradient(145deg, rgba(255, 253, 249, 0.98), rgba(248, 239, 227, 0.94));
-		padding: 0.75rem 0.8rem;
+		padding: 0.5rem 0.65rem;
 		box-shadow: 0 8px 22px rgba(87, 55, 30, 0.055);
 	}
 
@@ -277,14 +287,15 @@ const hasAnyFilter = vehicleFilterKeys.some((key) => Boolean(filterState.metadat
 	.vehicles-stat-label {
 		font-size: 0.6rem;
 		font-weight: 750;
+		line-height: 1.1;
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
 		color: rgb(82 75 66);
 	}
 
 	.vehicles-stat-value {
-		margin-top: 0.45rem;
-		font-size: 2.4rem;
+		margin-top: 0.2rem;
+		font-size: 2rem;
 		font-weight: 650;
 		line-height: 1;
 		letter-spacing: -0.06em;
@@ -298,15 +309,16 @@ const hasAnyFilter = vehicleFilterKeys.some((key) => Boolean(filterState.metadat
 		justify-content: space-between;
 		gap: 0.75rem;
 		font-size: 0.68rem;
+		line-height: 1.1;
 		color: rgb(100 116 139);
 	}
 
 	.vehicles-split-layout {
 		display: grid;
-		grid-template-columns: 4.2rem minmax(0, 1fr);
+		grid-template-columns: 3.2rem minmax(0, 1fr);
 		align-items: center;
-		gap: 0.8rem;
-		margin-top: 0.75rem;
+		gap: 0.55rem;
+		margin-top: 0.25rem;
 	}
 
 	.vehicles-donut {
@@ -329,7 +341,7 @@ const hasAnyFilter = vehicleFilterKeys.some((key) => Boolean(filterState.metadat
 	.vehicles-split-list,
 	.vehicles-body-list {
 		display: grid;
-		gap: 0.1rem;
+		gap: 0;
 	}
 
 	.vehicles-plain-row {
@@ -338,10 +350,11 @@ const hasAnyFilter = vehicleFilterKeys.some((key) => Boolean(filterState.metadat
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 0.8rem;
+		gap: 0.55rem;
 		border-radius: 4px;
-		padding: 0.18rem 0.35rem;
-		font-size: 0.72rem;
+		padding: 0.06rem 0.25rem;
+		font-size: 0.62rem;
+		line-height: 1.1;
 		color: rgb(71 85 105);
 		transition: color 160ms ease;
 	}
@@ -367,7 +380,7 @@ const hasAnyFilter = vehicleFilterKeys.some((key) => Boolean(filterState.metadat
 	}
 
 	.vehicles-plain-row strong {
-		font-size: 0.68rem;
+		font-size: 0.6rem;
 		font-variant-numeric: tabular-nums;
 		color: rgb(71 85 105);
 	}
@@ -378,12 +391,12 @@ const hasAnyFilter = vehicleFilterKeys.some((key) => Boolean(filterState.metadat
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 0.75rem;
+		gap: 0.4rem;
 		min-width: 0;
 		border: 1px solid rgba(215, 196, 168, 0.88);
 		border-radius: 10px;
 		background: rgba(255, 253, 249, 0.74);
-		padding: 0.55rem;
+		padding: 0.3rem;
 		box-shadow: 0 8px 22px rgba(87, 55, 30, 0.045);
 	}
 
@@ -392,17 +405,17 @@ const hasAnyFilter = vehicleFilterKeys.some((key) => Boolean(filterState.metadat
 		min-width: 0;
 		flex: 1;
 		align-items: center;
-		gap: 0.55rem;
+		gap: 0.3rem;
 	}
 
 	.vehicles-category-scroll {
 		display: flex;
 		min-width: 0;
 		max-width: min(38vw, 30rem);
-		gap: 0.55rem;
+		gap: 0.3rem;
 		overflow-x: auto;
 		overscroll-behavior-x: contain;
-		padding-bottom: 0.1rem;
+		padding-bottom: 0;
 		scrollbar-width: none;
 		-ms-overflow-style: none;
 	}
@@ -413,16 +426,16 @@ const hasAnyFilter = vehicleFilterKeys.some((key) => Boolean(filterState.metadat
 
 	.vehicles-filter-pill {
 		display: inline-flex;
-		height: 2.35rem;
+		height: 1.9rem;
 		flex-shrink: 0;
 		align-items: center;
 		justify-content: center;
-		gap: 0.4rem;
+		gap: 0.3rem;
 		border: 1px solid transparent;
 		border-radius: 7px;
 		background: rgba(244, 239, 231, 0.78);
-		padding: 0 0.7rem;
-		font-size: 0.72rem;
+		padding: 0 0.55rem;
+		font-size: 0.65rem;
 		font-weight: 650;
 		color: rgb(71 85 105);
 		transition: border-color 180ms ease, background 180ms ease, color 180ms ease, box-shadow 180ms ease;
@@ -446,7 +459,7 @@ const hasAnyFilter = vehicleFilterKeys.some((key) => Boolean(filterState.metadat
 	}
 
 	.vehicles-filter-divider {
-		height: 1.75rem;
+		height: 1.4rem;
 		width: 1px;
 		flex-shrink: 0;
 		background: rgba(148, 116, 78, 0.22);
@@ -460,7 +473,24 @@ const hasAnyFilter = vehicleFilterKeys.some((key) => Boolean(filterState.metadat
 		display: flex;
 		flex-shrink: 0;
 		align-items: center;
-		gap: 0.45rem;
+		gap: 0.3rem;
+		--experience-sort-gap: 0.08rem;
+		--experience-sort-radius: 7px;
+		--experience-sort-padding: 0.1rem;
+		--experience-sort-shadow: none;
+		--experience-sort-button-height: 1.7rem;
+		--experience-sort-button-gap: 0.2rem;
+		--experience-sort-button-radius: 5px;
+		--experience-sort-button-padding: 0 0.45rem;
+		--experience-sort-font-size: 0.62rem;
+		--experience-sort-icon-size: 0.62rem;
+		--experience-sort-date-width: 4.6rem;
+		--experience-sort-title-width: 3.1rem;
+		--experience-browser-controls-gap: 0.25rem;
+		--experience-layout-gap: 0.15rem;
+		--experience-layout-button-size: 2rem;
+		--experience-layout-button-radius: 6px;
+		--experience-layout-icon-size: 0.78rem;
 	}
 
 	@media (max-width: 767px) {

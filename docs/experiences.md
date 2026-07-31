@@ -376,6 +376,8 @@ Future experiences should mostly be composition rather than implementation.
 
 ## Recipes
 
+The Recipe-specific current-state contract, restrictions, and planned ingredient taxonomy are documented in [`recipe-experience.md`](recipe-experience.md).
+
 Recipes behaves like a personal cookbook layered over normal Markdown notes:
 
 - a warm editorial hero using the shared serif title and description treatment
@@ -391,7 +393,7 @@ Recipe metadata is optional and additive. Notes are selected by their normalized
 
 A recipe is considered reviewed when it has either an explicit truthy `reviewed` value or a valid `rating`/`betyg`. The `Needs review` metric and its filter must use this same derived state.
 
-Markdown ingredient extraction starts at an `Ingredients` or `Ingredienser` heading and includes lists beneath deeper subsection headings, such as `Kakdeg` or `Pensling och garnering`. Extraction stops at the next heading at the same or a higher level, so the dashboard and Recipe inspector use the same complete ingredient set without consuming instruction lists.
+Markdown ingredient extraction starts at an `Ingredients` or `Ingredienser` heading and includes lists beneath deeper subsection headings, such as `Kakdeg` or `Pensling och garnering`. Extraction stops at the next heading at the same or a higher level. Ingredient data remains authored recipe data and must not be repurposed for visual recipe classification. The Recipe inspector renders the original Markdown section through `NoteContent`, preserving subgroup headings, quantities, spelling, emphasis, and links exactly as authored. Classification signals such as coffee, tea, or chocolate may choose a presentation icon, but do not rewrite or categorize individual ingredients.
 
 The Recipe inspector is not a separate recipe-detail route. Opening a card keeps the current browse state and uses the shared Experience inspector lifecycle; opening the complete note still uses the normal Note View.
 
