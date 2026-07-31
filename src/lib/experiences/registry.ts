@@ -115,7 +115,7 @@ export const experienceDefinitions = [
 		},
 		assets: {
 			heroArtwork: "/experiences/gear/experiences-heroart-gear-v2.webp",
-			placeholderThumbnail: "/experiences/gear/placeholder-thumbnail.webp",
+			placeholderThumbnail: "/experiences/gear/gear-placeholder-thumbnail.webp",
 		},
 		href: "/gear",
 		libraryHref: "/notes?category=gear",

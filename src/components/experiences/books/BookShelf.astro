@@ -1,0 +1,83 @@
+---
+import leftPillarTop from "src/assets/experiences/books/bookshelf-left-top.svg";
+import leftPillarMid from "src/assets/experiences/books/bookshelf-left-mid.svg";
+import leftPillarBot from "src/assets/experiences/books/bookshelf-left-bot.svg";
+import rightPillarTop from "src/assets/experiences/books/bookshelf-right-top.svg";
+import rightPillarMid from "src/assets/experiences/books/bookshelf-right-mid.svg";
+import rightPillarBot from "src/assets/experiences/books/bookshelf-right-bot.svg";
+---
+
+<div class="book-shelf-frame">
+	<div class="book-shelf-frame__pillar book-shelf-frame__pillar--left" aria-hidden="true">
+		<img class="book-shelf-frame__pillar-top" src={leftPillarTop.src} alt="" />
+		<img class="book-shelf-frame__pillar-mid" src={leftPillarMid.src} alt="" />
+		<img class="book-shelf-frame__pillar-bot" src={leftPillarBot.src} alt="" />
+	</div>
+	<div class="book-shelf-frame__rows">
+		<slot />
+	</div>
+	<div class="book-shelf-frame__pillar book-shelf-frame__pillar--right" aria-hidden="true">
+		<img class="book-shelf-frame__pillar-top" src={rightPillarTop.src} alt="" />
+		<img class="book-shelf-frame__pillar-mid" src={rightPillarMid.src} alt="" />
+		<img class="book-shelf-frame__pillar-bot" src={rightPillarBot.src} alt="" />
+	</div>
+</div>
+
+<style>
+	.book-shelf-frame {
+		--book-shelf-pillar-width: clamp(12px, 1.1vw, 18px);
+		--book-shelf-pillar-overhang: clamp(6px, 0.55vw, 9px);
+		--book-shelf-pillar-top-height: clamp(18px, 1.65vw, 27px);
+		--book-shelf-pillar-bot-height: clamp(38px, 3.6vw, 58px);
+		--book-shelf-pillar-top-gap: clamp(0.5rem, 1vw, 0.8rem);
+		position: relative;
+		display: grid;
+		grid-template-columns: var(--book-shelf-pillar-width) minmax(0, 1fr) var(--book-shelf-pillar-width);
+		align-self: start;
+		margin-bottom: var(--book-shelf-pillar-top-gap);
+		min-width: 0;
+	}
+	.book-shelf-frame__rows {
+		position: relative;
+		z-index: 1;
+		grid-column: 2;
+		grid-row: 1;
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+	}
+	.book-shelf-frame__pillar {
+		position: relative;
+		z-index: 0;
+		grid-row: 1;
+		align-self: stretch;
+		display: flex;
+		flex-direction: column;
+		margin-top: var(--book-shelf-pillar-top-gap);
+		height: calc(100% - var(--book-shelf-pillar-top-gap));
+		min-height: 0;
+		width: 100%;
+		overflow: hidden;
+		pointer-events: none;
+	}
+	.book-shelf-frame__pillar-top {
+		flex: 0 0 var(--book-shelf-pillar-top-height);
+		height: var(--book-shelf-pillar-top-height);
+		width: 100%;
+		object-fit: fill;
+	}
+	.book-shelf-frame__pillar-mid {
+		min-height: 0;
+		width: 100%;
+		flex: 1 1 auto;
+		object-fit: fill;
+	}
+	.book-shelf-frame__pillar-bot {
+		flex: 0 0 var(--book-shelf-pillar-bot-height);
+		height: var(--book-shelf-pillar-bot-height);
+		width: 100%;
+		object-fit: fill;
+	}
+	.book-shelf-frame__pillar--left { grid-column: 1; transform: translateX(1.5rem); }
+	.book-shelf-frame__pillar--right { grid-column: 3; transform: translateX(-1.5rem); }
+</style>

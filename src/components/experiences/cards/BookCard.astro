@@ -49,14 +49,15 @@ const paletteIndex = Array.from(note.title).reduce((sum, character) => sum + cha
 					/>
 				)
 			}
-			<span class="book-card__favorite" data-book-card-favorite hidden>
-				<Icon name="star" class="h-3.5 w-3.5 fill-current" />
-			</span>
 		</div>
+		<span class="book-card__favorite" data-book-card-favorite hidden>
+			<Icon name="star" class="h-3.5 w-3.5" />
+		</span>
 		<div class="book-card__rating" data-book-card-rating aria-label="Personal rating" hidden></div>
 		<div class="book-card__status-bar">
 			<div class="book-card__progress" data-book-card-progress hidden>
 				<span></span>
+				<small data-book-card-progress-label></small>
 			</div>
 			<span class="book-card__status" data-book-card-status>Unread</span>
 		</div>
@@ -72,23 +73,71 @@ const paletteIndex = Array.from(note.title).reduce((sum, character) => sum + cha
 		width: clamp(8.6rem, 13vw, 10.6rem);
 		flex: 0 0 auto;
 		scroll-snap-align: start;
+		perspective: 900px;
 	}
 	.book-card {
 		position: relative;
+		isolation: isolate;
 		display: block;
 		width: 100%;
 		text-align: left;
 		border: 1px solid rgba(208, 174, 125, 0.2);
-		border-radius: 7px;
+		border-radius: 7px 0 0 7px;
 		background: #171b17;
 		box-shadow: 0 13px 18px rgba(0, 0, 0, 0.48), 0 2px 4px rgba(0,0,0,.62);
-		overflow: hidden;
+		overflow: visible;
+		transform: rotateY(-2deg);
+		transform-origin: left center;
+		transform-style: preserve-3d;
+		transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+	}
+	.book-card::before,
+	.book-card::after {
+		content: "";
+		position: absolute;
+		pointer-events: none;
+	}
+	.book-card::before {
+		z-index: -2;
+		top: 3px;
+		right: -7px;
+		bottom: 2px;
+		width: 9px;
+		border: 1px solid rgba(74, 57, 38, .72);
+		border-left: 0;
+		border-radius: 0;
+		background: #34291e;
+		box-shadow: 4px 7px 12px rgba(0, 0, 0, .34);
+		transform: translateZ(-4px);
+	}
+	.book-card::after {
+		z-index: -1;
+		top: 5px;
+		right: -5px;
+		bottom: 4px;
+		width: 6px;
+		border-radius: 0;
+		background:
+			repeating-linear-gradient(
+				90deg,
+				rgba(91, 72, 49, .34) 0 1px,
+				rgba(255, 248, 229, .16) 1px 2px,
+				transparent 2px 3px,
+				rgba(113, 91, 63, .2) 3px 4px,
+				transparent 4px 6px
+			),
+			linear-gradient(90deg, #b9aa8f 0%, #e3d8c2 50%, #9f8d70 100%);
+		box-shadow:
+			inset 1px 0 rgba(255, 255, 255, .25),
+			inset -1px 0 rgba(63, 46, 29, .38);
+		transform: translateZ(-2px);
 	}
 	.book-card__cover {
 		position: relative;
 		aspect-ratio: 2 / 3;
 		overflow: hidden;
-		border-radius: 6px;
+		border-right: 1px solid transparent;
+		border-radius: 6px 0 0 6px;
 		background: #72533b;
 		box-shadow:
 			0 10px 20px rgba(0, 0, 0, 0.22);
@@ -113,15 +162,24 @@ const paletteIndex = Array.from(note.title).reduce((sum, character) => sum + cha
 	}
 	.book-card:hover,
 	.book-card:focus-visible,
-	.book-card-shell[data-selected="true"] .book-card {
-		transform: translateY(-5px);
+	.book-card-shell[data-selected="true"] .book-card,
+	.book-card[aria-pressed="true"] {
+		transform: translateY(-5px) rotateY(-4deg);
 		border-color: rgba(211, 161, 91, 0.58);
-		box-shadow: 0 20px 32px rgba(0, 0, 0, 0.42);
+		box-shadow:
+			inset -1px 0 rgba(211, 161, 91, .58),
+			0 20px 32px rgba(0, 0, 0, 0.42);
+	}
+	.book-card:hover .book-card__cover,
+	.book-card:focus-visible .book-card__cover,
+	.book-card-shell[data-selected="true"] .book-card__cover,
+	.book-card[aria-pressed="true"] .book-card__cover {
+		border-right-color: rgba(211, 161, 91, .58);
 	}
 	.book-card:focus-visible {
 		outline: 2px solid #a96f3d;
 		outline-offset: 5px;
-		border-radius: 8px;
+		border-radius: 8px 0 0 8px;
 	}
 	.book-card__cover img {
 		position: relative;
@@ -183,9 +241,17 @@ const paletteIndex = Array.from(note.title).reduce((sum, character) => sum + cha
 		min-height: 1.55rem;
 		place-items: center;
 		border-top: 1px solid rgba(220, 184, 129, .1);
+		border-right: 1px solid transparent;
+		border-radius: 0 0 0 6px;
 		background: #191d19;
 		padding: .3rem .55rem .28rem;
 		color: #c99754;
+	}
+	.book-card:hover .book-card__status-bar,
+	.book-card:focus-visible .book-card__status-bar,
+	.book-card-shell[data-selected="true"] .book-card__status-bar,
+	.book-card[aria-pressed="true"] .book-card__status-bar {
+		border-right-color: rgba(211, 161, 91, .58);
 	}
 	.book-card__status {
 		display: block;

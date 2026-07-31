@@ -137,7 +137,7 @@ It consumes normalized recipe metadata from `src/lib/experiences/recipes.ts`. Ca
 
 The `book` family represents standing books rather than generic note panels. Cover artwork dominates a narrow 2:3 volume, with a dark attached footer for title, author, reading status, optional progress, and a finished-book rating. Missing cover art receives a deterministic cloth-bound placeholder derived from the title; remote cover failure must reveal that fallback rather than a broken image.
 
-Book Cards are rendered into horizontally scrolling shelf tracks. They retain the shared `data-experience-card` selection contract so the Experience workspace owns inspector selection. Durable status, progress, rating, and favorite presentation comes exclusively from Muninn's Local Experience State service and never from a component write to frontmatter.
+Book Cards are rendered into non-scrolling Home shelf rows or the wrapping Library catalogue. They retain the shared `data-experience-card` selection contract so the Experience workspace owns inspector selection. Durable status, progress, rating, and favorite presentation comes exclusively from Muninn's Local Experience State service and never from a component write to frontmatter.
 
 ## Vehicle Card Contract
 

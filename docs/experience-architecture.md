@@ -44,6 +44,8 @@ Every Experience is registered centrally in `src/lib/experiences/registry.ts` an
 
 Gear provides a custom landing page, Product Card, and inspector. Recipes provides a custom editorial landing page, Recipe Card, dashboard, and inspector. Vehicles provides a thematic landing page, Vehicle Card, dashboard, and inspector as the reference pattern for the next-generation domain Experiences. Books provides a custom Digital Bookshelf, Book Card, local reading state, and inspector. Homelab provides a path-aware adapter, infrastructure dashboard, and Node Card while retaining Generic Note Cards for non-node documentation. Travel and Technology use the Default Experience implementation until their own typed presentation layers exist.
 
+Books deliberately changes presentation at the phone breakpoint. Desktop and tablet enter through the curated bookshelf Home, while phones enter directly into the Library catalogue and do not render the furniture metaphor. The phone Library retains the atmospheric, shared collapsible Experience Hero and exposes its filter chips as a horizontally scrollable control strip. Hero statistics and filter controls may scroll horizontally, but must never introduce vertical scrolling inside their rows.
+
 ## Default Experience
 
 An Experience without a component override receives:
@@ -203,6 +205,8 @@ The form-factor type is intentionally open rather than a closed Entity enum. Add
 Homelab Cards and the Homelab Inspector consume the same category-artwork resolver. The Inspector intentionally ignores note-owned covers, thumbnails, and body images just as the cards do. Its contextual header is followed by a compact full-width artwork hero and a separate full-width metadata panel; summary and relation content retain their existing order below those surfaces.
 
 The Homelab dashboard's Service Split counts unique service roots rather than individual Markdown files. It prefers explicit `service_category` or `category` metadata, then derives the categories Applications, Media, Utilities, Monitoring, Networking, Storage, Development, Automation, Security, Infrastructure, and Other from service identity, tags, and content. `Self-hosted Applications` and its singular variants normalize to Applications. Multiple notes below one service folder contribute one service to the split.
+
+Service-distribution rows are toggle filters using the shared `homelab_service_category` URL dimension. Selecting a row applies its category while preserving unrelated filters and browser preferences; selecting the active row again removes only that category filter and returns to the corresponding unfiltered service distribution.
 
 Service identity comes from the service note itself, not an organizational category folder below `Services`. A concrete service note uses its note title, so `Services/Monitoring/Prometheus.md` resolves to Prometheus. Generic roots such as `Index.md`, `Overview.md`, `Service.md`, and `README.md` instead use their immediate parent folder, so `Services/Monitoring/Grafana/Index.md` resolves to Grafana. The same identity resolver owns Service Card titles and unique-service dashboard counts.
 

@@ -47,8 +47,10 @@ const redirectTo = Astro.url.pathname + Astro.url.search;
 	[data-experience-id="books"] .experience-canvas {
 		gap: 0;
 	}
-	.experience-page[data-experience-id="books"][data-books-view="library"] .experience-discovery {
-		display: none;
+	@media (min-width: 768px) {
+		.experience-page[data-experience-id="books"][data-books-view="library"] .experience-discovery {
+			display: none;
+		}
 	}
 	[data-experience-id="books"] .experience-discovery {
 		border: 0;
@@ -80,5 +82,10 @@ const redirectTo = Astro.url.pathname + Astro.url.search;
 	[data-experience-id="books"] .experience-inspector-backdrop {
 		background: rgba(5, 6, 4, 0.52);
 		backdrop-filter: blur(3px);
+	}
+	@media (max-width: 767px) {
+		[data-experience-id="books"] .experience-discovery {
+			min-width: 0;
+		}
 	}
 </style>

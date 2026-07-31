@@ -40,9 +40,9 @@ function createGear(frontmatter: LibraryItem["frontmatter"] = {}): LibraryItem {
 test("Gear cards resolve the colocated Experience placeholder when artwork is absent", () => {
 	const definition = getExperienceDefinition("gear");
 	assert.ok(definition);
-	assert.equal(definition.assets.placeholderThumbnail, "/experiences/gear/placeholder-thumbnail.webp");
+	assert.equal(definition.assets.placeholderThumbnail, "/experiences/gear/gear-placeholder-thumbnail.webp");
 	const image = getCardImage(createGear(), definition);
-	assert.equal(image, "/experiences/gear/placeholder-thumbnail.webp");
+	assert.equal(image, "/experiences/gear/gear-placeholder-thumbnail.webp");
 	assert.equal(isPlaceholderExperienceImage(image, definition), true);
 });
 

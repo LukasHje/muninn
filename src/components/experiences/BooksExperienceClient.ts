@@ -52,6 +52,7 @@ function animatePercentage(element: Element, target: number) {
 }
 
 function syncCard(card: HTMLElement, state: BookState) {
+	card.dataset.bookReadingStatus = state.readingStatus ?? "unread";
 	const status = card.querySelector("[data-book-card-status]");
 	if (status) {
 		status.textContent = state.readingStatus
@@ -59,11 +60,16 @@ function syncCard(card: HTMLElement, state: BookState) {
 			: "Unread";
 	}
 	const favorite = card.querySelector("[data-book-card-favorite]");
-	if (favorite instanceof HTMLElement) favorite.hidden = !state.favorite;
+	if (favorite instanceof HTMLElement) {
+		favorite.hidden = !state.favorite;
+		favorite.dataset.active = state.favorite ? "true" : "false";
+	}
 	const progress = card.querySelector("[data-book-card-progress]");
 	if (progress instanceof HTMLElement) {
 		progress.hidden = state.progress === null;
 		progress.style.setProperty("--book-progress", `${state.progress ?? 0}%`);
+		const progressLabel = progress.querySelector("[data-book-card-progress-label]");
+		if (progressLabel) progressLabel.textContent = `${state.progress ?? 0}%`;
 	}
 	const rating = card.querySelector("[data-book-card-rating]");
 	if (rating) {
@@ -110,7 +116,8 @@ export function initBooksExperiences() {
 			.filter((record) => record.id);
 		const savedPreferences = preferencesStore.get("library");
 		const initialUrl = new URL(window.location.href);
-		let activeView: "home" | "library" = initialUrl.searchParams.get("view") === "library" ? "library" : "home";
+		const usesMobileCatalogue = window.matchMedia("(max-width: 767px)").matches;
+		let activeView: "home" | "library" = usesMobileCatalogue || initialUrl.searchParams.get("view") === "library" ? "library" : "home";
 		let activeFilter = initialUrl.searchParams.get("book-status") ?? savedPreferences?.filter ?? "all";
 		let activeAuthor = savedPreferences?.author ?? "";
 		let activeYear = savedPreferences?.year ?? "";
@@ -119,10 +126,20 @@ export function initBooksExperiences() {
 		let catalogueLayout: "grid" | "list" = "grid";
 
 		const stateFor = (id: string) => store.get(id) ?? emptyBookState(id);
+		const selectedBookId = () => {
+			const panel = root.querySelector("[data-experience-inspector-panel]:not([hidden])");
+			return panel instanceof HTMLElement ? panel.dataset.experienceInspectorPanel ?? "" : "";
+		};
 		const cloneCard = (record: BookRecord) => {
 			const clone = record.template.content.firstElementChild?.cloneNode(true);
 			if (!(clone instanceof HTMLElement)) return null;
 			syncCard(clone, stateFor(record.id));
+			const isSelected = selectedBookId() === record.id;
+			clone.dataset.selected = isSelected ? "true" : "false";
+			const trigger = clone.querySelector("[data-experience-card]");
+			if (trigger instanceof HTMLElement) {
+				trigger.setAttribute("aria-pressed", isSelected ? "true" : "false");
+			}
 			protectCoverImages(clone);
 			return clone;
 		};
@@ -214,14 +231,25 @@ export function initBooksExperiences() {
 				const track = shelf.querySelector("[data-book-shelf-track]");
 				if (!(track instanceof HTMLElement)) continue;
 				const allMatches = sorted(recordsForShelf(shelfId));
-				const approximateCardWidth = window.matchMedia("(max-width: 767px)").matches ? 138 : 170;
-				const visibleCount = Math.max(1, Math.floor(track.clientWidth / approximateCardWidth));
-				const visibleMatches = allMatches.slice(0, Math.min(5, visibleCount));
-				track.replaceChildren(...visibleMatches.map(cloneCard).filter((card): card is HTMLElement => Boolean(card)));
+				const trackStyle = getComputedStyle(track);
+				const horizontalPadding = (Number.parseFloat(trackStyle.paddingLeft) || 0) + (Number.parseFloat(trackStyle.paddingRight) || 0);
+				const availableWidth = Math.max(0, track.clientWidth - horizontalPadding);
+				const viewportWidth = window.innerWidth;
+				const targetSlotWidth = viewportWidth <= 480 ? 124 : viewportWidth <= 767 ? 132 : viewportWidth <= 1100 ? 145 : 155;
+				const inspectorOpen = viewportWidth >= 1280 && root.dataset.inspectorOpen === "true";
+				const maximumSlots = inspectorOpen ? 4 : 5;
+				const minimumSlotGap = viewportWidth <= 767 ? 16 : 32;
+				const slotCount = Math.max(1, Math.min(maximumSlots, Math.floor((availableWidth + minimumSlotGap) / (targetSlotWidth + minimumSlotGap))));
+				track.style.setProperty("--book-shelf-slot-count", String(slotCount));
+				track.style.setProperty("--book-shelf-slot-width", `${targetSlotWidth}px`);
+				const hasOverflow = allMatches.length > slotCount;
+				const visibleMatches = allMatches.slice(0, slotCount);
+				const shelfChildren = visibleMatches.map(cloneCard).filter((card): card is HTMLElement => Boolean(card));
+				const seeAll = shelf.querySelector("[data-book-see-all]");
+				if (seeAll instanceof HTMLElement) seeAll.hidden = !hasOverflow;
+				track.replaceChildren(...shelfChildren);
 				const empty = shelf.querySelector("[data-book-shelf-empty]");
 				if (empty instanceof HTMLElement) empty.hidden = allMatches.length > 0;
-				const seeAll = shelf.querySelector("[data-book-see-all]");
-				if (seeAll instanceof HTMLButtonElement) seeAll.hidden = allMatches.length <= visibleMatches.length;
 			}
 			if (activeView === "library") {
 				const matches = sorted(records.filter(matchesFilter));
@@ -437,17 +465,27 @@ export function initBooksExperiences() {
 		window.addEventListener("storage", (event) => {
 			if (event.key === "muninn:experience-state:books") render();
 		});
-		const observer = new MutationObserver(syncInspector);
+		const observer = new MutationObserver(() => {
+			syncInspector();
+			requestAnimationFrame(render);
+		});
 		const inspectorPanels = root.querySelector("[data-experience-inspector-panels]");
 		if (inspectorPanels) observer.observe(inspectorPanels, { childList: true });
-		let renderedWidth = library.clientWidth;
-		const resizeObserver = new ResizeObserver(([entry]) => {
-			const nextWidth = entry?.contentRect.width ?? library.clientWidth;
-			if (Math.abs(nextWidth - renderedWidth) < 1) return;
-			renderedWidth = nextWidth;
-			render();
+		const inspectorStateObserver = new MutationObserver(() => requestAnimationFrame(render));
+		inspectorStateObserver.observe(root, { attributes: true, attributeFilter: ["data-inspector-open"] });
+		let resizeRenderPending = false;
+		const resizeObserver = new ResizeObserver(() => {
+			if (resizeRenderPending) return;
+			resizeRenderPending = true;
+			requestAnimationFrame(() => {
+				resizeRenderPending = false;
+				render();
+			});
 		});
 		resizeObserver.observe(library);
+		for (const track of library.querySelectorAll("[data-book-shelf-track]")) {
+			resizeObserver.observe(track);
+		}
 		render();
 	}
 }

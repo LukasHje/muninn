@@ -257,7 +257,16 @@ const { definition, notes = [] } = Astro.props;
 			min-height: clamp(19rem, 48dvh, 25rem);
 		}
 		.books-hero__artwork { object-position: 62% center; }
-		.books-hero__summary { max-width: 100%; overflow-x: auto; padding-bottom: .3rem; scrollbar-width: none; }
+		.books-hero__summary {
+			max-width: 100%;
+			overflow-x: auto;
+			overflow-y: hidden;
+			overscroll-behavior-x: contain;
+			padding-bottom: .3rem;
+			scrollbar-width: none;
+			touch-action: pan-x;
+		}
+		.books-hero__summary::-webkit-scrollbar { display: none; }
 		.books-hero__summary > span { flex: 0 0 auto; }
 	}
 </style>
