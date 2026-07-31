@@ -1,0 +1,263 @@
+---
+import type { ExperienceDefinition } from "src/lib/experiences/registry";
+import type { ExperienceStatistic } from "src/lib/experiences/statistics";
+import type { LibraryItem } from "src/lib/vault";
+
+interface Props {
+	definition: ExperienceDefinition;
+	statistics: ExperienceStatistic[];
+	notes?: LibraryItem[];
+}
+
+const { definition, notes = [] } = Astro.props;
+---
+
+<div class="books-hero" data-has-artwork={definition.assets.heroArtwork ? "true" : "false"}>
+	{
+		definition.assets.heroArtwork && (
+			<img
+				class="books-hero__artwork"
+				src={definition.assets.heroArtwork}
+				alt=""
+				aria-hidden="true"
+			/>
+		)
+	}
+	<div class="books-hero__content">
+		<h1>{definition.title}</h1>
+		<p class="books-hero__description">
+			A digital bookshelf for the stories that shape you.
+		</p>
+		<div class="books-hero__summary" aria-label="Library summary">
+			<span><strong>{notes.length}</strong><small>Total</small></span>
+			<span><strong data-books-hero-finished>0</strong><small>Read</small></span>
+			<span><strong data-books-hero-reading>0</strong><small>Currently Reading</small></span>
+			<span><strong data-books-hero-wanted>0</strong><small>Want to Read</small></span>
+			<span><strong data-books-hero-dnf>0</strong><small>Did Not Finish</small></span>
+			<span class="books-hero__completion" data-books-completion-panel>
+				<svg class="books-hero__completion-ring" data-books-completion-ring viewBox="0 0 72 72" aria-hidden="true">
+					<circle class="books-hero__completion-track" cx="36" cy="36" r="27" pathLength="100"></circle>
+					<circle class="books-hero__completion-segment books-hero__completion-segment--read" data-books-ring-segment="read" cx="36" cy="36" r="27" pathLength="100"></circle>
+					<circle class="books-hero__completion-segment books-hero__completion-segment--reading" data-books-ring-segment="reading" cx="36" cy="36" r="27" pathLength="100"></circle>
+					<circle class="books-hero__completion-segment books-hero__completion-segment--want" data-books-ring-segment="want" cx="36" cy="36" r="27" pathLength="100"></circle>
+					<circle class="books-hero__completion-segment books-hero__completion-segment--dnf" data-books-ring-segment="dnf" cx="36" cy="36" r="27" pathLength="100"></circle>
+				</svg>
+				<strong data-books-completion>0%</strong><small>Read</small>
+				<svg class="books-hero__completion-edge" viewBox="0 0 60 106" preserveAspectRatio="none" aria-hidden="true">
+					<defs>
+						<linearGradient id="books-completion-arc-gradient" x1="0" y1="1" x2="0" y2="0">
+							<stop offset="0" stop-color="#8d6c48"></stop>
+							<stop offset=".62" stop-color="#cfa15a"></stop>
+							<stop offset="1" stop-color="#f0d08b"></stop>
+						</linearGradient>
+						<mask id="books-completion-arc-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="60" height="106">
+							<path
+								data-books-completion-arc
+								pathLength="100"
+								d="M5 2.5 C35 2.5 57.5 24 57.5 53 C57.5 82 35 103.5 5 103.5"
+								fill="none"
+								stroke="white"
+								stroke-width="12"
+								stroke-linecap="butt"
+								stroke-dasharray="0 100"
+							></path>
+						</mask>
+					</defs>
+					<path
+						d="M5 0 C36.5 0 60 23 60 53 C60 83 36 106 5 106 L5 105 C34 105 55 82 55 53 C55 26 34 5 5 5 Z"
+						fill="#cfb897"
+						fill-opacity=".18"
+					></path>
+					<path
+						d="M5 0 C36.5 0 60 23 60 53 C60 83 36 106 5 106 L5 105 C34 105 55 82 55 53 C55 26 34 5 5 5 Z"
+						fill="url(#books-completion-arc-gradient)"
+						mask="url(#books-completion-arc-mask)"
+					></path>
+				</svg>
+			</span>
+		</div>
+	</div>
+</div>
+
+<style>
+	.books-hero {
+		position: relative;
+		display: flex;
+		min-height: clamp(18rem, 36dvh, 25rem);
+		align-items: flex-end;
+		overflow: hidden;
+		padding: 2rem clamp(1.25rem, 4vw, 3rem) 1.7rem;
+		background: #10110e;
+	}
+	.books-hero__artwork {
+		position: absolute;
+		z-index: 0;
+		inset: 0;
+		height: 100%;
+		width: 100%;
+		object-fit: cover;
+		object-position: center 42%;
+	}
+	.books-hero::before {
+		content: "";
+		position: absolute;
+		z-index: 1;
+		inset: 0;
+		background:
+			linear-gradient(90deg, rgba(11, 9, 7, .92) 0%, rgba(18, 13, 9, .72) 38%, rgba(16, 12, 8, .22) 76%, rgba(7, 8, 6, .08) 100%),
+			linear-gradient(0deg, #11130f 0%, rgba(15, 14, 10, .82) 14%, rgba(16, 12, 9, .2) 58%, rgba(6, 7, 5, .2) 100%);
+	}
+	.books-hero__content {
+		position: relative;
+		z-index: 2;
+		width: 100%;
+		max-width: none;
+	}
+	h1 {
+		font-family: Georgia, "Times New Roman", serif;
+		font-size: clamp(2.55rem, 6vw, 4.6rem);
+		font-weight: 500;
+		line-height: 0.95;
+		letter-spacing: -0.055em;
+		color: #fff8ec;
+		text-shadow: 0 4px 24px rgba(0, 0, 0, 0.34);
+	}
+	.books-hero__description {
+		margin-top: 0.8rem;
+		max-width: 37rem;
+		font-family: Georgia, "Times New Roman", serif;
+		font-size: clamp(0.88rem, 1.4vw, 1.02rem);
+		line-height: 1.65;
+		color: rgba(255, 244, 226, 0.75);
+	}
+	.books-hero__summary {
+		display: flex;
+		width: 100%;
+		align-items: center;
+		gap: 0;
+		margin-top: 1.45rem;
+		font-size: 0.68rem;
+		letter-spacing: 0.04em;
+		color: rgba(255, 238, 215, 0.66);
+	}
+	.books-hero__summary > span {
+		display: grid;
+		min-width: 8.5rem;
+		flex: 1 1 0;
+		gap: 0.18rem;
+		border-right: 1px solid rgba(255, 234, 204, 0.16);
+		padding: 0 1.25rem;
+	}
+	.books-hero__summary > span:first-child { padding-left: 0; }
+	.books-hero__summary strong {
+		font-family: Georgia, "Times New Roman", serif;
+		font-size: 1.3125rem;
+		font-weight: 500;
+		color: #fff8ec;
+	}
+	.books-hero__summary small { font-size: 0.675rem; white-space: nowrap; color: rgba(255, 238, 215, 0.54); }
+	.books-hero__summary .books-hero__completion {
+		position: relative;
+		grid-template-columns: 4.8rem minmax(4.5rem, auto);
+		grid-template-rows: auto auto;
+		align-items: center;
+		border-right: 0;
+		min-width: 13.5rem;
+		max-width: 15rem;
+		min-height: 6.6rem;
+		flex: 1.45 0 13.5rem;
+		margin-left: 1rem;
+		border: 1px solid rgba(231, 194, 139, .13);
+		border-radius: 9999px;
+		background: linear-gradient(
+			0deg,
+			rgba(25, 22, 18, .2) 0%,
+			rgba(25, 22, 18, .2) 33%,
+			rgba(25, 22, 18, .08) 68%,
+			rgba(25, 22, 18, 0) 100%
+		);
+		padding: 1.125rem 1.375rem;
+		box-shadow:
+			inset 0 1px rgba(255,255,255,.04),
+			0 10px 30px rgba(0,0,0,.3);
+		backdrop-filter: blur(18px);
+		cursor: pointer;
+		transition:
+			transform 180ms ease,
+			border-color 180ms ease,
+			box-shadow 180ms ease;
+	}
+	.books-hero__summary .books-hero__completion:hover {
+		transform: translateY(-2px);
+		border-color: rgba(255,255,255,.11);
+		box-shadow:
+			inset 0 1px rgba(255,255,255,.055),
+			0 14px 34px rgba(0,0,0,.36);
+	}
+	.books-hero__completion-ring {
+		grid-row: 1 / 3;
+		display: block;
+		height: 4.5rem;
+		width: 4.5rem;
+		overflow: visible;
+		transform: rotate(-90deg);
+	}
+	.books-hero__completion-ring circle {
+		fill: none;
+		stroke-width: 10px;
+	}
+	.books-hero__completion-track { stroke: #2d2924; }
+	.books-hero__completion-segment {
+		stroke-linecap: butt;
+		stroke-dasharray: 0 100;
+		transition:
+			stroke-dasharray 350ms cubic-bezier(.22,.61,.36,1),
+			stroke-dashoffset 350ms cubic-bezier(.22,.61,.36,1),
+			opacity 180ms ease;
+	}
+	.books-hero__completion-segment--read { stroke: #cfa15a; }
+	.books-hero__completion-segment--reading { stroke: #87967b; }
+	.books-hero__completion-segment--want { stroke: #8d6c48; }
+	.books-hero__completion-segment--dnf { stroke: #6b5644; }
+	.books-hero__completion strong {
+		align-self: end;
+		font-family: Georgia, "Times New Roman", serif;
+		font-size: 1.7rem;
+		font-weight: 600;
+		line-height: 1;
+		letter-spacing: -.03em;
+		color: #fff;
+	}
+	.books-hero__completion small {
+		align-self: start;
+		margin-top: .2rem;
+		font-family: Georgia, "Times New Roman", serif;
+		font-size: .7rem;
+		font-weight: 500;
+		color: rgba(255,255,255,.58);
+	}
+	.books-hero__completion-edge {
+		position: absolute;
+		z-index: 2;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		display: block;
+		height: 100%;
+		width: 3.75rem;
+		overflow: visible;
+		filter: drop-shadow(0 0 3px rgba(207,161,90,.24));
+		pointer-events: none;
+	}
+	.books-hero__completion-edge [data-books-completion-arc] {
+		transition: stroke-dasharray 350ms cubic-bezier(.22,.61,.36,1);
+	}
+	@media (max-width: 767px) {
+		.books-hero {
+			min-height: clamp(19rem, 48dvh, 25rem);
+		}
+		.books-hero__artwork { object-position: 62% center; }
+		.books-hero__summary { max-width: 100%; overflow-x: auto; padding-bottom: .3rem; scrollbar-width: none; }
+		.books-hero__summary > span { flex: 0 0 auto; }
+	}
+</style>

@@ -4,6 +4,7 @@ import SelectedNoteInspector from "src/components/experiences/SelectedNoteInspec
 import RecipeNoteInspector from "src/components/experiences/RecipeNoteInspector.astro";
 import VehicleNoteInspector from "src/components/experiences/VehicleNoteInspector.astro";
 import HomelabNoteInspector from "src/components/experiences/HomelabNoteInspector.astro";
+import BookNoteInspector from "src/components/experiences/BookNoteInspector.astro";
 import type { InspectorSection } from "src/lib/experiences/inspector";
 import type { ExperienceDefinition } from "src/lib/experiences/registry";
 import type { LibraryItem } from "src/lib/vault";
@@ -22,6 +23,7 @@ const inspectorComponents = {
 	gear: SelectedNoteInspector,
 	recipes: RecipeNoteInspector,
 	vehicles: VehicleNoteInspector,
+	books: BookNoteInspector,
 	homelab: HomelabNoteInspector,
 };
 const InspectorComponent = props.definition.inspector

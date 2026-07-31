@@ -48,7 +48,9 @@ const {
 const currentPath = Astro.url.pathname;
 const searchParams = Astro.url.searchParams;
 const currentUrl = `${Astro.url.pathname}${Astro.url.search}`;
-const initialInspectorNote = filterState.inspector === "closed" ? null : selectedNote;
+const initialInspectorNote = definition.id === "books" || filterState.inspector === "closed"
+	? null
+	: selectedNote;
 const inspectorEndpoint = `${currentPath}/inspector`;
 
 function buildHref(mutator?: (params: URLSearchParams) => void) {
@@ -244,7 +246,9 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 		<div id="experience-library" class="experience-workspace">
 			<section class="experience-notes-scroll min-w-0">
 				{
-					filteredNotes.length === 0 ? (
+					Astro.slots.has("library") ? (
+						<slot name="library" />
+					) : filteredNotes.length === 0 ? (
 						<div class="experience-empty-state p-6">
 							<h2 class="panel-title">No matching notes</h2>
 							<p class="mt-2 text-sm leading-7 text-slate-600">

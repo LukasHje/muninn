@@ -2,6 +2,8 @@
 
 Muninn Experiences are data-driven application surfaces over the unified Vault note model.
 
+All Experiences follow the project-wide [Knowledge State vs Experience State](knowledge-vs-experience-state.md) ownership model. Vault-authored information is read-only Knowledge State. Interaction data and application preferences are Experience State owned by Muninn. An Experience may combine them for presentation, but must not blur their ownership or write Experience State into the vault.
+
 ```text
 Vault
     ↓
@@ -40,7 +42,7 @@ Every Experience is registered centrally in `src/lib/experiences/registry.ts` an
 - optional landing page override
 - optional inspector override
 
-Gear provides a custom landing page, Product Card, and inspector. Recipes provides a custom editorial landing page, Recipe Card, dashboard, and inspector. Vehicles provides a thematic landing page, Vehicle Card, dashboard, and inspector as the reference pattern for the next-generation domain Experiences. Homelab provides a path-aware adapter, infrastructure dashboard, and Node Card while retaining Generic Note Cards for non-node documentation. Travel, Books, and Technology use the Default Experience implementation until their own typed presentation layers exist.
+Gear provides a custom landing page, Product Card, and inspector. Recipes provides a custom editorial landing page, Recipe Card, dashboard, and inspector. Vehicles provides a thematic landing page, Vehicle Card, dashboard, and inspector as the reference pattern for the next-generation domain Experiences. Books provides a custom Digital Bookshelf, Book Card, local reading state, and inspector. Homelab provides a path-aware adapter, infrastructure dashboard, and Node Card while retaining Generic Note Cards for non-node documentation. Travel and Technology use the Default Experience implementation until their own typed presentation layers exist.
 
 ## Default Experience
 
@@ -141,6 +143,8 @@ The shared controller exposes two sort buttons. Its date button cycles through u
 
 ## Boundaries
 
+- Knowledge State belongs to the vault and is read-only to Muninn.
+- Experience State belongs to Muninn and must never be written into Markdown or other vault files.
 - The Registry owns Experience configuration, not matching algorithms.
 - The Selector Engine owns note discovery, not presentation.
 - The Browser owns filtering, selection, and interaction, not domain rules.
@@ -158,7 +162,7 @@ When an Experience needs domain-specific metadata, implement a small adapter und
 - return `null` or empty arrays for missing data instead of inventing values;
 - preserve the shared selector, filter, note-selection, favorite, and inspector contracts.
 
-Vehicles follows this pattern in `src/lib/experiences/vehicles.ts`. Future Travel, Books, and Homelab implementations should follow the same slice rather than branching on `definition.id` inside the shared browser.
+Vehicles, Books, and Homelab follow this pattern in their domain adapters. Future Travel and Technology implementations should follow the same slice rather than branching on `definition.id` inside the shared browser.
 
 Homelab follows the same adapter boundary in `src/lib/experiences/homelab.ts` and classifies each note along independent dimensions: Entity, Lifecycle, Operational Status, and Card Kind. Entity describes what the note represents and normally prioritizes explicit `entity` or `type` frontmatter over filename, semantic folder, and content heuristics. `07.00 Dashboard`, `07.01 Infrastructure`, `07.04 Knowledgebase`, and `07.97 Resources` are deliberate exceptions: they are semantic documentation boundaries, so every descendant is Documentation even when a guide mentions machines, has a dashboard-like filename, or contains object-like metadata. Lifecycle describes organizational state and prioritizes explicit `lifecycle` frontmatter before the `Current`, `Planned`, `To_Upgrade`, and `Archived_Specs` path segments. Operational Status prioritizes explicit `status` frontmatter and only then falls back from Lifecycle. Muninn's globally inferred normalized note type is not explicit Homelab frontmatter and must not suppress Homelab heuristics.
 

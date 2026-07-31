@@ -4,6 +4,7 @@ import ProductCard from "src/components/experiences/cards/ProductCard.astro";
 import RecipeCard from "src/components/experiences/cards/RecipeCard.astro";
 import VehicleCard from "src/components/experiences/cards/VehicleCard.astro";
 import HomelabCard from "src/components/experiences/cards/HomelabCard.astro";
+import BookCard from "src/components/experiences/cards/BookCard.astro";
 import type { ExperienceDefinition } from "src/lib/experiences/registry";
 import type { LibraryItem } from "src/lib/vault";
 
@@ -27,6 +28,7 @@ const cardFamilyComponents = {
 	product: ProductCard,
 	recipe: RecipeCard,
 	vehicle: VehicleCard,
+	book: BookCard,
 	homelab: HomelabCard,
 	"generic-note": GenericNoteCard,
 };

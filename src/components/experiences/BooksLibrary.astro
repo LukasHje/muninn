@@ -1,0 +1,552 @@
+---
+import BookCard from "src/components/experiences/cards/BookCard.astro";
+import Icon from "src/components/Icon.astro";
+import { getBookMetadata } from "src/lib/experiences/books";
+import type { ExperienceDefinition } from "src/lib/experiences/registry";
+import type { LibraryItem } from "src/lib/vault";
+
+interface Props {
+	definition: ExperienceDefinition;
+	notes: LibraryItem[];
+	selectedNote: LibraryItem | null;
+	redirectTo: string;
+}
+
+const { definition, notes, selectedNote, redirectTo } = Astro.props;
+const genreCounts = new Map<string, number>();
+for (const note of notes) {
+	for (const genre of new Set(getBookMetadata(note).genres)) {
+		genreCounts.set(genre, (genreCounts.get(genre) ?? 0) + 1);
+	}
+}
+const genres = Array.from(genreCounts)
+	.sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0], "en"))
+	.slice(0, 4)
+	.map(([name, count]) => ({ name, count }));
+const authors = Array.from(new Set(notes.map((note) => getBookMetadata(note).author).filter(Boolean) as string[]))
+	.sort((left, right) => left.localeCompare(right, "en"));
+const years = Array.from(new Set(notes.map((note) => getBookMetadata(note).publicationYear).filter(Boolean) as number[]))
+	.sort((left, right) => right - left);
+const shelves = [
+	{
+		id: "want-to-read",
+		title: "Want to Read",
+		subtitle: "Journeys waiting to begin",
+		empty: "No future journeys planned.",
+	},
+	{
+		id: "currently-reading",
+		title: "Currently Reading",
+		subtitle: "Stories already in motion",
+		empty: "A quiet shelf awaits your next adventure.",
+	},
+	{
+		id: "read",
+		title: "Read",
+		subtitle: "Books still lingering in memory",
+		empty: "Finished stories will gather here.",
+	},
+];
+---
+
+<div class="books-library" data-books-library>
+	<div class="books-library__catalogue-navigation" data-books-catalogue-navigation hidden>
+		<button type="button" data-books-home>
+			<Icon name="arrow-left" class="h-4 w-4" />
+			<span>Home</span>
+		</button>
+		<div>
+			<p>Books catalogue</p>
+			<h2>Library</h2>
+		</div>
+	</div>
+
+	<div class="books-library__home" data-books-home-view>
+		<nav class="books-home-controller" aria-label="Browse the Books library">
+			<div class="books-home-controller__destinations">
+				<button type="button" class="books-home-controller__primary" data-book-see-all="all">All Books</button>
+				<button type="button" data-book-see-all="read">Read</button>
+				<button type="button" data-book-see-all="currently-reading">Currently Reading</button>
+				<button type="button" data-book-see-all="want-to-read">Want to Read</button>
+				<button type="button" data-book-see-all="did-not-finish">Did Not Finish</button>
+			</div>
+			<button type="button" class="books-home-controller__filter" data-book-see-all="all">
+				<Icon name="sliders-horizontal" class="h-3.5 w-3.5" />
+				<span>Filter</span>
+			</button>
+		</nav>
+		{
+			shelves.map((shelf) => (
+				<section class="book-shelf" data-book-shelf={shelf.id}>
+					<header>
+						<div>
+							<h2>{shelf.title}</h2>
+							<p data-book-shelf-subtitle>{shelf.subtitle}</p>
+						</div>
+						<button type="button" data-book-see-all={shelf.id}>
+							<span>See all</span>
+							<Icon name="chevron-right" class="h-3.5 w-3.5" />
+						</button>
+					</header>
+					<div class="book-shelf__stage">
+						<div class="book-shelf__track" data-book-shelf-track></div>
+						<p class="book-shelf__empty" data-book-shelf-empty>{shelf.empty}</p>
+						<div class="book-shelf__wood" aria-hidden="true"></div>
+					</div>
+				</section>
+			))
+		}
+	</div>
+
+	<section class="books-catalogue" data-books-catalogue hidden>
+		<div class="books-library__toolbar">
+			<label class="books-catalogue__search">
+				<Icon name="search" class="h-4 w-4" />
+				<input type="search" data-book-search placeholder="Search title, author or genre…" aria-label="Search books" />
+			</label>
+			<div class="books-library__chips" role="group" aria-label="Filter books">
+				<button type="button" data-book-filter="all" aria-pressed="true">All</button>
+				<button type="button" data-book-filter="currently-reading" aria-pressed="false">Reading</button>
+				<button type="button" data-book-filter="want-to-read" aria-pressed="false">Want to Read</button>
+				<button type="button" data-book-filter="read" aria-pressed="false">Read</button>
+				<button type="button" data-book-filter="did-not-finish" aria-pressed="false">Did Not Finish</button>
+				<button type="button" data-book-filter="five-star" aria-pressed="false">
+					<Icon name="star" class="h-3 w-3 fill-current" /> 5 stars
+				</button>
+				{genres.map((genre) => (
+					<button type="button" data-book-filter={`genre:${genre.name}`} aria-pressed="false">{genre.name}</button>
+				))}
+			</div>
+			<label class="books-library__sort">
+				<span>Sort</span>
+				<select data-book-sort aria-label="Sort books">
+					<option value="recently-added">Recently Added</option>
+					<option value="recently-finished">Recently Finished</option>
+					<option value="title">Title</option>
+					<option value="author">Author</option>
+					<option value="rating">Rating</option>
+					<option value="publication-year">Publication Year</option>
+				</select>
+				<Icon name="chevron-down" class="h-3.5 w-3.5" />
+			</label>
+			<div class="books-catalogue__layout" role="group" aria-label="Library layout">
+				<button type="button" data-book-layout="grid" aria-pressed="true" aria-label="Grid view"><Icon name="layout-grid" class="h-4 w-4" /></button>
+				<button type="button" data-book-layout="list" aria-pressed="false" aria-label="List view"><Icon name="list" class="h-4 w-4" /></button>
+			</div>
+			<details class="books-library__filters">
+				<summary><Icon name="sliders-horizontal" class="h-3.5 w-3.5" /> Filter</summary>
+				<div>
+					<label>
+						<span>Author</span>
+						<select data-book-author-filter>
+							<option value="">All authors</option>
+							{authors.map((author) => <option value={author}>{author}</option>)}
+						</select>
+					</label>
+					<label>
+						<span>Publication year</span>
+						<select data-book-year-filter>
+							<option value="">All years</option>
+							{years.map((year) => <option value={year}>{year}</option>)}
+						</select>
+					</label>
+				</div>
+			</details>
+		</div>
+		<header class="books-catalogue__header">
+			<div>
+				<p>Catalogue</p>
+				<h2 data-books-catalogue-title>All Books</h2>
+			</div>
+			<span data-books-catalogue-count>{notes.length} books</span>
+		</header>
+		<div class="books-catalogue__grid" data-books-catalogue-grid data-layout="grid"></div>
+		<p class="books-catalogue__empty" data-books-catalogue-empty hidden>No books match the current catalogue filters.</p>
+	</section>
+
+	<div hidden aria-hidden="true">
+		{
+			notes.map((note, index) => (
+				<template data-book-template={note.id}>
+					<BookCard
+						definition={definition}
+						note={note}
+						index={index}
+						selected={selectedNote?.id === note.id}
+						redirectTo={redirectTo}
+					/>
+				</template>
+			))
+		}
+	</div>
+</div>
+
+<script>
+	import { initBooksExperiences } from "src/components/experiences/BooksExperienceClient";
+	initBooksExperiences();
+	document.addEventListener("astro:page-load", initBooksExperiences);
+</script>
+
+<style>
+	.books-library {
+		min-height: 100%;
+		padding: 0;
+		color: #eee1cf;
+		background: #11130f;
+	}
+	.books-library__toolbar {
+		position: sticky;
+		z-index: 4;
+		top: 0;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.8rem;
+		padding: 0.55rem 1.25rem 0.75rem;
+		border-bottom: 1px solid rgba(203, 167, 113, 0.13);
+		background: rgba(17, 19, 15, 0.94);
+		backdrop-filter: blur(12px);
+	}
+	.books-library__catalogue-navigation {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		padding: 1rem 1.25rem;
+		border-bottom: 1px solid rgba(203, 167, 113, .13);
+		background: #11130f;
+	}
+	.books-library__catalogue-navigation[hidden] { display: none; }
+	.books-library__catalogue-navigation > button {
+		display: inline-flex; min-height: 2.25rem; align-items: center; gap: .45rem;
+		border: 1px solid rgba(213,179,128,.14); border-radius: 5px; padding: 0 .7rem;
+		font-size: .62rem; color: #c6b49e;
+	}
+	.books-library__catalogue-navigation > div { padding-left: 1rem; border-left: 1px solid rgba(213,179,128,.13); }
+	.books-library__catalogue-navigation p { font-size: .52rem; letter-spacing: .1em; text-transform: uppercase; color: #766c60; }
+	.books-library__catalogue-navigation h2 { margin-top: .15rem; font-family: Georgia, serif; font-size: 1rem; color: #eadcc8; }
+	.books-library__home[hidden], .books-catalogue[hidden] { display: none; }
+	.books-catalogue__search {
+		display: flex;
+		height: 2.25rem;
+		min-width: min(18rem, 100%);
+		flex: 1 1 18rem;
+		align-items: center;
+		gap: .5rem;
+		border: 1px solid rgba(213,179,128,.13);
+		border-radius: 7px;
+		background: rgba(255,244,224,.035);
+		padding: 0 .7rem;
+		color: #85796b;
+	}
+	.books-catalogue__search input {
+		min-width: 0;
+		flex: 1;
+		background: transparent;
+		font-size: .7rem;
+		color: #ddd0be;
+		outline: none;
+	}
+	.books-catalogue__layout {
+		display: flex;
+		height: 2rem;
+		border: 1px solid rgba(213,179,128,.13);
+		border-radius: 5px;
+		overflow: hidden;
+	}
+	.books-catalogue__layout button { display: grid; width: 2rem; place-items: center; color: #817668; }
+	.books-catalogue__layout button[aria-pressed="true"] { background: rgba(202,158,95,.14); color: #e4cfb2; }
+	.books-library__chips {
+		display: flex;
+		min-width: 0;
+		flex: 1;
+		gap: 0.4rem;
+		overflow-x: auto;
+		padding: 0.1rem 0.05rem 0.3rem;
+		scrollbar-width: none;
+	}
+	.books-library__chips::-webkit-scrollbar { display: none; }
+	.books-library__chips button {
+		display: inline-flex;
+		min-height: 2rem;
+		flex: 0 0 auto;
+		align-items: center;
+		gap: 0.3rem;
+		border: 1px solid rgba(213, 179, 128, 0.12);
+		border-radius: 5px;
+		background: rgba(255, 244, 224, 0.035);
+		padding: 0 0.72rem;
+		font-size: 0.62rem;
+		font-weight: 650;
+		color: #a99b88;
+		transition: 150ms ease;
+	}
+	.books-library__chips button:hover,
+	.books-library__chips button[aria-pressed="true"] {
+		border-color: rgba(205, 164, 105, 0.36);
+		background: rgba(202, 158, 95, 0.14);
+		color: #f2dfc3;
+		box-shadow: inset 0 0 14px rgba(205, 157, 91, 0.05);
+	}
+	.books-library__sort {
+		position: relative;
+		display: flex;
+		height: 2rem;
+		flex: 0 0 auto;
+		align-items: center;
+		gap: 0.35rem;
+		border: 1px solid rgba(213, 179, 128, 0.13);
+		border-radius: 5px;
+		background: rgba(255, 244, 224, 0.04);
+		padding: 0 0.7rem;
+		color: #b9aa97;
+	}
+	.books-library__sort span {
+		font-size: 0.56rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+	.books-library__sort select {
+		appearance: none;
+		background: transparent;
+		padding-right: 0.2rem;
+		font-size: 0.62rem;
+		font-weight: 650;
+		outline: none;
+	}
+	.books-library__filters { position: relative; flex: 0 0 auto; }
+	.books-library__filters summary {
+		display: inline-flex; height: 2rem; cursor: pointer; list-style: none; align-items: center; gap: .35rem;
+		border: 1px solid rgba(213, 179, 128, .13); border-radius: 5px; background: rgba(255, 244, 224, .04);
+		padding: 0 .7rem; font-size: .62rem; font-weight: 650; color: #b9aa97;
+	}
+	.books-library__filters summary::-webkit-details-marker { display: none; }
+	.books-library__filters[open] summary { border-color: rgba(205, 164, 105, .36); color: #f2dfc3; }
+	.books-library__filters > div {
+		position: absolute; z-index: 10; top: calc(100% + .4rem); right: 0; display: grid; width: 13rem; gap: .7rem;
+		border: 1px solid rgba(213,179,128,.16); border-radius: 8px; background: #1b1d18; padding: .8rem;
+		box-shadow: 0 16px 34px rgba(0,0,0,.45);
+	}
+	.books-library__filters label span { display: block; margin-bottom: .3rem; font-size: .54rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #8f8374; }
+	.books-library__filters select { width: 100%; height: 2.2rem; border: 1px solid rgba(213,179,128,.14); border-radius: 5px; background: #12140f; padding: 0 .5rem; font-size: .64rem; color: #d7c8b5; }
+	.books-library__home {
+		display: grid;
+		gap: 0;
+	}
+	.books-home-controller {
+		display: flex;
+		min-width: 0;
+		align-items: center;
+		gap: 1rem;
+		border-top: 1px solid rgba(255, 244, 224, .035);
+		border-bottom: 1px solid rgba(213, 179, 128, .13);
+		background: linear-gradient(90deg, rgba(42, 38, 31, .84), rgba(26, 26, 21, .9));
+		padding: .7rem 1rem;
+		box-shadow: inset 0 1px rgba(255,255,255,.025);
+	}
+	.books-home-controller__destinations {
+		display: flex;
+		min-width: 0;
+		flex: 1 1 auto;
+		align-items: center;
+		gap: .25rem;
+		overflow-x: auto;
+		overflow-y: hidden;
+		scrollbar-width: none;
+	}
+	.books-home-controller__destinations::-webkit-scrollbar { display: none; }
+	.books-home-controller button {
+		display: inline-flex;
+		min-height: 2rem;
+		flex: 0 0 auto;
+		align-items: center;
+		justify-content: center;
+		gap: .35rem;
+		border: 1px solid transparent;
+		border-radius: 5px;
+		padding: 0 .7rem;
+		font-size: .61rem;
+		font-weight: 600;
+		color: #a99b88;
+		transition: border-color 150ms ease, background 150ms ease, color 150ms ease;
+	}
+	.books-home-controller button:hover {
+		border-color: rgba(205, 164, 105, .22);
+		background: rgba(255, 244, 224, .045);
+		color: #f0dfc7;
+	}
+	.books-home-controller .books-home-controller__primary {
+		border-color: rgba(213, 179, 128, .14);
+		background: rgba(255, 244, 224, .09);
+		color: #f0e2cf;
+		box-shadow: inset 0 1px rgba(255,255,255,.035);
+	}
+	.books-home-controller .books-home-controller__filter {
+		border-color: rgba(213, 179, 128, .13);
+		background: rgba(10, 11, 9, .2);
+		color: #c4b49e;
+	}
+	.book-shelf[hidden] { display: none; }
+	.book-shelf header {
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+		padding: 1.05rem 1.1rem 0.65rem;
+		border-top: 1px solid rgba(213, 179, 128, 0.08);
+	}
+	.book-shelf h2 {
+		font-family: Georgia, "Times New Roman", serif;
+		font-size: 1.18rem;
+		font-weight: 600;
+		letter-spacing: -0.025em;
+		color: #e9dcc9;
+	}
+	.book-shelf header p {
+		margin-top: 0.14rem;
+		font-size: 0.61rem;
+		color: #83796d;
+	}
+	.book-shelf header > button {
+		display: inline-flex; min-height: 2.25rem; align-items: center; gap: .25rem;
+		font-size: .64rem; color: #c79856;
+	}
+	.book-shelf header > button[hidden] { display: none; }
+	.book-shelf header > button small {
+		margin-left: .2rem; color: #756b5f;
+	}
+	.book-shelf__stage {
+		position: relative;
+		isolation: isolate;
+		min-height: 17.4rem;
+		overflow: hidden;
+		padding: 0.55rem 1.7rem 1.15rem;
+		background:
+			radial-gradient(ellipse at 50% 3%, rgba(184, 127, 67, .09), transparent 58%),
+			linear-gradient(180deg, #171811 0%, #11130e 46%, #090b08 100%);
+		box-shadow:
+			inset 0 24px 42px rgba(0,0,0,.48),
+			inset 0 -12px 24px rgba(0,0,0,.28);
+	}
+	.book-shelf__stage::before,
+	.book-shelf__stage::after {
+		content: "";
+		position: absolute;
+		z-index: 2;
+		top: 0;
+		bottom: .72rem;
+		width: 1rem;
+		pointer-events: none;
+	}
+	.book-shelf__stage::before {
+		left: 0;
+		background: linear-gradient(90deg, #24170d, #4a2e18 45%, rgba(34,20,11,.38));
+		box-shadow: 6px 0 15px rgba(0,0,0,.55), inset -1px 0 rgba(214,157,91,.11);
+	}
+	.book-shelf__stage::after {
+		right: 0;
+		background: linear-gradient(270deg, #24170d, #4a2e18 45%, rgba(34,20,11,.38));
+		box-shadow: -6px 0 15px rgba(0,0,0,.55), inset 1px 0 rgba(214,157,91,.11);
+	}
+	.book-shelf__track {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(8.6rem, 10.6rem));
+		min-height: 15rem;
+		position: relative;
+		z-index: 1;
+		align-items: flex-end;
+		gap: clamp(0.8rem, 2vw, 1.35rem);
+		overflow: hidden;
+		padding: 0.45rem 0.3rem 0.9rem;
+	}
+	.book-shelf__track :global(.book-card-shell) {
+		width: 100%;
+	}
+	.book-shelf__empty {
+		position: absolute;
+		inset: 0 1rem 1.2rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-family: Georgia, "Times New Roman", serif;
+		font-size: 0.88rem;
+		font-style: italic;
+		color: #786d60;
+	}
+	.book-shelf__wood {
+		position: absolute;
+		right: 0;
+		bottom: 0;
+		left: 0;
+		z-index: 3;
+		height: 0.9rem;
+		background:
+			linear-gradient(180deg, rgba(245,194,124,.24), transparent 18%, rgba(20,8,3,.25) 82%),
+			repeating-linear-gradient(94deg, #523117 0, #81542b 38px, #60391c 75px, #3f250f 112px);
+		box-shadow:
+			0 9px 16px rgba(0,0,0,.76),
+			inset 0 -3px 3px rgba(17,7,2,.72),
+			inset 0 1px rgba(238,184,111,.3);
+	}
+	.books-catalogue {
+		min-height: 100%;
+		background:
+			radial-gradient(circle at 85% 0, rgba(137,91,43,.07), transparent 32%),
+			#11130f;
+	}
+	.books-catalogue__header {
+		display: flex;
+		align-items: end;
+		justify-content: space-between;
+		padding: 1.5rem 1.5rem 1rem;
+		border-bottom: 1px solid rgba(213,179,128,.1);
+	}
+	.books-catalogue__header p { font-size: .55rem; letter-spacing: .12em; text-transform: uppercase; color: #786e61; }
+	.books-catalogue__header h2 { margin-top: .18rem; font-family: Georgia, serif; font-size: 1.7rem; color: #eee0cc; }
+	.books-catalogue__header > span { font-size: .65rem; color: #887d6e; }
+	.books-catalogue__grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(8.6rem, 10.6rem));
+		align-items: start;
+		gap: 1.5rem clamp(1rem, 2vw, 1.75rem);
+		padding: 1.5rem;
+	}
+	.books-catalogue__grid :global(.book-card-shell) { width: 100%; }
+	.books-catalogue__grid[data-layout="list"] { grid-template-columns: 1fr; gap: .6rem; }
+	.books-catalogue__grid[data-layout="list"] :global(.book-card) {
+		display: grid;
+		grid-template-columns: 4.5rem minmax(0,1fr);
+		height: 6.75rem;
+		align-items: center;
+	}
+	.books-catalogue__grid[data-layout="list"] :global(.book-card__cover) {
+		grid-row: 1;
+		height: 6.75rem;
+		aspect-ratio: 2 / 3;
+		border-radius: 6px 0 0 6px;
+	}
+	.books-catalogue__grid[data-layout="list"] :global(.book-card__status-bar) { right: auto; width: 4.5rem; min-height: 1.35rem; }
+	.books-catalogue__grid[data-layout="list"] :global(.book-card__rating) { right: auto; width: 3.4rem; bottom: 1.7rem; }
+	.books-catalogue__grid[data-layout="list"] :global(.book-card__catalogue-copy) {
+		display: grid;
+		gap: .25rem;
+		padding: 0 1rem;
+	}
+	.books-catalogue__grid[data-layout="list"] :global(.book-card__catalogue-copy[hidden]) { display: none; }
+	.books-catalogue__grid[data-layout="list"] :global(.book-card__catalogue-copy strong) {
+		font-family: Georgia, serif;
+		font-size: .95rem;
+		color: #e9ddcb;
+	}
+	.books-catalogue__grid[data-layout="list"] :global(.book-card__catalogue-copy span) { font-size: .65rem; color: #8d8376; }
+	.books-catalogue__empty { padding: 4rem 1.5rem; text-align: center; font-family: Georgia,serif; font-style: italic; color: #776c5f; }
+	@media (max-width: 767px) {
+		.books-library__toolbar { align-items: stretch; flex-direction: column; padding-inline: .75rem; }
+		.books-library__sort, .books-library__filters { align-self: flex-end; }
+		.books-home-controller { gap: .5rem; padding-inline: .65rem; }
+		.books-home-controller button { padding-inline: .6rem; }
+		.book-shelf__stage { min-height: 15rem; padding-inline: .65rem; }
+		.book-shelf__track { min-height: 13rem; }
+		.books-library__catalogue-navigation { padding-inline: .75rem; }
+		.books-library__catalogue-navigation > button span { display: none; }
+	}
+</style>

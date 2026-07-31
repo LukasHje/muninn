@@ -1,0 +1,231 @@
+---
+import Icon from "src/components/Icon.astro";
+import { getBookMetadata } from "src/lib/experiences/books";
+import type { ExperienceDefinition } from "src/lib/experiences/registry";
+import type { LibraryItem } from "src/lib/vault";
+
+interface Props {
+	definition: ExperienceDefinition;
+	note: LibraryItem;
+	selected?: boolean;
+	redirectTo?: string;
+	index?: number;
+}
+
+const { note, selected = false, index = 0 } = Astro.props;
+const book = getBookMetadata(note);
+const paletteIndex = Array.from(note.title).reduce((sum, character) => sum + character.charCodeAt(0), 0) % 6;
+---
+
+<article
+	class="book-card-shell"
+	data-selected={selected ? "true" : "false"}
+	data-book-note={note.id}
+	data-book-title={note.title}
+	data-book-author={book.author ?? ""}
+	data-book-year={book.publicationYear ?? ""}
+	data-book-genres={book.genres.join("|")}
+	data-book-added={note.createdAt}
+>
+	<button
+		type="button"
+		class="book-card"
+		data-experience-card={note.id}
+		aria-label={`Open ${note.title}`}
+		aria-pressed={selected ? "true" : "false"}
+	>
+		<div class="book-card__cover" data-book-palette={paletteIndex}>
+			<div class="book-card__fallback">
+				<Icon name="book-open" class="h-6 w-6 opacity-45" />
+				<span>{note.title}</span>
+				<small>{book.author ?? "Unknown author"}</small>
+			</div>
+			{
+				book.coverUrl && (
+					<img
+						src={book.coverUrl}
+						alt={`Cover of ${note.title}`}
+						loading={index < 6 ? "eager" : "lazy"}
+					/>
+				)
+			}
+			<span class="book-card__favorite" data-book-card-favorite hidden>
+				<Icon name="star" class="h-3.5 w-3.5 fill-current" />
+			</span>
+		</div>
+		<div class="book-card__rating" data-book-card-rating aria-label="Personal rating" hidden></div>
+		<div class="book-card__status-bar">
+			<div class="book-card__progress" data-book-card-progress hidden>
+				<span></span>
+			</div>
+			<span class="book-card__status" data-book-card-status>Unread</span>
+		</div>
+		<div class="book-card__catalogue-copy" data-book-catalogue-copy hidden aria-hidden="true">
+			<strong>{note.title}</strong>
+			<span>{book.author ?? "Unknown author"}</span>
+		</div>
+	</button>
+</article>
+
+<style>
+	.book-card-shell {
+		width: clamp(8.6rem, 13vw, 10.6rem);
+		flex: 0 0 auto;
+		scroll-snap-align: start;
+	}
+	.book-card {
+		position: relative;
+		display: block;
+		width: 100%;
+		text-align: left;
+		border: 1px solid rgba(208, 174, 125, 0.2);
+		border-radius: 7px;
+		background: #171b17;
+		box-shadow: 0 13px 18px rgba(0, 0, 0, 0.48), 0 2px 4px rgba(0,0,0,.62);
+		overflow: hidden;
+	}
+	.book-card__cover {
+		position: relative;
+		aspect-ratio: 2 / 3;
+		overflow: hidden;
+		border-radius: 6px;
+		background: #72533b;
+		box-shadow:
+			0 10px 20px rgba(0, 0, 0, 0.22);
+		transition: transform 180ms ease, box-shadow 180ms ease;
+	}
+	.book-card__cover::after {
+		content: "";
+		position: absolute;
+		inset: 0 auto 0 0;
+		width: 8px;
+		background: linear-gradient(90deg, rgba(0, 0, 0, 0.23), rgba(255, 255, 255, 0.1), transparent);
+		pointer-events: none;
+	}
+	.book-card__cover::before {
+		content: "";
+		position: absolute;
+		z-index: 2;
+		inset: auto 0 0;
+		height: 34%;
+		background: linear-gradient(180deg, transparent, rgba(8, 10, 8, .34) 48%, rgba(8, 10, 8, .7));
+		pointer-events: none;
+	}
+	.book-card:hover,
+	.book-card:focus-visible,
+	.book-card-shell[data-selected="true"] .book-card {
+		transform: translateY(-5px);
+		border-color: rgba(211, 161, 91, 0.58);
+		box-shadow: 0 20px 32px rgba(0, 0, 0, 0.42);
+	}
+	.book-card:focus-visible {
+		outline: 2px solid #a96f3d;
+		outline-offset: 5px;
+		border-radius: 8px;
+	}
+	.book-card__cover img {
+		position: relative;
+		z-index: 1;
+		height: 100%;
+		width: 100%;
+		object-fit: cover;
+	}
+	.book-card__fallback {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 0.65rem;
+		padding: 1rem 0.75rem;
+		text-align: center;
+		color: rgba(255, 248, 235, 0.9);
+		background: linear-gradient(145deg, #5f4130, #976a47);
+	}
+	.book-card__cover[data-book-palette="1"] .book-card__fallback { background: linear-gradient(145deg, #3f5360, #71828b); }
+	.book-card__cover[data-book-palette="2"] .book-card__fallback { background: linear-gradient(145deg, #655532, #aa8b4d); }
+	.book-card__cover[data-book-palette="3"] .book-card__fallback { background: linear-gradient(145deg, #4d3d56, #806786); }
+	.book-card__cover[data-book-palette="4"] .book-card__fallback { background: linear-gradient(145deg, #354c3e, #63806d); }
+	.book-card__cover[data-book-palette="5"] .book-card__fallback { background: linear-gradient(145deg, #6b3e3a, #a36458); }
+	.book-card__fallback span {
+		font-family: Georgia, "Times New Roman", serif;
+		font-size: 0.88rem;
+		font-weight: 600;
+		line-height: 1.15;
+	}
+	.book-card__fallback small {
+		font-size: 0.56rem;
+		line-height: 1.25;
+		opacity: 0.7;
+	}
+	.book-card__favorite {
+		position: absolute;
+		z-index: 2;
+		top: 0.5rem;
+		right: 0.5rem;
+		display: flex;
+		height: 1.65rem;
+		width: 1.65rem;
+		align-items: center;
+		justify-content: center;
+		border-radius: 999px;
+		background: rgba(24, 21, 16, 0.88);
+		color: #f5c76f;
+	}
+	.book-card__status-bar {
+		position: absolute;
+		z-index: 3;
+		right: 0;
+		bottom: 0;
+		left: 0;
+		display: grid;
+		min-height: 1.55rem;
+		place-items: center;
+		border-top: 1px solid rgba(220, 184, 129, .1);
+		background: #191d19;
+		padding: .3rem .55rem .28rem;
+		color: #c99754;
+	}
+	.book-card__status {
+		display: block;
+		width: 100%;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-size: 0.56rem;
+		font-weight: 650;
+		text-align: center;
+		color: #c8bcaa;
+	}
+	.book-card__progress {
+		position: absolute;
+		top: -2px;
+		right: 0;
+		left: 0;
+		height: 2px;
+		overflow: hidden;
+		background: rgba(116, 105, 89, .36);
+	}
+	.book-card__progress span {
+		display: block;
+		height: 100%;
+		width: var(--book-progress, 0%);
+		border-radius: inherit;
+		background: linear-gradient(90deg, #b97d3e, #efbe68);
+		box-shadow: 0 0 8px rgba(230, 168, 86, .38);
+	}
+	.book-card__rating {
+		position: absolute;
+		z-index: 4;
+		right: .55rem;
+		bottom: 1.95rem;
+		left: .55rem;
+		min-height: 0;
+		font-size: 0.72rem;
+		letter-spacing: 0.05em;
+		color: #efb64e;
+		text-shadow: 0 2px 5px rgba(0,0,0,.8);
+	}
+	.book-card__catalogue-copy { display: none; }
+</style>

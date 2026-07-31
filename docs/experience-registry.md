@@ -25,7 +25,7 @@ The registry does not implement selectors, traverse the Vault, parse Markdown, o
 - Vehicles: custom thematic landing page, Vehicle Card, dashboard, and custom inspector
 - Travel: Default Experience
 - Recipes: custom editorial landing page, dashboard, Recipe Card, and custom inspector
-- Books: Default Experience
+- Books: custom Digital Bookshelf landing page, Book Card, local reading state, and custom inspector
 - Technology: Default Experience
 - Homelab: custom path-aware landing page, infrastructure dashboard, Node Card, and metadata-focused inspector
 
@@ -102,6 +102,12 @@ Vehicles does not render the generic Experience metadata filter row. Its dashboa
 Vehicle statistics and cards must be derived from actual notes. Missing fields are omitted or represented with neutral empty states; mockup values must not be hardcoded into the implementation.
 
 Vehicles resolves missing images in this order: explicit thumbnail, explicit cover, normalized note image, category placeholder, then the generic Vehicle placeholder when the note has no usable body style. Known categories without a registered placeholder render their category icon instead of borrowing an incorrect vehicle silhouette. Photographic category placeholders fill the image frame; the generic illustration retains contained placeholder presentation.
+
+## Books Definition
+
+Books accepts `book`, `books`, `bok`, and `böcker` type values. Its registry entry selects the custom Digital Bookshelf landing page, `book` Card Family, and Books inspector. Bibliographic aliases and cover fallback behavior belong to the Books adapter rather than the registry or Astro components.
+
+Books deliberately hides the generic metadata filter row. Its lightweight chips and shelf navigation combine read-only genre/author/year metadata with local reading state. Reading status, personal rating, progress, dates, favorites, and Books view preferences are Muninn-owned Experience State persisted through the Local Experience State service; the Books UI never submits those values to a route that writes vault content.
 
 ## Data Ownership
 

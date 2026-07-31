@@ -1,0 +1,209 @@
+---
+import Icon from "src/components/Icon.astro";
+import NoteContent from "src/components/notes/NoteContent.astro";
+import { getBookMetadata } from "src/lib/experiences/books";
+import type { InspectorSection } from "src/lib/experiences/inspector";
+import type { ExperienceDefinition } from "src/lib/experiences/registry";
+import type { LibraryItem } from "src/lib/vault";
+
+interface Props {
+	definition: ExperienceDefinition;
+	note: LibraryItem;
+	sections: InspectorSection[];
+	noteHref: string;
+	redirectTo: string;
+	experienceNotes?: LibraryItem[];
+}
+
+const { note, sections, noteHref, experienceNotes = [] } = Astro.props;
+const book = getBookMetadata(note);
+const paletteIndex = Array.from(note.title).reduce((sum, character) => sum + character.charCodeAt(0), 0) % 6;
+const related = experienceNotes
+	.filter((candidate) => candidate.id !== note.id && book.author && getBookMetadata(candidate).author === book.author)
+	.slice(0, 4);
+const obsidianFile = note.relativePath.replace(/\.md$/i, "");
+const obsidianHref = `obsidian://open?file=${encodeURIComponent(obsidianFile)}`;
+const metadata = [
+	["Published", book.publicationYear ? String(book.publicationYear) : null],
+	["Pages", book.pages ? String(book.pages) : null],
+	["Publisher", book.publisher],
+	["ISBN", book.isbn],
+	["Language", book.language],
+	["Format", book.format],
+	["Series", book.series],
+	["Added to library", new Intl.DateTimeFormat("en", { year: "numeric", month: "short", day: "numeric" }).format(note.createdAt)],
+	["Last updated", note.updatedLabel],
+].filter((entry): entry is [string, string] => Boolean(entry[1]));
+const descriptionSection = sections.find((section) =>
+	["description", "overview", "summary", "beskrivning"].includes(section.title.trim().toLocaleLowerCase("en"))
+);
+---
+
+<div class="book-inspector" data-book-state-for={note.id}>
+	<button type="button" data-experience-close class="book-inspector__close" aria-label="Close inspector">
+		<Icon name="x" class="h-4 w-4" />
+	</button>
+
+	<div class="book-inspector__hero">
+		<div class="book-inspector__cover" data-book-palette={paletteIndex}>
+			<div class="book-inspector__fallback">
+				<Icon name="book-open" class="h-9 w-9 opacity-45" />
+				<strong>{note.title}</strong>
+				<span>{book.author ?? "Unknown author"}</span>
+			</div>
+			{book.coverUrl && <img src={book.coverUrl} alt={`Cover of ${note.title}`} />}
+		</div>
+		<div class="book-inspector__identity">
+			<h1>{note.title}</h1>
+			<h2>{book.author ?? "Unknown author"}</h2>
+			<div class="book-inspector__rating">
+				<div class="book-inspector__stars" role="group" aria-label="Personal rating">
+					{[1, 2, 3, 4, 5].map((rating) => (
+						<button type="button" data-book-rating={rating} aria-label={`${rating} stars`} aria-pressed="false">
+							<Icon name="star" class="h-4 w-4" />
+						</button>
+					))}
+				</div>
+				<output data-book-rating-output>Not rated</output>
+			</div>
+			<p class="book-inspector__genre">{book.genres[0] ?? "Uncategorized"}</p>
+			<label class="book-inspector__status">
+				<Icon name="book" class="h-4 w-4" />
+				<span class="sr-only">Reading status</span>
+			<select data-book-status>
+				<option value="">Unread</option>
+				<option value="want-to-read">Want to Read</option>
+				<option value="currently-reading">Currently Reading</option>
+				<option value="read">Read</option>
+				<option value="did-not-finish">Did Not Finish</option>
+			</select>
+				<Icon name="chevron-down" class="h-3.5 w-3.5" />
+			</label>
+			<label class="book-inspector__progress">
+				<span>Progress <output data-book-progress-output>0%</output></span>
+				<input type="range" min="0" max="100" step="1" value="0" data-book-progress />
+				<small data-book-pages data-book-total-pages={book.pages ?? undefined}>{book.pages ? `0 / ${book.pages} pages` : "Reading progress"}</small>
+			</label>
+			<div class="book-inspector__actions">
+				<a href={obsidianHref}>Open in Obsidian <Icon name="square-arrow-up-right" class="h-4 w-4" /></a>
+				<a href={noteHref} data-experience-open-note data-note-href={noteHref} aria-label="Open full note">
+					<Icon name="ellipsis" class="h-4 w-4" />
+				</a>
+				<button type="button" data-book-favorite aria-pressed="false" title="Add to favorites">
+					<Icon name="star" class="h-4 w-4" />
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<section class="book-inspector__section">
+		<h2>Notes</h2>
+		{
+			descriptionSection
+				? <NoteContent note={note} content={descriptionSection.content} />
+				: <p class="book-inspector__description">{book.description || "No description has been added to this note yet."}</p>
+		}
+	</section>
+
+	{metadata.length > 0 && (
+		<section class="book-inspector__section">
+			<h2>Information</h2>
+			<dl>
+				{metadata.map(([label, value]) => <div><dt>{label}</dt><dd>{value}</dd></div>)}
+			</dl>
+		</section>
+	)}
+
+	{related.length > 0 && (
+		<section class="book-inspector__section">
+			<h2>More by {book.author}</h2>
+			<div class="book-inspector__related">
+				{related.map((candidate) => (
+					<button type="button" data-experience-card={candidate.id}>
+						<span>{candidate.title}</span>
+						<Icon name="chevron-right" class="h-4 w-4" />
+					</button>
+				))}
+			</div>
+		</section>
+	)}
+</div>
+
+<style>
+	.book-inspector {
+		min-height: 100%; padding: 1rem 1.35rem 2.5rem; color: #e7e1d7;
+		background:
+			radial-gradient(circle at 15% 5%, rgba(154, 110, 58, .14), transparent 34%),
+			linear-gradient(160deg, #22231f, #171914 68%);
+	}
+	.book-inspector__close {
+		display: inline-flex; height: 2.25rem; width: 2.25rem; align-items: center; justify-content: center;
+		margin-left: -.65rem; border-radius: 999px; color: #a9a59b; transition: 150ms ease;
+	}
+	.book-inspector__close:hover { background: rgba(255,255,255,.06); color: #fff; }
+	.book-inspector__hero {
+		display: grid; grid-template-columns: minmax(8rem, 42%) minmax(0, 1fr); gap: 1.4rem; align-items: start;
+		padding: 1.25rem .55rem 1.6rem;
+	}
+	.book-inspector__cover {
+		position: relative; aspect-ratio: 2 / 3; overflow: hidden; border-radius: 4px 9px 9px 4px;
+		background: #745238; box-shadow: -3px 5px 0 rgba(0,0,0,.24), 0 18px 32px rgba(0,0,0,.42);
+	}
+	.book-inspector__cover img { position: relative; z-index: 1; height: 100%; width: 100%; object-fit: cover; }
+	.book-inspector__fallback {
+		position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+		gap: 0.7rem; padding: 1rem; text-align: center; color: #fff5e4;
+		background: linear-gradient(145deg, #533929, #946746);
+	}
+	.book-inspector__fallback strong { font-family: Georgia, serif; font-size: 0.85rem; line-height: 1.15; }
+	.book-inspector__fallback span { font-size: 0.58rem; opacity: 0.7; }
+	.book-inspector__identity { min-width: 0; padding-top: .5rem; }
+	.book-inspector__identity h1 { font-family: Georgia, serif; font-size: 1.75rem; line-height: 1.08; letter-spacing: -.025em; color: #f5f0e7; }
+	.book-inspector__identity h2 { margin-top: .55rem; font-size: .78rem; color: #aaa49a; }
+	.book-inspector__rating { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: 1rem; }
+	.book-inspector__rating output { font-size: .62rem; color: #827e75; }
+	.book-inspector__genre { margin-top: .6rem; font-size: .68rem; color: #9f9a91; }
+	.book-inspector__status {
+		display: flex; align-items: center; gap: .5rem; height: 2.45rem; margin-top: 1rem;
+		border: 1px solid rgba(196, 151, 85, .13); border-radius: 7px; background: rgba(53, 49, 40, .8);
+		padding: 0 .65rem; color: #d8a64f;
+	}
+	.book-inspector__status select {
+		min-width: 0; flex: 1; appearance: none; border: 0; outline: 0; background: transparent;
+		font-size: .68rem; color: #e0dcd3;
+	}
+	.book-inspector__progress { display: block; margin-top: 1.15rem; }
+	.book-inspector__progress > span {
+		display: flex; justify-content: space-between; font-size: .62rem; color: #aaa59b;
+	}
+	.book-inspector__progress input { width: 100%; margin-top: .35rem; accent-color: #dba84e; }
+	.book-inspector__progress small { display: block; margin-top: .25rem; font-size: .58rem; color: #77746d; }
+	.book-inspector__actions { display: flex; gap: .4rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,.07); }
+	.book-inspector__actions a, .book-inspector__actions button {
+		display: inline-flex; min-height: 2.2rem; align-items: center; justify-content: center; gap: .4rem;
+		border: 1px solid rgba(255,255,255,.06); border-radius: 7px; background: rgba(255,255,255,.055); padding: 0 .7rem;
+		font-size: .62rem; font-weight: 650; color: #d8d3ca;
+	}
+	.book-inspector__actions a:first-child { flex: 1; }
+	.book-inspector__actions a:not(:first-child), .book-inspector__actions button { width: 2.2rem; padding: 0; }
+	.book-inspector__actions button[aria-pressed="true"] { color: #efb852; }
+	.book-inspector__stars { display: flex; gap: .22rem; }
+	.book-inspector__stars button { color: #57564f; }
+	.book-inspector__stars button[aria-pressed="true"] { color: #e6ad47; }
+	.book-inspector__stars button[aria-pressed="true"] :global(svg) { fill: currentColor; }
+	.book-inspector__section { margin: 0 -.05rem; padding: 1.35rem .6rem; border-top: 1px solid rgba(255,255,255,.07); }
+	.book-inspector__section > h2 { margin-bottom: .85rem; font-size: .82rem; font-weight: 650; color: #efebe4; }
+	.book-inspector__section dl div { display: grid; grid-template-columns: minmax(7rem, 1fr) 1.25fr; gap: 1rem; padding: .48rem 0; }
+	.book-inspector__section dt { font-size: .64rem; color: #89867f; }
+	.book-inspector__section dd { font-size: .64rem; color: #bbb6ad; overflow-wrap: anywhere; }
+	.book-inspector__description { font-size: .72rem; line-height: 1.75; color: #a9a59d; }
+	.book-inspector__section :global(.note-content) { color: #aaa69e; font-size: .72rem; line-height: 1.75; }
+	.book-inspector__related { display: grid; gap: .4rem; }
+	.book-inspector__related button { display: flex; align-items: center; justify-content: space-between; border-radius: 7px; background: rgba(255,255,255,.045); padding: .65rem .75rem; font-size: .68rem; color: #b8b2a8; }
+	@media (max-width: 420px) {
+		.book-inspector { padding-right: 1rem; padding-left: 1rem; }
+		.book-inspector__hero { grid-template-columns: 7rem minmax(0, 1fr); gap: .9rem; padding-right: 0; padding-left: 0; }
+		.book-inspector__identity h1 { font-size: 1.35rem; }
+		.book-inspector__actions a:first-child { font-size: .58rem; padding: 0 .45rem; }
+	}
+</style>

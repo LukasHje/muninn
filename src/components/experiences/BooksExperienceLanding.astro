@@ -1,0 +1,84 @@
+---
+import BooksExperienceHero from "src/components/experiences/BooksExperienceHero.astro";
+import BooksLibrary from "src/components/experiences/BooksLibrary.astro";
+import ExperienceView from "src/components/experiences/ExperienceView.astro";
+import type { ExperienceViewModel } from "src/lib/experiences/experience";
+
+type Props = ExperienceViewModel;
+const props = Astro.props;
+const redirectTo = Astro.url.pathname + Astro.url.search;
+---
+
+<ExperienceView
+	{...props}
+	heroComponent={BooksExperienceHero}
+	showHeroBrowserControls={false}
+>
+	<Fragment slot="library">
+		<BooksLibrary
+			definition={props.definition}
+			notes={props.notes}
+			selectedNote={props.selectedNote}
+			{redirectTo}
+		/>
+	</Fragment>
+</ExperienceView>
+
+<style is:global>
+	.experience-page[data-experience-id="books"],
+	[data-experience-id="books"] .experience-canvas {
+		background: #11130f;
+	}
+	.experience-page[data-experience-id="books"] {
+		height: 100%;
+		min-height: 100%;
+	}
+	.application-main-workspace:has([data-experience-id="books"]) {
+		overflow: hidden;
+		padding: 0;
+	}
+	.experience-artwork-workspace:has([data-experience-id="books"]) {
+		--experience-main-gutter: 0rem;
+		--experience-artwork-tail: 0rem;
+	}
+	.experience-artwork-workspace:has([data-experience-id="books"]) .experience-artwork-workspace__art {
+		display: none;
+	}
+	[data-experience-id="books"] .experience-canvas {
+		gap: 0;
+	}
+	.experience-page[data-experience-id="books"][data-books-view="library"] .experience-discovery {
+		display: none;
+	}
+	[data-experience-id="books"] .experience-discovery {
+		border: 0;
+		border-radius: 0;
+		background: transparent;
+		box-shadow: none;
+	}
+	[data-experience-id="books"] .experience-workspace {
+		background:
+			linear-gradient(rgba(17, 19, 15, 0.96), rgba(11, 13, 10, 0.99)),
+			repeating-linear-gradient(90deg, rgba(186, 139, 80, 0.025) 0, rgba(186, 139, 80, 0.025) 1px, transparent 1px, transparent 5px);
+		border: 0;
+		border-radius: 0;
+	}
+	[data-experience-id="books"] .experience-notes-scroll {
+		padding: 0;
+	}
+	[data-experience-id="books"] .experience-inspector-panel,
+	[data-experience-id="books"] .experience-inspector-shell {
+		background: #171914;
+	}
+	[data-experience-id="books"] .experience-inspector-panel {
+		border-color: rgba(201, 157, 96, 0.14);
+	}
+	[data-experience-id="books"] .experience-inspector-shell {
+		border-color: rgba(201, 157, 96, 0.14);
+		box-shadow: -18px 0 48px rgba(0, 0, 0, 0.42);
+	}
+	[data-experience-id="books"] .experience-inspector-backdrop {
+		background: rgba(5, 6, 4, 0.52);
+		backdrop-filter: blur(3px);
+	}
+</style>
