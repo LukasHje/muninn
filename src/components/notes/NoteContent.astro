@@ -23,6 +23,7 @@ import MediaSlider from "src/components/media/MediaSlider.astro";
 import LeafletMap from "src/components/maps/LeafletMap.astro";
 import MermaidDiagram from "src/components/plugins/MermaidDiagram.astro";
 import MultiColumnBlock from "src/components/plugins/MultiColumnBlock.astro";
+import { renderMotionBurstMarkup } from "src/lib/motionBurst";
 
 interface Props {
 	note: LibraryItem;
@@ -136,10 +137,16 @@ function isPdfAsset(extension?: string) {
 
 function renderCopyIcon() {
 	return `
-		<svg class="code-copy-button__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-			<rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
-			<path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
-		</svg>
+		<span data-motion-icon="default">
+			<svg class="code-copy-button__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+				<rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
+				<path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+			</svg>
+		</span>
+		<span data-motion-icon="success">
+			<svg class="code-copy-button__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"></path></svg>
+		</span>
+		${renderMotionBurstMarkup("default", "accent")}
 	`;
 }
 
@@ -151,7 +158,7 @@ function renderCodeBlock(language: string, code: string) {
 		<div class="code-block">
 			<div class="code-block__toolbar">
 				<span class="code-block__language">${escapeHtml(normalizedLanguage)}</span>
-				<button type="button" class="code-copy-button" data-copy-code data-copy-value="${escapeAttribute(code)}" aria-label="${escapeAttribute(ui.common.copy)}" title="${escapeAttribute(ui.common.copy)}">${renderCopyIcon()}</button>
+				<button type="button" class="code-copy-button" data-copy-code data-motion-positive data-copy-value="${escapeAttribute(code)}" aria-label="${escapeAttribute(ui.common.copy)}" title="${escapeAttribute(ui.common.copy)}">${renderCopyIcon()}</button>
 			</div>
 			<pre class="code-block__pre"><code class="language-${escapeAttribute(normalizedLanguage)}">${escapedCode}</code></pre>
 		</div>
@@ -337,13 +344,14 @@ function renderMarkdownHtml(raw: string) {
 		window.__muninnCodeCopyBound = true;
 		document.addEventListener("click", async (event) => {
 			const target = event.target;
-			if (!(target instanceof HTMLElement)) return;
+			if (!(target instanceof Element)) return;
 			const button = target.closest("[data-copy-code]");
 			if (!(button instanceof HTMLButtonElement)) return;
 			const code = button.getAttribute("data-copy-value") ?? "";
 			try {
 				await navigator.clipboard.writeText(code);
 				button.dataset.copyState = "copied";
+				button.dispatchEvent(new CustomEvent("muninn:motion-positive", { bubbles: true }));
 				button.setAttribute("aria-label", copiedLabel);
 				button.title = copiedLabel;
 				window.setTimeout(() => {
@@ -571,7 +579,7 @@ function renderMarkdownHtml(raw: string) {
 	}
 
 	.note-content :global(.code-copy-button[data-copy-state="copied"]) {
-		border-color: rgba(74, 222, 128, 0.42);
+		border-color: rgba(134, 239, 172, 0.26);
 		color: #86efac;
 	}
 

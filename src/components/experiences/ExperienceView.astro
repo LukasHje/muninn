@@ -703,6 +703,9 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 				}
 
 				setFavoriteState(noteId, payload.isFavorite);
+				if (payload.isFavorite) {
+					target.querySelector("[data-motion-positive]")?.dispatchEvent(new CustomEvent("muninn:motion-positive", { bubbles: true }));
+				}
 				window.dispatchEvent(new CustomEvent("muninn:favorite-change", { detail: payload }));
 			} catch (error) {
 				console.error(error);

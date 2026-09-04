@@ -385,3 +385,139 @@
 		@apply bg-sky-400/18 text-sky-300;
 	}
 }
+/* Muninn Motion System --------------------------------------------------- */
+[data-motion-positive] {
+	position: relative;
+	isolation: isolate;
+}
+
+[data-motion-icon] {
+	position: relative;
+	z-index: 1;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	transform-origin: center;
+}
+
+[data-motion-icon="default"] {
+	transition: opacity 90ms ease, transform 120ms cubic-bezier(.2, .8, .2, 1);
+}
+
+[data-motion-icon="success"] {
+	position: absolute;
+	z-index: 1;
+	inset: 50% auto auto 50%;
+	opacity: 0;
+	transform: translate(-50%, -50%) scale(.88);
+	transition: opacity 120ms ease;
+	pointer-events: none;
+}
+
+[data-motion-positive][data-motion-success="true"] [data-motion-icon="default"] {
+	opacity: 0;
+	transform: scale(.9);
+}
+
+[data-motion-positive][data-motion-success="true"] [data-motion-icon="success"] {
+	opacity: 1;
+	animation: muninn-motion-icon-pop 330ms cubic-bezier(.2, .8, .2, 1) both;
+}
+
+.motion-burst {
+	--motion-burst-color: currentColor;
+	position: absolute;
+	z-index: 0;
+	top: 50%;
+	left: 50%;
+	display: block;
+	height: 1px;
+	width: 1px;
+	color: var(--motion-burst-color);
+	pointer-events: none;
+}
+
+.motion-burst[data-motion-color="favorite"] {
+	--motion-burst-color: #e9b34c;
+}
+
+.motion-burst__particle {
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: block;
+	height: 4px;
+	width: 4px;
+	opacity: 0;
+	color: inherit;
+	transform: translate(-50%, -50%) scale(.45) rotate(0deg);
+}
+
+[data-motion-positive][data-motion-success="true"] .motion-burst__particle {
+	animation: muninn-motion-particle 360ms cubic-bezier(.16, .72, .24, 1) var(--motion-delay) both;
+}
+
+.motion-burst__particle[data-motion-shape="dot"] {
+	border-radius: 999px;
+	background: currentColor;
+}
+
+.motion-burst__particle[data-motion-shape="ring"] {
+	height: 4px;
+	width: 4px;
+	border: 1px solid currentColor;
+	border-radius: 999px;
+}
+
+.motion-burst__particle[data-motion-shape="ray"] {
+	height: 1px;
+	width: 5px;
+	border-radius: 999px;
+	background: currentColor;
+}
+
+.motion-burst__particle[data-motion-shape="glint"] {
+	height: 5px;
+	width: 5px;
+	background:
+		linear-gradient(currentColor, currentColor) center / 1px 100% no-repeat,
+		linear-gradient(90deg, currentColor, currentColor) center / 100% 1px no-repeat;
+	clip-path: polygon(45% 0, 55% 0, 58% 42%, 100% 45%, 100% 55%, 58% 58%, 55% 100%, 45% 100%, 42% 58%, 0 55%, 0 45%, 42% 42%);
+}
+
+.code-copy-button .motion-burst__particle {
+	scale: .8;
+}
+
+@keyframes muninn-motion-icon-pop {
+	0% { transform: translate(-50%, -50%) scale(.88); }
+	38% { transform: translate(-50%, -50%) scale(1.12); }
+	70% { transform: translate(-50%, -50%) scale(.97); }
+	100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes muninn-motion-particle {
+	0% {
+		opacity: 0;
+		transform: translate(-50%, -50%) scale(.45) rotate(0deg);
+	}
+	18% { opacity: .82; }
+	58% {
+		opacity: .64;
+		transform: translate(calc(-50% + var(--motion-mid-x)), calc(-50% + var(--motion-mid-y))) scale(var(--motion-size)) rotate(var(--motion-rotation));
+	}
+	100% {
+		opacity: 0;
+		transform: translate(calc(-50% + var(--motion-x)), calc(-50% + var(--motion-y))) scale(var(--motion-size)) rotate(var(--motion-rotation));
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	[data-motion-positive][data-motion-success="true"] [data-motion-icon="success"] {
+		animation: none;
+		transform: translate(-50%, -50%) scale(1);
+	}
+	[data-motion-positive][data-motion-success="true"] .motion-burst__particle {
+		animation: none;
+	}
+}

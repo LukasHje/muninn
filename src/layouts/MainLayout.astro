@@ -119,9 +119,17 @@ const navigation = getSidebarNavigation().map((item) => {
 
 		<script>
 			import initApplicationShell from "src/components/ApplicationShellClient.ts";
+			import initFavoriteToggleClient from "src/components/FavoriteToggleClient.ts";
+			import initMotionBurstSystem from "src/components/MotionBurstClient.ts";
 
 			initApplicationShell();
-			document.addEventListener("astro:page-load", initApplicationShell);
+			initFavoriteToggleClient();
+			initMotionBurstSystem();
+			document.addEventListener("astro:page-load", () => {
+				initApplicationShell();
+				initFavoriteToggleClient();
+				initMotionBurstSystem();
+			});
 		</script>
 	</body>
 </html>

@@ -95,11 +95,12 @@ const snippetHtml = searchQuery && searchSnippet && searchField
 	: null;
 ---
 
-<article class="group relative overflow-hidden rounded-[14px] border border-[#ece5dc] bg-white shadow-[0_8px_20px_rgba(15,23,42,0.04)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(15,23,42,0.08)]">
+<article class="group relative overflow-hidden rounded-[14px] border border-[#ece5dc] bg-white shadow-[0_8px_20px_rgba(15,23,42,0.04)] transition-colors duration-200 hover:border-[#d4c7b5]">
 	<div class="absolute right-3 top-0 z-10 sm:top-3">
 		<FavoriteToggleButton
 			noteId={item.id}
 			isFavorite={Boolean(item.favorite)}
+			motionVariant="sunray"
 			redirectTo={redirectTo}
 			size="xs"
 			elevated={false}
@@ -111,7 +112,7 @@ const snippetHtml = searchQuery && searchSnippet && searchField
 				<img
 					src={item.imageUrl}
 					alt=""
-					class="h-44 w-full object-cover transition duration-300 group-hover:scale-[1.015]"
+					class="h-44 w-full object-cover"
 					loading="lazy"
 				/>
 			) : (

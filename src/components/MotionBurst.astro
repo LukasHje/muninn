@@ -1,0 +1,36 @@
+---
+import {
+	motionBurstParticles,
+	motionParticleStyle,
+	type MotionBurstColor,
+	type MotionBurstVariant,
+} from "src/lib/motionBurst";
+
+interface Props {
+	variant?: MotionBurstVariant;
+	color?: MotionBurstColor;
+	class?: string;
+}
+
+const {
+	variant = "default",
+	color = variant === "sparkle" ? "favorite" : "accent",
+	class: className,
+} = Astro.props;
+---
+
+<span
+	class:list={["motion-burst", className]}
+	data-motion-burst
+	data-motion-variant={variant}
+	data-motion-color={color}
+	aria-hidden="true"
+>
+	{motionBurstParticles[variant].map((particle) => (
+		<i
+			class="motion-burst__particle"
+			data-motion-shape={particle.shape}
+			style={motionParticleStyle(particle)}
+		></i>
+	))}
+</span>

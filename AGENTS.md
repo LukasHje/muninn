@@ -59,6 +59,12 @@ This document defines responsive viewport sizing, scroll ownership, and the fixe
 
 Read it before changing `MainLayout`, sidebar sizing, mobile headers, drawers, inspectors, overlays, viewport breakpoints, safe areas, focus management, or scroll locking.
 
+### Motion
+
+- docs/motion-system.md
+
+Read this before adding or changing positive interaction feedback, icon morphs, success pops, bursts, favorite/rating animation, or reduced-motion behavior. Reuse the shared MotionBurst system rather than introducing feature-local keyframes or particles.
+
 ---
 
 ### Search
