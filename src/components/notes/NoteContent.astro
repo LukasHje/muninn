@@ -24,6 +24,7 @@ import LeafletMap from "src/components/maps/LeafletMap.astro";
 import MermaidDiagram from "src/components/plugins/MermaidDiagram.astro";
 import MultiColumnBlock from "src/components/plugins/MultiColumnBlock.astro";
 import { renderMotionBurstMarkup } from "src/lib/motionBurst";
+import { highlightCode } from "src/lib/codeHighlight";
 
 interface Props {
 	note: LibraryItem;
@@ -150,20 +151,27 @@ function renderCopyIcon() {
 	`;
 }
 
-function renderCodeBlock(language: string, code: string) {
-	const normalizedLanguage = language.trim().toLowerCase() || "text";
-	const escapedCode = escapeHtml(code.replace(/\n$/, ""));
+async function renderCodeBlock(language: string, code: string) {
+	const highlighted = await highlightCode(code, language);
 
 	return `
-		<div class="code-block">
+		<div class="code-block" data-code-language="${escapeAttribute(highlighted.language)}" data-code-highlighted="${highlighted.highlighted}">
 			<div class="code-block__toolbar">
-				<span class="code-block__language">${escapeHtml(normalizedLanguage)}</span>
+				<span class="code-block__language">${escapeHtml(highlighted.language)}</span>
 				<button type="button" class="code-copy-button" data-copy-code data-motion-positive data-copy-value="${escapeAttribute(code)}" aria-label="${escapeAttribute(ui.common.copy)}" title="${escapeAttribute(ui.common.copy)}">${renderCopyIcon()}</button>
 			</div>
-			<pre class="code-block__pre"><code class="language-${escapeAttribute(normalizedLanguage)}">${escapedCode}</code></pre>
+			<pre class="code-block__pre"><code class="language-${escapeAttribute(highlighted.language)}">${highlighted.html}</code></pre>
 		</div>
 	`;
 }
+
+const renderedCodeBlocks = new Map(
+	await Promise.all(
+		segments
+			.filter((segment) => segment.type === "code")
+			.map(async (segment) => [segment.key, await renderCodeBlock(segment.language, segment.code)] as const),
+	),
+);
 
 const renderer = new Renderer();
 const defaultTableRenderer = Renderer.prototype.table;
@@ -270,7 +278,7 @@ function renderMarkdownHtml(raw: string) {
 			segment.type === "markdown" ? (
 				<div class="note-content__segment" set:html={renderMarkdownHtml(segment.text)}></div>
 			) : segment.type === "code" ? (
-				<div class="note-content__segment" set:html={renderCodeBlock(segment.language, segment.code)}></div>
+				<div class="note-content__segment" set:html={renderedCodeBlocks.get(segment.key) ?? ""}></div>
 			) : segment.type === "callout" ? (
 				<div class="my-7">
 					<Callout
@@ -532,10 +540,10 @@ function renderMarkdownHtml(raw: string) {
 	.note-content :global(.dataview-card) {
 		margin: 1.6rem 0;
 		overflow: hidden;
-		border-radius: 1.2rem;
-		border: 1px solid rgba(148, 163, 184, 0.18);
-		background: radial-gradient(circle at top, rgba(30, 41, 59, 0.96), #0f172a 62%);
-		box-shadow: 0 18px 36px rgba(15, 23, 42, 0.16);
+		border-radius: 0.7rem;
+		border: 1px solid rgba(148, 163, 184, 0.16);
+		background: #101318;
+		box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
 	}
 
 	.note-content :global(.code-block__toolbar),
@@ -543,54 +551,57 @@ function renderMarkdownHtml(raw: string) {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 1rem;
+		gap: 0.75rem;
 		border-bottom: 1px solid rgba(148, 163, 184, 0.15);
-		padding: 0.82rem 0.95rem;
-		background: rgba(15, 23, 42, 0.32);
+		padding: 0.46rem 0.78rem;
+		background: #292c31;
 	}
 
 	.note-content :global(.code-block__language) {
 		font-size: 0.72rem;
-		font-weight: 700;
-		letter-spacing: 0.12em;
-		text-transform: uppercase;
-		color: #cbd5e1;
+		font-weight: 500;
+		letter-spacing: 0.01em;
+		text-transform: lowercase;
+		color: #c7c9ce;
 	}
 
 	.note-content :global(.code-copy-button) {
 		display: inline-flex;
-		width: 2.25rem;
-		height: 2.25rem;
+		width: 1.65rem;
+		height: 1.65rem;
 		flex: 0 0 auto;
 		align-items: center;
 		justify-content: center;
-		border: 1px solid rgba(148, 163, 184, 0.22);
-		background: rgba(255, 255, 255, 0.08);
-		color: #e2e8f0;
-		border-radius: 999px;
+		border: 0;
+		background: transparent;
+		color: #c7c9ce;
+		border-radius: 0.25rem;
 		padding: 0;
 		cursor: pointer;
-		transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+		transition: color 120ms ease, opacity 120ms ease;
 	}
 
 	.note-content :global(.code-copy-button:hover) {
-		background: rgba(255, 255, 255, 0.14);
-		border-color: rgba(226, 232, 240, 0.28);
+		color: #ffffff;
+	}
+
+	.note-content :global(.code-copy-button:focus-visible) {
+		outline: 1px solid rgba(226, 232, 240, 0.7);
+		outline-offset: 2px;
+		color: #ffffff;
 	}
 
 	.note-content :global(.code-copy-button[data-copy-state="copied"]) {
-		border-color: rgba(134, 239, 172, 0.26);
 		color: #86efac;
 	}
 
 	.note-content :global(.code-copy-button[data-copy-state="failed"]) {
-		border-color: rgba(248, 113, 113, 0.42);
 		color: #fca5a5;
 	}
 
 	.note-content :global(.code-copy-button__icon) {
-		width: 1rem;
-		height: 1rem;
+		width: 0.95rem;
+		height: 0.95rem;
 	}
 
 	.note-content :global(.code-block__pre) {
@@ -599,7 +610,7 @@ function renderMarkdownHtml(raw: string) {
 		border-radius: 0;
 		box-shadow: none;
 		background: transparent;
-		padding: 0.95rem 1rem 1.05rem;
+		padding: 1rem 1.05rem 1.1rem;
 	}
 
 	.note-content :global(.dataview-card__title) {
@@ -1488,9 +1499,9 @@ function renderMarkdownHtml(raw: string) {
 		}
 
 		.note-content :global(.code-copy-button) {
-			width: 2.75rem;
-			height: 2.75rem;
-			min-height: 2.75rem;
+			width: 1.9rem;
+			height: 1.9rem;
+			min-height: 1.9rem;
 		}
 
 		.note-content :global(blockquote) {

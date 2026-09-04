@@ -100,12 +100,15 @@ Examples:
 - note layouts
 - typography
 - code block chrome
+- grammar-aware syntax colors selected from the fenced code language, with plain-text fallback for unknown languages
 - copy buttons
 - image framing
 - responsive tables
 - cards, spacing and colors
 
 Renderer/UI consumes the already-understood document and decides how it should look.
+
+Fenced code language labels are passed through Core unchanged. `NoteContent` delegates presentation-only syntax highlighting to `src/lib/codeHighlight.ts`; highlighting must not introduce parsing rules or make an unsupported language fail rendering.
 
 Renderer/UI must never:
 
