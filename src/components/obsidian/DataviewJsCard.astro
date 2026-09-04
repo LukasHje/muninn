@@ -1,6 +1,7 @@
 ---
 import { ui } from "src/i18n";
 import Icon from "src/components/Icon.astro";
+import MotionBurst from "src/components/MotionBurst.astro";
 
 interface Props {
 	code: string;
@@ -19,11 +20,14 @@ const { code } = Astro.props;
 			type="button"
 			class="code-copy-button"
 			data-copy-code
+			data-motion-positive
 			data-copy-value={code}
 			aria-label={ui.common.copy}
 			title={ui.common.copy}
 		>
-			<Icon name="copy" class="code-copy-button__icon" />
+			<span data-motion-icon="default"><Icon name="copy" class="code-copy-button__icon" /></span>
+			<span data-motion-icon="success"><Icon name="check" class="code-copy-button__icon" /></span>
+			<MotionBurst variant="default" color="accent" />
 		</button>
 	</div>
 	<pre class="code-block__pre"><code>{code.replace(/\n$/, "")}</code></pre>

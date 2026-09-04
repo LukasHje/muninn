@@ -92,8 +92,9 @@ const isPlaceholderImage = isPlaceholderExperienceImage(imageUrl, definition);
 				</h2>
 
 				{
-					contextTags.length > 0 && (
-						<div class="mt-2 flex max-h-[2.9rem] flex-wrap gap-x-1 gap-y-1 overflow-hidden pr-2">
+					<div class="mt-2 flex min-h-[2.9rem] max-h-[2.9rem] flex-wrap content-start gap-x-1 gap-y-1 overflow-hidden pr-2">
+						{contextTags.length > 0 && (
+							<>
 							{
 								contextTags.map((tag) => (
 									<span
@@ -103,8 +104,9 @@ const isPlaceholderImage = isPlaceholderExperienceImage(imageUrl, definition);
 									</span>
 								))
 							}
+							</>
+						)}
 						</div>
-						)
 					}
 				{
 					statusValue && (

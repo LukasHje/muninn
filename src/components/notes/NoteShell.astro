@@ -75,6 +75,7 @@ const updatedLabel = formatDate(note.normalized.updated) ?? note.updatedLabel;
 								redirectTo={redirectTo}
 								tone="dark"
 								size="md"
+								motionVariant="sunray"
 							/>
 						</div>
 						<div class="mt-auto space-y-4 md:space-y-5">
@@ -138,6 +139,7 @@ const updatedLabel = formatDate(note.normalized.updated) ?? note.updatedLabel;
 									isFavorite={Boolean(note.favorite)}
 									redirectTo={redirectTo}
 									size="md"
+									motionVariant="sunray"
 								/>
 							</div>
 							{breadcrumb && <p class="text-sm font-medium text-slate-400">{breadcrumb}</p>}
@@ -157,12 +159,12 @@ const updatedLabel = formatDate(note.normalized.updated) ?? note.updatedLabel;
 					</div>
 					<div class="space-y-4 md:space-y-5">
 						<div class="flex flex-wrap items-center gap-2.5">
-							<span class="rounded-[5px] border border-[#ece3d7] bg-[#fbf8f3] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+							<span class="rounded-[5px] border border-[#cbd9e2] bg-[#e8eef2] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#40566b]">
 								{note.domainLabel}
 							</span>
 							{
 								typeLabel && (
-									<span class="rounded-[5px] border border-[#e6deea] bg-[#f8f5fb] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+									<span class="rounded-[5px] border border-[#d9d5e5] bg-[#f0eef6] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#514a68]">
 										{typeLabel}
 									</span>
 								)

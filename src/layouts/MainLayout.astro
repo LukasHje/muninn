@@ -62,7 +62,7 @@ const navigation = getSidebarNavigation().map((item) => {
 			<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 			<meta name="generator" content={Astro.generator} />
 			<meta name="description" content={description} />
-			<meta name="theme-color" content="#faf7f2" />
+			<meta name="theme-color" content="#f8fafb" />
 			<title>{title}</title>
 			<ClientRouter fallback="swap" />
 		</head>
@@ -119,9 +119,17 @@ const navigation = getSidebarNavigation().map((item) => {
 
 		<script>
 			import initApplicationShell from "src/components/ApplicationShellClient.ts";
+			import initFavoriteToggleClient from "src/components/FavoriteToggleClient.ts";
+			import initMotionBurstSystem from "src/components/MotionBurstClient.ts";
 
 			initApplicationShell();
-			document.addEventListener("astro:page-load", initApplicationShell);
+			initFavoriteToggleClient();
+			initMotionBurstSystem();
+			document.addEventListener("astro:page-load", () => {
+				initApplicationShell();
+				initFavoriteToggleClient();
+				initMotionBurstSystem();
+			});
 		</script>
 	</body>
 </html>

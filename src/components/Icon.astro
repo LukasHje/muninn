@@ -45,6 +45,33 @@ const viewBox = specialViewBoxes[name] ?? "0 0 24 24";
 			<path d="M14.5 9.5 17 7l-5-5v4.5"></path>
 		</>
 	)}
+	{name === "audio-lines" && (
+		<>
+			<path d="M2 10v3"></path>
+			<path d="M6 6v11"></path>
+			<path d="M10 3v18"></path>
+			<path d="M14 8v7"></path>
+			<path d="M18 5v13"></path>
+			<path d="M22 10v3"></path>
+		</>
+	)}
+	{name === "cassette-tape" && (
+		<>
+			<rect width="20" height="16" x="2" y="4" rx="2"></rect>
+			<circle cx="8" cy="10" r="2"></circle>
+			<path d="M8 12h8"></path>
+			<circle cx="16" cy="10" r="2"></circle>
+			<path d="m6 20 .7-2.9A1.4 1.4 0 0 1 8.1 16h7.8a1.4 1.4 0 0 1 1.4 1l.7 3"></path>
+		</>
+	)}
+	{name === "disc-3" && (
+		<>
+			<circle cx="12" cy="12" r="10"></circle>
+			<path d="M6 12c0-1.7.7-3.2 1.8-4.2"></path>
+			<circle cx="12" cy="12" r="2"></circle>
+			<path d="M18 12c0 1.7-.7 3.2-1.8 4.2"></path>
+		</>
+	)}
 	{name === "wifi" && (
 		<>
 			<path d="M12 20h.01"></path>
@@ -1136,6 +1163,16 @@ const viewBox = specialViewBoxes[name] ?? "0 0 24 24";
 			<rect x="2" y="6" width="16" height="12" rx="2"/>
 		</g>
 	)}
+	{name === "car-battery" && (
+		<>
+			<path d="M14 13h4"></path>
+			<path d="M16 15v-4"></path>
+			<path d="M18 5v2"></path>
+			<path d="M6 13h4"></path>
+			<path d="M6 5v2"></path>
+			<rect x="2" y="7" width="20" height="12" rx="2"></rect>
+		</>
+	)}
 	{name === "droplets" && (
 		<>
 			<path d="M12 3.5c2.8 3.7 5 6.3 5 9.1a5 5 0 1 1-10 0c0-2.8 2.2-5.4 5-9.1Z"></path>
@@ -1145,6 +1182,34 @@ const viewBox = specialViewBoxes[name] ?? "0 0 24 24";
 		<>
 			<circle cx="12" cy="12" r="10"></circle>
 			<path d="m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z"></path>
+		</>
+	)}
+	{name === "diameter" && (
+		<>
+			<circle cx="19" cy="19" r="2"></circle>
+			<circle cx="5" cy="5" r="2"></circle>
+			<path d="M6.48 3.66a10 10 0 0 1 13.86 13.86"></path>
+			<path d="m6.41 6.41 11.18 11.18"></path>
+			<path d="M3.66 6.48a10 10 0 0 0 13.86 13.86"></path>
+		</>
+	)}
+	{name === "aperture" && (
+		<>
+			<circle cx="12" cy="12" r="10"></circle>
+			<path d="m14.31 8 5.74 9.94"></path>
+			<path d="M9.69 8h11.48"></path>
+			<path d="m7.38 12 5.74-9.94"></path>
+			<path d="M9.69 16 3.95 6.06"></path>
+			<path d="M14.31 16H2.83"></path>
+			<path d="m16.62 12-5.74 9.94"></path>
+		</>
+	)}
+	{name === "swatch-book" && (
+		<>
+			<path d="M11 17a4 4 0 0 1-8 0V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2Z"></path>
+			<path d="M16.7 13H19a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H7"></path>
+			<path d="M7 17h.01"></path>
+			<path d="m11 8 2.3-2.3a2.4 2.4 0 0 1 3.404.004L18.6 7.6a2.4 2.4 0 0 1 .026 3.434L9.9 19.8"></path>
 		</>
 	)}
 	{name === "binoculars" && (

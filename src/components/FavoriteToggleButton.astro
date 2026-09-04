@@ -1,6 +1,7 @@
 ---
 import { ui } from "src/i18n";
 import Icon from "src/components/Icon.astro";
+import MotionBurst from "src/components/MotionBurst.astro";
 
 interface Props {
 	noteId: string;
@@ -10,6 +11,7 @@ interface Props {
 	size?: "xs" | "sm" | "md";
 	variant?: "surface" | "chromeless" | "floating";
 	elevated?: boolean;
+	motionVariant?: "sparkle" | "sunray";
 }
 
 const {
@@ -20,6 +22,7 @@ const {
 	size = "sm",
 	variant = "surface",
 	elevated = true,
+	motionVariant = "sparkle",
 } = Astro.props;
 
 const sizeClasses =
@@ -38,6 +41,14 @@ const sizeClasses =
 			: variant === "floating"
 				? "h-9 w-9 rounded-[12px]"
 			: "h-9 w-9 rounded-xl";
+const iconSizeClass =
+	variant === "chromeless" && size === "md"
+		? "h-6 w-6"
+		: size === "xs"
+			? "h-4 w-4"
+			: variant === "floating"
+				? "h-4.5 w-4.5"
+				: "h-4 w-4";
 
 ---
 
@@ -68,23 +79,16 @@ const sizeClasses =
 					: "border-none shadow-none",
 			sizeClasses,
 		]}
+		data-motion-positive
 		aria-label={isFavorite ? ui.favorites.remove : ui.favorites.add}
 		aria-pressed={isFavorite ? "true" : "false"}
 		title={isFavorite ? ui.favorites.remove : ui.favorites.add}
 	>
-		<Icon
-			name="star"
-			filled={isFavorite}
-			class:list={[
-				variant === "chromeless" && size === "md"
-					? "h-6 w-6"
-					: size === "xs"
-						? "h-4 w-4"
-					: variant === "floating"
-						? "h-4.5 w-4.5"
-						: "h-4 w-4",
-			]}
-		/>
+		<span data-motion-icon="default">
+			<Icon name="star" filled={isFavorite} class={iconSizeClass} />
+		</span>
+		<span data-motion-icon="success"><Icon name="star" filled class={iconSizeClass} /></span>
+		<MotionBurst variant={motionVariant} color="favorite" />
 	</button>
 </form>
 
@@ -107,13 +111,13 @@ const sizeClasses =
 	}
 
 	.favorite-toggle-form[data-favorite-variant="floating"] .favorite-toggle-button {
-		border-color: #e8dfd2;
+		border-color: #dce4e9;
 		background: rgba(255, 255, 255, 0.94);
-		color: #cbd5e1;
+		color: #64748b;
 	}
 
 	.favorite-toggle-form[data-favorite-variant="floating"] .favorite-toggle-button:hover {
-		border-color: #d7cbba;
+		border-color: #cbd6de;
 		color: #f59e0b;
 	}
 
@@ -129,13 +133,13 @@ const sizeClasses =
 	}
 
 	.favorite-toggle-form[data-favorite-variant="surface"][data-favorite-tone="light"] .favorite-toggle-button {
-		border-color: #e6ddd0;
+		border-color: #dce4e9;
 		background: white;
-		color: #cbd5e1;
+		color: #64748b;
 	}
 
 	.favorite-toggle-form[data-favorite-variant="surface"][data-favorite-tone="light"] .favorite-toggle-button:hover {
-		border-color: #d8cdbd;
+		border-color: #cbd6de;
 		color: #f59e0b;
 	}
 

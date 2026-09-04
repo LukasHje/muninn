@@ -1,5 +1,6 @@
 ---
 import Icon from "src/components/Icon.astro";
+import MotionBurst from "src/components/MotionBurst.astro";
 import NoteContent from "src/components/notes/NoteContent.astro";
 import { getBookMetadata } from "src/lib/experiences/books";
 import type { InspectorSection } from "src/lib/experiences/inspector";
@@ -59,8 +60,10 @@ const descriptionSection = sections.find((section) =>
 			<div class="book-inspector__rating">
 				<div class="book-inspector__stars" role="group" aria-label="Personal rating">
 					{[1, 2, 3, 4, 5].map((rating) => (
-						<button type="button" data-book-rating={rating} aria-label={`${rating} stars`} aria-pressed="false">
-							<Icon name="star" class="h-4 w-4" />
+						<button type="button" data-book-rating={rating} data-motion-positive aria-label={`${rating} stars`} aria-pressed="false">
+							<span data-motion-icon="default"><Icon name="star" class="h-4 w-4" /></span>
+							<span data-motion-icon="success"><Icon name="star" filled class="h-4 w-4" /></span>
+							<MotionBurst variant="sparkle" color="favorite" />
 						</button>
 					))}
 				</div>
@@ -89,8 +92,10 @@ const descriptionSection = sections.find((section) =>
 				<a href={noteHref} data-experience-open-note data-note-href={noteHref} aria-label="Open full note">
 					<Icon name="ellipsis" class="h-4 w-4" />
 				</a>
-				<button type="button" data-book-favorite aria-pressed="false" title="Add to favorites">
-					<Icon name="star" class="h-4 w-4" />
+				<button type="button" data-book-favorite data-motion-positive aria-pressed="false" title="Add to favorites">
+					<span data-motion-icon="default"><Icon name="star" class="h-4 w-4" /></span>
+					<span data-motion-icon="success"><Icon name="star" filled class="h-4 w-4" /></span>
+					<MotionBurst variant="sparkle" color="favorite" />
 				</button>
 			</div>
 		</div>
@@ -187,6 +192,7 @@ const descriptionSection = sections.find((section) =>
 	.book-inspector__actions a:first-child { flex: 1; }
 	.book-inspector__actions a:not(:first-child), .book-inspector__actions button { width: 2.2rem; padding: 0; }
 	.book-inspector__actions button[aria-pressed="true"] { color: #efb852; }
+	.book-inspector__actions button[aria-pressed="true"] :global(svg) { fill: currentColor; }
 	.book-inspector__stars { display: flex; gap: .22rem; }
 	.book-inspector__stars button { color: #57564f; }
 	.book-inspector__stars button[aria-pressed="true"] { color: #e6ad47; }

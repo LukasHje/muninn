@@ -451,13 +451,17 @@ export function initBooksExperiences() {
 			if (ratingButton instanceof HTMLButtonElement) {
 				const rating = Number.parseInt(ratingButton.dataset.bookRating ?? "", 10);
 				const current = stateFor(noteId);
-				store.set(noteId, { ...current, rating: current.rating === rating ? null : rating });
+				const isPositive = current.rating !== rating;
+				store.set(noteId, { ...current, rating: isPositive ? rating : null });
+				if (isPositive) ratingButton.dispatchEvent(new CustomEvent("muninn:motion-positive", { bubbles: true }));
 				render();
 				return;
 			}
-			if (target.closest("[data-book-favorite]")) {
+			const favoriteButton = target.closest("[data-book-favorite]");
+			if (favoriteButton instanceof HTMLButtonElement) {
 				const current = stateFor(noteId);
 				store.set(noteId, { ...current, favorite: !current.favorite });
+				if (!current.favorite) favoriteButton.dispatchEvent(new CustomEvent("muninn:motion-positive", { bubbles: true }));
 				render();
 			}
 		});
