@@ -42,7 +42,7 @@ function toTitleCase(value: string) {
 }
 
 function formatDecimalValue(value: string) {
-	return value.replace(",", ".");
+	return value.replace(/[\s\u00a0\u202f]/g, "").replace(",", ".");
 }
 
 function formatSignedDecimalValue(value: string) {
@@ -51,6 +51,14 @@ function formatSignedDecimalValue(value: string) {
 }
 
 function formatUnitValue(amount: string, unit: string) {
+	if (unit.toLocaleLowerCase("en") === "mah") {
+		const numericAmount = Number(formatDecimalValue(amount));
+		if (Number.isFinite(numericAmount) && numericAmount >= 10_000) {
+			const compactAmount = Math.round((numericAmount / 1_000) * 10) / 10;
+			return `${compactAmount.toLocaleString("sv-SE", { maximumFractionDigits: 1 })}k mAh`;
+		}
+	}
+
 	return `${formatDecimalValue(amount)} ${unit}`;
 }
 
@@ -258,14 +266,16 @@ function selectTemperatureFeature(bullets: string[]) {
 	return candidates.sort((left, right) => right.score - left.score)[0]?.value ?? null;
 }
 
-function extractBatteryFeature(bullet: string) {
+function extractBatteryCountFeature(bullet: string) {
 	if (/\bCR2(?:[- ]?(?:batter(?:y|ies)|batteri(?:et|er)?))?\b/i.test(bullet)) {
 		const numericCountMatch = bullet.match(/\b(\d+)\s*(?:x|×)?\s*(?:replaceable\s+|utbytbara?\s+)?CR2\b/i);
-		const count = numericCountMatch?.[1] ?? extractSpelledCount(bullet) ?? "1";
-		return `${count}x CR2`;
+		const count = numericCountMatch?.[1] ?? extractSpelledCount(bullet);
+		return count ? `${count}x CR2` : null;
 	}
 
-	const aaMatch = bullet.match(/\b(\d+)\s*x\s*AA\b/i) ?? bullet.match(/\b(\d+)\s*AA-batter/i);
+	const aaMatch =
+		bullet.match(/\b(\d+)\s*x\s*AA\b/i) ??
+		bullet.match(/\b(\d+)\s*(?:stycken?\s+|st\.?\s+)?AA(?:[-\s]?batter)/i);
 	if (aaMatch) {
 		return `${aaMatch[1]}x AA`;
 	}
@@ -275,17 +285,35 @@ function extractBatteryFeature(bullet: string) {
 		if (spelledCount) {
 			return `${spelledCount}x AA`;
 		}
+	}
 
+	return null;
+}
+
+function extractBatteryTypeFeature(bullet: string) {
+	if (extractBatteryCountFeature(bullet)) {
+		return null;
+	}
+
+	const platformMatch = bullet.match(/\b(M\d{2})(?:\s+REDLITHIUM)?\b/i);
+	if (platformMatch && /\b(?:battery|batteri|platform|plattform|system|REDLITHIUM)\b/i.test(bullet)) {
+		return platformMatch[1].toUpperCase();
+	}
+
+	if (/\bCR2(?:[- ]?(?:batter(?:y|ies)|batteri(?:et|er)?))?\b/i.test(bullet)) {
+		return "CR2";
+	}
+
+	if (/\bAA(?:[-\s]?(?:batter(?:y|ies)|batteri(?:et|er)?))?\b/i.test(bullet)) {
 		return "AA";
 	}
 
-	const energyMatch = bullet.match(/\b(\d+(?:[.,]\d+)?)\s*(Wh|mAh)\b/i);
-	if (energyMatch) {
-		return formatUnitValue(energyMatch[1], energyMatch[2]);
+	if (/\bli-?ion\b|\blithium[- ]ion\b|\blitiumjon/i.test(bullet)) {
+		return "Li-ion";
 	}
 
-	if (/\bli-?ion\b|\blitiumjon/i.test(bullet)) {
-		return "Li-ion";
+	if (/\bsealed lead-acid\b|\bslutet blybatteri\b/i.test(bullet)) {
+		return "Lead-acid";
 	}
 
 	if (/\brechargeable battery\b|\buppladdningsbart batteri\b/i.test(bullet)) {
@@ -293,6 +321,13 @@ function extractBatteryFeature(bullet: string) {
 	}
 
 	return null;
+}
+
+function extractBatteryCapacityFeature(bullet: string) {
+	const capacityMatch = bullet.match(
+		/\b(\d{1,3}(?:[\s\u00a0\u202f]\d{3})+|\d+(?:[.,]\d+)?)\s*(mAh|Ah|Wh)\b/i
+	);
+	return capacityMatch ? formatUnitValue(capacityMatch[1], capacityMatch[2]) : null;
 }
 
 function extractWaterproofFeature(bullet: string) {
@@ -330,7 +365,7 @@ function resolveWaterproofIconName(value: string) {
 		return "water-resistance-atm";
 	}
 
-	return value === "Waterproof" ? "waterproof" : "droplets";
+	return value === "Weatherproof" ? "waterproof" : "droplets";
 }
 
 function extractSolarFeature(bullet: string) {
@@ -389,6 +424,34 @@ function extractWirelessFeature(bullet: string) {
 	}
 
 	return null;
+}
+
+function extractFmRadioFeature(bullet: string) {
+	if (/\bAM\s*\/\s*FM(?:[- ]?(?:radio|fickradio))?\b|\bAM[- ]och[- ]FM[- ]radio\b/i.test(bullet)) {
+		return "AM/FM";
+	}
+
+	return /\bFM[- ]?(?:radio|fickradio)\b/i.test(bullet) ? "FM radio" : null;
+}
+
+function extractCassetteFeature(bullet: string) {
+	return /\b(?:cassette(?: tapes?| player| mechanism)?|kassett(?:band|spelare|mekanik|format(?:et)?)?)\b/i.test(bullet)
+		? "Cassette"
+		: null;
+}
+
+function extractOpticalDiscFeature(bullet: string) {
+	if (/\bblu[- ]?ray(?: disc| player| spelare)?\b/i.test(bullet)) {
+		return "Blu-ray";
+	}
+
+	if (/\bDVD(?:[- ]?(?:disc|player|spelare|skiva))?\b/i.test(bullet)) {
+		return "DVD";
+	}
+
+	return /\b(?:CD[- ]?(?:player|spelare|skiva)|compact disc|optical disc|optisk skiva)\b/i.test(bullet)
+		? "CD"
+		: null;
 }
 
 function extractZipperFeature(bullet: string) {
@@ -504,6 +567,44 @@ function extractLumensFeature(bullet: string) {
 	return lumenMatch ? formatUnitValue(lumenMatch[1], "lm") : null;
 }
 
+function extractDiameterFeature(bullet: string) {
+	if (!/\b(?:maximum |max |front |disc |disk |skiv|objective |objektiv)?diameter\b|\bskivdiameter\b/i.test(bullet)) {
+		return null;
+	}
+
+	const diameterMatch = bullet.match(/\b(\d+(?:[.,]\d+)?)\s*mm\b/i);
+	return diameterMatch ? formatUnitValue(diameterMatch[1], "mm") : null;
+}
+
+function extractFocalLengthFeature(bullet: string) {
+	if (!/\b(?:focal length|brännvidd)\b/i.test(bullet)) {
+		return null;
+	}
+
+	const rangeMatch = bullet.match(/\b(\d+(?:[.,]\d+)?)\s*[–—-]\s*(\d+(?:[.,]\d+)?)\s*mm\b/i);
+	if (rangeMatch) {
+		return `${formatDecimalValue(rangeMatch[1])}–${formatDecimalValue(rangeMatch[2])} mm`;
+	}
+
+	const focalLengthMatch = bullet.match(/\b(\d+(?:[.,]\d+)?)\s*mm\b/i);
+	return focalLengthMatch ? formatUnitValue(focalLengthMatch[1], "mm") : null;
+}
+
+function extractOpticalZoomFeature(bullet: string) {
+	const zoomMatch =
+		bullet.match(/\b(\d+(?:[.,]\d+)?)\s*[x×]\s*(?:optical|optisk)\s+zoom\b/i) ??
+		bullet.match(/\b(?:optical|optisk)\s+zoom\D{0,8}(\d+(?:[.,]\d+)?)\s*[x×]\b/i);
+
+	return zoomMatch ? `${formatDecimalValue(zoomMatch[1])}x zoom` : null;
+}
+
+function extractReferenceColorsFeature(bullet: string) {
+	const colorMatch = bullet.match(
+		/\b(\d+)\s+(?:reference\s+colou?rs?|referensfärger|colour patches|color patches|färgrutor)\b/i
+	);
+	return colorMatch ? `${colorMatch[1]} colors` : null;
+}
+
 function extractOpticsFeature(bullet: string) {
 	const combinedMatch = bullet.match(
 		/\b(\d+(?:[.,]\d+)?)\s*[x×]\s*(\d+(?:[.,]\d+)?)\b(?:\s*mm)?/i
@@ -573,7 +674,9 @@ function extractBoilTimeFeature(bullet: string) {
 }
 
 function extractWaypointFeature(bullet: string) {
-	return /\bwaypoints?\b|\broutes?\b|\btracks?\b/i.test(bullet) ? "Waypoints" : null;
+	return /\bwaypoints?\b|\broutes?\b|\b(?:track logging|track log|spårloggning|spårlogg)\b/i.test(bullet)
+		? "Waypoints"
+		: null;
 }
 
 function extractWeightFeature(bullet: string) {
@@ -746,11 +849,25 @@ const productFeatureDefinitions: ProductFeatureDefinition[] = [
 		extractValue: extractSolarFeature,
 	},
 	{
-		id: "battery",
-		label: "Battery",
+		id: "battery-capacity",
+		label: "Battery capacity",
 		iconName: "battery",
 		priority: 90,
-		extractValue: extractBatteryFeature,
+		extractValue: extractBatteryCapacityFeature,
+	},
+	{
+		id: "battery-count",
+		label: "Batteries",
+		iconName: "battery",
+		priority: 90,
+		extractValue: extractBatteryCountFeature,
+	},
+	{
+		id: "battery-type",
+		label: "Battery type",
+		iconName: "car-battery",
+		priority: 90,
+		extractValue: extractBatteryTypeFeature,
 	},
 	{
 		id: "gps",
@@ -780,6 +897,27 @@ const productFeatureDefinitions: ProductFeatureDefinition[] = [
 		iconName: "wifi",
 		priority: 88,
 		extractValue: extractWirelessFeature,
+	},
+	{
+		id: "fm-radio",
+		label: "Radio",
+		iconName: "audio-lines",
+		priority: 89,
+		extractValue: extractFmRadioFeature,
+	},
+	{
+		id: "cassette",
+		label: "Media",
+		iconName: "cassette-tape",
+		priority: 89,
+		extractValue: extractCassetteFeature,
+	},
+	{
+		id: "optical-disc",
+		label: "Media",
+		iconName: "disc-3",
+		priority: 89,
+		extractValue: extractOpticalDiscFeature,
 	},
 	{
 		id: "zipper",
@@ -843,6 +981,34 @@ const productFeatureDefinitions: ProductFeatureDefinition[] = [
 		iconName: "lightbulb",
 		priority: 82,
 		extractValue: extractLumensFeature,
+	},
+	{
+		id: "diameter",
+		label: "Diameter",
+		iconName: "diameter",
+		priority: 82,
+		extractValue: extractDiameterFeature,
+	},
+	{
+		id: "focal-length",
+		label: "Focal length",
+		iconName: "aperture",
+		priority: 82,
+		extractValue: extractFocalLengthFeature,
+	},
+	{
+		id: "optical-zoom",
+		label: "Optical zoom",
+		iconName: "binoculars",
+		priority: 82,
+		extractValue: extractOpticalZoomFeature,
+	},
+	{
+		id: "reference-colors",
+		label: "Reference colors",
+		iconName: "swatch-book",
+		priority: 82,
+		extractValue: extractReferenceColorsFeature,
 	},
 	{
 		id: "optics",

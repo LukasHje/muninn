@@ -115,6 +115,8 @@ This keeps the Experience layer declarative while allowing each family to evolve
 
 Product-oriented card families should consume a dedicated Product Feature Extraction system rather than arbitrary frontmatter fields.
 
+Product Cards reserve the same two-line context-tag region even when a note has fewer tags. This keeps lifecycle status and the specification row aligned across a grid rather than allowing sparse metadata to collapse the card hierarchy.
+
 The Default Experience always has a viable fallback through `generic-note`. Registering an Experience does not require creating a new Card Family.
 
 ## Recipe Card Contract

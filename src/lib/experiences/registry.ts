@@ -80,6 +80,7 @@ const gearFeatureSections = [
 	"Highlights",
 	"Specifications",
 	"Technical highlights",
+	"Limitations",
 ];
 
 const defaultExperienceConfig = {
