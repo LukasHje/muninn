@@ -11,10 +11,10 @@ const mobileValues = values.slice(0, 4);
 const mobileOmittedCount = Math.max(values.length - mobileValues.length, 0);
 const tagClasses = variant === "dark"
 	? "border border-sky-200/30 bg-white/10 text-white/88 shadow-[0_6px_16px_rgba(15,23,42,0.12)] backdrop-blur-sm"
-	: "border border-amber-200/80 bg-amber-50 text-amber-700 shadow-[0_6px_16px_rgba(217,119,6,0.08)]";
+	: "border border-[#cbd9e2] bg-[#e8eef2] text-[#40566b] shadow-[0_6px_16px_rgba(15,23,42,0.05)]";
 const overflowClasses = variant === "dark"
 	? "border border-white/14 bg-white/8 text-white/72 backdrop-blur-sm"
-	: "border border-[#ece3d7] bg-[#fbf8f3] text-slate-400";
+	: "border border-[#cbd9e2] bg-[#e8eef2] text-[#40566b]";
 
 function overflowLabel(count: number) {
 	return `${ui.noteDetail.openMetadata}. ${ui.notesBrowser.additionalTags(count)}`;
