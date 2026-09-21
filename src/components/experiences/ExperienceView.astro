@@ -296,6 +296,7 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 	<aside
 		id="experience-inspector-panel"
 		class="experience-inspector-panel"
+		data-inspector-family={definition.cardFamily}
 		data-experience-inspector-root
 		aria-label={ui.applicationShell.inspectorLabel}
 		aria-hidden={initialInspectorNote ? "false" : "true"}
@@ -323,6 +324,7 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 </div>
 
 <script>
+	import "./InspectorGalleryClient";
 	function initExperienceViews() {
 	const roots = Array.from(document.querySelectorAll("[data-experience-root]"));
 
@@ -977,6 +979,16 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 		border: 0;
 		background: linear-gradient(180deg, #f6f1e8 0%, #f1ebe2 100%);
 		box-shadow: -10px 0 28px rgba(15, 23, 42, 0.05);
+	}
+
+	.experience-inspector-panel[data-inspector-family="vehicle"] {
+		--vehicle-preview-surface: #f8faf9;
+		background: var(--vehicle-preview-surface);
+	}
+
+	.experience-inspector-panel[data-inspector-family="vehicle"] .experience-inspector-shell {
+		background: var(--vehicle-preview-surface);
+		border-color: #d7e0da;
 	}
 
 	.experience-empty-state {

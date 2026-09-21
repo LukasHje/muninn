@@ -1,0 +1,36 @@
+---
+import Icon from "src/components/Icon.astro";
+interface Props { images: string[]; title: string; }
+const { images, title } = Astro.props;
+---
+<inspector-gallery role="region" aria-roledescription="carousel" aria-label={`${title} images`}>
+ <div class="gallery-frame">
+  {images.map((src, index) => <div data-gallery-slide hidden={index !== 0} role="group" aria-roledescription="slide" aria-label={`${index + 1} of ${images.length}`}>
+   <img src={src} alt={`${title} — image ${index + 1}`} loading="lazy" onerror="this.setAttribute('hidden', ''); this.nextElementSibling.removeAttribute('hidden')" />
+   <span class="gallery-error" hidden>Image unavailable</span>
+  </div>)}
+  <button class="gallery-arrow gallery-prev" type="button" data-gallery-step="-1" aria-label="Previous image"><Icon name="chevron-left" class="h-5 w-5" /></button>
+  <button class="gallery-arrow gallery-next" type="button" data-gallery-step="1" aria-label="Next image"><Icon name="chevron-right" class="h-5 w-5" /></button>
+ </div>
+ <div class="gallery-dots" aria-label="Choose image">
+  {images.map((_, index) => <button type="button" data-gallery-index={index} aria-label={`Show image ${index + 1} of ${images.length}`} aria-current={index === 0 ? "true" : "false"}><span></span></button>)}
+ </div>
+ <span class="sr-only" data-gallery-status aria-live="polite" aria-atomic="true">Image 1 of {images.length}</span>
+</inspector-gallery>
+<style>
+ inspector-gallery { display: block; position: relative; overflow: hidden; background: var(--vehicle-preview-surface, #f8faf9); color: #202d28; }
+ .gallery-frame { position: relative; width: 100%; aspect-ratio: 16/10; background: #e9efeb; }
+ [data-gallery-slide] { position: absolute; inset: 0; }
+ img { width: 100%; height: 100%; object-fit: cover; }
+ .gallery-error { position: absolute; inset: 0; display: grid; place-items: center; color: #52645b; font-size: .8rem; }
+ [hidden] { display: none !important; }
+ .gallery-arrow { position: absolute; top: calc(50% - 22px); width: 44px; height: 44px; display: grid; place-items: center; background: rgb(15 23 20 / 45%); color: #fff; border: 1px solid rgb(255 255 255 / 30%); border-radius: 50%; backdrop-filter: blur(6px); }
+ .gallery-prev { left: .65rem; }
+ .gallery-next { right: .65rem; }
+ .gallery-arrow:hover { background: rgb(15 23 20 / 65%); }
+ .gallery-dots { position: absolute; bottom: .5rem; left: 50%; transform: translateX(-50%); display: flex; align-items: center; width: max-content; max-width: calc(100% - 2rem); overflow-x: auto; padding: 0; }
+ .gallery-dots button { flex: 0 0 24px; width: 24px; height: 32px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 4px; background: transparent; }
+ .gallery-dots span { display: block; width: 8px; height: 8px; box-sizing: border-box; border-radius: 50%; border: 1px solid #fff; background: rgb(15 23 20 / 55%); box-shadow: 0 1px 3px rgb(0 0 0 / 70%); }
+ .gallery-dots [aria-current="true"] span { background: #fff; }
+ button:focus-visible { outline: 2px solid #fff; outline-offset: -4px; box-shadow: 0 0 0 2px #202d28; }
+</style>

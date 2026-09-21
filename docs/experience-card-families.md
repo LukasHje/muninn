@@ -148,12 +148,26 @@ The `vehicle` family uses a compact garage/archive hierarchy optimized for vehic
 - cover, thumbnail, note image, category-specific placeholder, or configured generic placeholder
 - manufacturer and model when available, otherwise the note title
 - generation, year, and body style as secondary context
-- title, variant, and status presented over a theme-aware image fade
+- title, variant, and status presented over a dark image fade, with the dark surface and warm light text retained regardless of system theme
 - up to four specs, prioritizing drivetrain, fuel, year, body style, and transmission
 - a compact updated timestamp below the spec divider
 - the shared favorite control
 
 It consumes normalized vehicle metadata from `src/lib/experiences/vehicles.ts`. Cards must omit absent values rather than invent defaults, and they must retain the shared `data-experience-card` selection contract so the generic browser can open the Vehicle inspector.
+
+### Vehicle preview
+
+Multiple resolved note images use a manual inspector gallery, with the primary image first, duplicate URLs removed, and non-image attachments excluded. Previous/next arrows, selectable position dots, and keyboard arrows control the gallery; it never advances automatically. Zero/one-image previews retain their artwork/fallback presentation without gallery controls. Gallery state is transient Application UI, never persisted to the vault. The client must initialize both server-rendered and lazily inserted inspectors. Catalogue cards are unaffected.
+
+The inspector frame and content share the same surface token, including empty space below short previews and safe-area padding. This styling is scoped to the vehicle inspector and must not change catalogue card colors or other inspector families.
+
+The gallery matches the single-image preview's fixed 16:10 frame and full-bleed `object-fit: cover` crop. Translucent arrows and position dots overlay the image; controls must not reserve an extra row or increase the artwork height.
+
+Vehicle preview category/default artwork uses that same edge-to-edge cover treatment without inset padding. Only a missing or broken asset reveals the centered category icon. This does not change placeholder treatment in catalogue cards or other families.
+
+The Vehicle inspector has a light neutral-and-sage presentation with dark text, independent of the catalogue card and shell theme. Text pairs must meet WCAG AA contrast (4.5:1 for normal text); controls and focus indicators remain clearly visible on the light surfaces. It shows existing artwork, vehicle identity and phase/status, a primary Open vehicle note action, relevant facts, authored summary, details, and contextual note excerpts. No external enrichment is required.
+
+The inspector's read-only adapter prioritizes frame, wheels, gearing, and brakes for bicycles. Other vehicles show drivetrain, fuel, transmission, and year when documented. Custom builds retain the note title. Explicit concept/prototype phases receive explanatory copy and planned specifications; missing metadata never implies a prototype. Missing or broken images reveal a category illustration/icon within a stable image frame. Existing shell selection, close, favorite, focus, and scrolling contracts remain in force.
 
 ## Generic Note Image Contract
 
