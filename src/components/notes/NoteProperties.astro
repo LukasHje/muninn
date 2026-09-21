@@ -56,20 +56,20 @@ const hasContent = metadata.length > 0 || aliases.length > 0 || note.normalized.
 
 {
 	hasContent && (
-		<section class="surface-card overflow-hidden rounded-[5px] border-[#ece4d7] bg-[linear-gradient(180deg,#fffdf9_0%,#fbf8f2_100%)] p-5 shadow-[0_12px_28px_rgba(15,23,42,0.04)] md:p-6">
-			<div class="space-y-5 md:space-y-6">
-				<h2 class="panel-title">{ui.noteDetail.properties}</h2>
+		<section class="note-properties">
+			<div class="space-y-6">
+				<h2 class="font-serif text-[1.4rem] font-semibold tracking-[-0.025em] text-[#1d2926]">{ui.noteDetail.properties}</h2>
 
 				{
 					metadata.length > 0 && (
-						<dl class="grid gap-3 sm:grid-cols-2">
+						<dl class="note-properties__list">
 							{
 								metadata.map((entry) => (
-									<div class="rounded-[5px] border border-[#efe6da] bg-white/72 p-4 shadow-[0_8px_18px_rgba(15,23,42,0.03)] backdrop-blur-sm">
-										<dt class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+									<div class="note-properties__row">
+										<dt class="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#7a8782]">
 											{entry.label}
 										</dt>
-										<dd class="mt-2 break-words text-sm font-medium leading-6 text-slate-700">
+										<dd class="mt-1.5 break-words text-sm font-medium leading-6 text-[#35433f]">
 											{entry.value}
 										</dd>
 									</div>
@@ -81,8 +81,8 @@ const hasContent = metadata.length > 0 || aliases.length > 0 || note.normalized.
 
 				{
 					aliases.length > 0 && (
-						<div class="space-y-3 border-t border-[#efe7dc] pt-5">
-							<p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+						<div class="space-y-3 border-t border-[#dfe5e2] pt-5">
+							<p class="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#7a8782]">
 								{ui.noteDetail.aliases}
 							</p>
 							<TagPills values={aliases} tone="sky" />
@@ -92,11 +92,11 @@ const hasContent = metadata.length > 0 || aliases.length > 0 || note.normalized.
 
 				{
 					note.normalized.tags.length > 0 && (
-						<div class="space-y-3 border-t border-[#efe7dc] pt-5">
-							<p class="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+						<div class="space-y-3 border-t border-[#dfe5e2] pt-5">
+							<p class="text-[10px] font-semibold uppercase tracking-[0.15em] text-[#7a8782]">
 								{ui.noteDetail.tags}
 							</p>
-							<TagPills values={note.normalized.tags.map((tag) => `#${tag}`)} tone="amber" />
+							<TagPills values={note.normalized.tags.map((tag) => `#${tag}`)} tone="slate" />
 						</div>
 					)
 				}
@@ -104,3 +104,50 @@ const hasContent = metadata.length > 0 || aliases.length > 0 || note.normalized.
 		</section>
 	)
 }
+
+<style>
+	.note-properties {
+		padding-block: 0.25rem 1.5rem;
+	}
+
+	.note-properties__list {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		border-block: 1px solid #dfe5e2;
+	}
+
+	.note-properties__row {
+		min-width: 0;
+		padding: 0.9rem 0;
+		border-bottom: 1px solid #e6eae8;
+	}
+
+	.note-properties__row:nth-child(odd) {
+		padding-right: 1rem;
+	}
+
+	.note-properties__row:nth-child(even) {
+		padding-left: 1rem;
+		border-left: 1px solid #e6eae8;
+	}
+
+	.note-properties__row:nth-last-child(-n + 2) {
+		border-bottom: 0;
+	}
+
+	@media (max-width: 390px) {
+		.note-properties__list {
+			grid-template-columns: minmax(0, 1fr);
+		}
+
+		.note-properties__row:nth-child(n) {
+			padding-inline: 0;
+			border-left: 0;
+			border-bottom: 1px solid #e6eae8;
+		}
+
+		.note-properties__row:last-child {
+			border-bottom: 0;
+		}
+	}
+</style>

@@ -123,6 +123,10 @@ The drawer, not an expandable hero region, is the complete tag destination.
 
 The normal note flow does not append the full image/properties panel after the Markdown content. The drawer is the single standard-reader presentation of that information.
 
+The drawer follows the standard reader's continuous, low-noise presentation. Its
+metadata is grouped with spacing and quiet dividers rather than nested property
+cards; image, properties, aliases, and tags must still remain visibly distinct.
+
 Where available, it reuses:
 
 - the note's centrally resolved display image

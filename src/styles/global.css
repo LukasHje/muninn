@@ -190,8 +190,8 @@
 		padding-right: env(safe-area-inset-right);
 		padding-bottom: env(safe-area-inset-bottom);
 		transform: translateX(102%);
-		background: linear-gradient(180deg, #f7f9fb 0%, #edf2f5 100%);
-		box-shadow: -16px 0 42px rgba(15, 23, 42, 0.14);
+		background: #f8f9f6;
+		box-shadow: -16px 0 42px rgba(30, 41, 45, 0.12);
 		transition: transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1), visibility 240ms;
 	}
 
@@ -201,7 +201,7 @@
 		min-height: 0;
 		flex-direction: column;
 		overflow: hidden;
-		border-left: 1px solid #d7e0e6;
+		border-left: 1px solid #dce3df;
 	}
 
 	.note-metadata-drawer__header {
@@ -210,9 +210,9 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 1rem;
-		border-bottom: 1px solid #dce4e9;
-		background: rgba(247, 249, 251, 0.94);
-		padding: 1rem;
+		border-bottom: 1px solid #dfe5e2;
+		background: rgba(248, 249, 246, 0.94);
+		padding: 1rem 1.25rem;
 		backdrop-filter: blur(16px);
 	}
 
@@ -221,11 +221,11 @@
 		flex: 1;
 		overflow-y: auto;
 		overscroll-behavior: contain;
-		padding: 1rem;
+		padding: 1.25rem;
 	}
 
 	.note-metadata-drawer__content > * + * {
-		margin-top: 1rem;
+		margin-top: 1.5rem;
 	}
 
 	.application-shell[data-overlay="sidebar"] .application-sidebar-drawer {
