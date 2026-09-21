@@ -111,6 +111,9 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 <div
 	class="flex h-full min-h-0 flex-col gap-3 md:gap-5 xl:gap-6"
 	data-library-browser
+	data-library-base-path={basePath}
+	data-library-empty-message={emptyMessage}
+	data-library-results-label={ui.notesBrowser.resultsSubtitle("__COUNT__")}
 >
 	<section
 		class="library-controls-panel surface-panel shrink-0 p-3 md:p-5"
@@ -309,7 +312,7 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 					{emptyMessage}
 				</div>
 			) : layout === "grid" ? (
-				<div class="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+				<div class="grid gap-4 md:grid-cols-2 2xl:grid-cols-3" data-library-results-list>
 					{
 						filteredItems.map((item) => (
 							<NoteCard
@@ -324,7 +327,7 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 					}
 				</div>
 			) : (
-				<div>
+				<div data-library-results-list>
 					{
 						filteredItems.map((item) => (
 							<NoteListRow
@@ -404,8 +407,54 @@ function buildLayoutHref(nextLayout: "list" | "grid") {
 		}
 	}
 
+	function initFavoriteResults() {
+		for (const root of document.querySelectorAll<HTMLElement>("[data-library-browser]")) {
+			if (root.dataset.libraryFavoriteResultsReady === "true") continue;
+			root.dataset.libraryFavoriteResultsReady = "true";
+
+			const handleFavoriteChange = (event: Event) => {
+				if (root.dataset.libraryBasePath !== "/favorites") return;
+				const detail = (event as CustomEvent).detail;
+				if (!detail || detail.isFavorite !== false || typeof detail.noteId !== "string") return;
+
+				const note = root.querySelector<HTMLElement>(
+					`[data-library-note-id="${CSS.escape(detail.noteId)}"]`
+				);
+				if (!note) return;
+				note.remove();
+
+				const remaining = root.querySelectorAll("[data-library-note-id]").length;
+				const subtitle = root.querySelector<HTMLElement>("[data-section-card-subtitle]");
+				const label = root.dataset.libraryResultsLabel ?? "__COUNT__ notes";
+				const formattedRemaining = new Intl.NumberFormat(document.documentElement.lang).format(remaining);
+				if (subtitle) subtitle.textContent = label.replace("__COUNT__", formattedRemaining);
+
+				if (remaining === 0) {
+					const list = root.querySelector<HTMLElement>("[data-library-results-list]");
+					if (list) {
+						const empty = document.createElement("div");
+						empty.className = "rounded-[16px] border border-dashed border-[#ced9e0] bg-[#f5f8fa] px-5 py-8 text-sm text-slate-600";
+						empty.textContent = root.dataset.libraryEmptyMessage ?? "No favorites yet.";
+						list.replaceWith(empty);
+					}
+				}
+			};
+
+			window.addEventListener("muninn:favorite-change", handleFavoriteChange);
+			document.addEventListener(
+				"astro:before-swap",
+				() => window.removeEventListener("muninn:favorite-change", handleFavoriteChange),
+				{ once: true }
+			);
+		}
+	}
+
 	initLibraryControls();
-	document.addEventListener("astro:page-load", initLibraryControls);
+	initFavoriteResults();
+	document.addEventListener("astro:page-load", () => {
+		initLibraryControls();
+		initFavoriteResults();
+	});
 </script>
 
 <style>

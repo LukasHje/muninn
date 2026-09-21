@@ -172,7 +172,7 @@ async function renderCodeBlock(language: string, code: string) {
 		<div class="code-block" data-code-language="${escapeAttribute(highlighted.language)}" data-code-highlighted="${highlighted.highlighted}">
 			<div class="code-block__toolbar">
 				<span class="code-block__language">${escapeHtml(highlighted.language)}</span>
-				<button type="button" class="code-copy-button" data-copy-code data-motion-positive data-copy-value="${escapeAttribute(code)}" aria-label="${escapeAttribute(ui.common.copy)}" title="${escapeAttribute(ui.common.copy)}">${renderCopyIcon()}</button>
+				<button type="button" class="code-copy-button" data-copy-code data-motion-positive data-copy-value="${escapeAttribute(code)}" data-copy-label="${escapeAttribute(ui.common.copy)}" data-copied-label="${escapeAttribute(ui.common.copied)}" data-copy-failed-label="${escapeAttribute(ui.common.copyFailed)}" aria-label="${escapeAttribute(ui.common.copy)}" title="${escapeAttribute(ui.common.copy)}">${renderCopyIcon()}</button>
 			</div>
 			<pre class="code-block__pre"><code class="language-${escapeAttribute(highlighted.language)}">${highlighted.html}</code></pre>
 		</div>
@@ -358,47 +358,6 @@ function renderMarkdownHtml(raw: string) {
 			initPdfViewers();
 		});
 	</script>
-
-<script
-	is:inline
-	define:vars={{
-		copyLabel: ui.common.copy,
-		copiedLabel: ui.common.copied,
-		copyFailedLabel: ui.common.copyFailed,
-	}}
->
-	if (!window.__muninnCodeCopyBound) {
-		window.__muninnCodeCopyBound = true;
-		document.addEventListener("click", async (event) => {
-			const target = event.target;
-			if (!(target instanceof Element)) return;
-			const button = target.closest("[data-copy-code]");
-			if (!(button instanceof HTMLButtonElement)) return;
-			const code = button.getAttribute("data-copy-value") ?? "";
-			try {
-				await navigator.clipboard.writeText(code);
-				button.dataset.copyState = "copied";
-				button.dispatchEvent(new CustomEvent("muninn:motion-positive", { bubbles: true }));
-				button.setAttribute("aria-label", copiedLabel);
-				button.title = copiedLabel;
-				window.setTimeout(() => {
-					delete button.dataset.copyState;
-					button.setAttribute("aria-label", copyLabel);
-					button.title = copyLabel;
-				}, 1200);
-			} catch {
-				button.dataset.copyState = "failed";
-				button.setAttribute("aria-label", copyFailedLabel);
-				button.title = copyFailedLabel;
-				window.setTimeout(() => {
-					delete button.dataset.copyState;
-					button.setAttribute("aria-label", copyLabel);
-					button.title = copyLabel;
-				}, 1200);
-			}
-		});
-	}
-</script>
 
 <script is:inline>
 	if (!window.__muninnSmoothHashLinksBound) {

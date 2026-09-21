@@ -108,6 +108,11 @@ Examples:
 
 Renderer/UI consumes the already-understood document and decides how it should look.
 
+Code-copy interaction is delegated to the persistent `CodeCopyClient` mounted by
+the application layout. Renderers provide the copy value, localized labels, and
+shared MotionBurst markup; they must not install page-local clipboard listeners
+that can be lost during Astro client navigation.
+
 Fenced code language labels are passed through Core unchanged. `NoteContent` delegates presentation-only syntax highlighting to `src/lib/codeHighlight.ts`; highlighting must not introduce parsing rules or make an unsupported language fail rendering.
 
 Renderer/UI must never:

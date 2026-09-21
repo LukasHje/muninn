@@ -119,14 +119,17 @@ const navigation = getSidebarNavigation().map((item) => {
 
 		<script>
 			import initApplicationShell from "src/components/ApplicationShellClient.ts";
+			import initCodeCopyClient from "src/components/CodeCopyClient.ts";
 			import initFavoriteToggleClient from "src/components/FavoriteToggleClient.ts";
 			import initMotionBurstSystem from "src/components/MotionBurstClient.ts";
 
 			initApplicationShell();
+			initCodeCopyClient();
 			initFavoriteToggleClient();
 			initMotionBurstSystem();
 			document.addEventListener("astro:page-load", () => {
 				initApplicationShell();
+				initCodeCopyClient();
 				initFavoriteToggleClient();
 				initMotionBurstSystem();
 			});
