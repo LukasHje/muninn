@@ -11,9 +11,5 @@ const { note } = Astro.props;
 ---
 
 <NoteShell note={note} heroStyle="none">
-	<div class="mx-auto max-w-[880px]">
-		<section class="surface-panel overflow-hidden px-5 py-7 md:px-10 md:py-10">
-			<NoteContent note={note} />
-		</section>
-	</div>
+	<NoteContent note={note} suppressMatchingTitle />
 </NoteShell>

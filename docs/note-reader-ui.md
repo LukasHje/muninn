@@ -32,6 +32,17 @@ Responsibilities:
 
 The note reader must not create a second modal controller, viewport system, body scroll lock, or focus trap.
 
+The standard reader is one continuous reading sheet. Navigation, note identity,
+summary, tags, and rendered Markdown share the same surface and reading axis;
+the shell must not render a separate full-width hero card above a second content
+card. The content column remains deliberately narrower than the sheet to preserve
+comfortable line length.
+
+When a rendered H1 has visible text that exactly matches the canonical note title,
+standard layouts may suppress that heading because the shell already presents the
+title. This is a presentation-only option in `NoteContent`; parsing and source
+Markdown remain unchanged. Non-matching H1 headings must remain visible.
+
 ## Metadata Source of Truth
 
 All reader metadata comes from the existing `LibraryItem` and its normalized note data. The reader must not parse frontmatter again or maintain a reduced metadata copy.
