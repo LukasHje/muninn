@@ -106,4 +106,7 @@ const notesPreview = notes
  .recipe-inspector :is(button, a):focus-visible { outline: 2px solid #52653c; outline-offset: 3px; }
  .recipe-inspector__toolbar :global(.favorite-toggle-form[data-favorite-variant="chromeless"] .favorite-toggle-button) { color: #576052; }
  .recipe-inspector__toolbar :global(.favorite-toggle-form[data-favorite-variant="chromeless"][data-favorite-state="true"] .favorite-toggle-button) { color: #795409; }
+ @media (max-width: 1279px) {
+  .recipe-inspector__toolbar { position: sticky; top: 0; z-index: 30; border-bottom: 1px solid #d9dfd2; background: var(--recipe-preview-surface, #fafaf8); }
+ }
 </style>

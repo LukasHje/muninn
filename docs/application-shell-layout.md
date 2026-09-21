@@ -211,6 +211,7 @@ Below `xl`, the same inspector content is presented by the shell as a full-scree
 
 - it fills `100dvh` and respects every safe-area inset
 - its content is the overlay's only vertical scroll owner
+- a domain inspector's contextual toolbar remains sticky at the top of that scroll owner so its close and favorite actions stay available throughout the preview
 - it has a visible close action; Escape is an additional mechanism
 - background content is inert and cannot be scrolled or focused
 - focus moves into the inspector, is trapped there, and returns to the selected card on close

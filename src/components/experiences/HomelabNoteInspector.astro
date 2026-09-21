@@ -1,18 +1,31 @@
 ---
 import FavoriteToggleButton from "src/components/FavoriteToggleButton.astro";
 import Icon from "src/components/Icon.astro";
-import InspectorHeader from "src/components/experiences/InspectorHeader.astro";
-import MetadataRow from "src/components/experiences/MetadataRow.astro";
 import type { InspectorSection } from "src/lib/experiences/inspector";
-import { buildHomelabRelations, getHomelabArtworkCategory, getHomelabCardPresentation, getHomelabClassification, getHomelabInspectorMetadataEntries, getHomelabServiceCategory } from "src/lib/experiences/homelab";
+import {
+	buildHomelabRelations,
+	getHomelabArtworkCategory,
+	getHomelabCardPresentation,
+	getHomelabClassification,
+	getHomelabInspectorMetadataEntries,
+	getHomelabInspectorPurpose,
+	getHomelabServiceCategory,
+} from "src/lib/experiences/homelab";
 import type { ExperienceDefinition } from "src/lib/experiences/registry";
 import { getNoteSummary, resolveExperienceCategoryArtwork } from "src/lib/experiences/selectors";
 import type { LibraryItem } from "src/lib/vault";
 
-interface Props { definition: ExperienceDefinition; note: LibraryItem; sections: InspectorSection[]; noteHref: string; redirectTo: string; experienceNotes?: LibraryItem[] }
+interface Props {
+	definition: ExperienceDefinition;
+	note: LibraryItem;
+	sections: InspectorSection[];
+	noteHref: string;
+	redirectTo: string;
+	experienceNotes?: LibraryItem[];
+}
+
 const { definition, note, noteHref, redirectTo, experienceNotes = [] } = Astro.props;
 const card = getHomelabCardPresentation(note);
-const metadataEntries = getHomelabInspectorMetadataEntries(note, definition.inspectorMetadata);
 const classification = getHomelabClassification(note);
 const serviceCategory = classification.entity === "service" ? getHomelabServiceCategory(note) : null;
 const imageUrl = resolveExperienceCategoryArtwork(
@@ -20,31 +33,143 @@ const imageUrl = resolveExperienceCategoryArtwork(
 	getHomelabArtworkCategory(note),
 	serviceCategory ? "service-other" : null
 );
-const summary = getNoteSummary(note);
+const purpose = getHomelabInspectorPurpose(note);
+const summary = purpose.length === 0 ? getNoteSummary(note) : null;
 const relations = buildHomelabRelations(note, experienceNotes);
+const factLabels = new Set(card.facts.map((fact) => fact.label.toLocaleLowerCase("en")));
+const metadataEntries = getHomelabInspectorMetadataEntries(note, definition.inspectorMetadata)
+	.filter((entry) => entry.key !== "status" && !factLabels.has(entry.label.toLocaleLowerCase("en")));
+const humanize = (value: string) => value
+	.replace(/[-_]+/g, " ")
+	.replace(/\b\w/g, (letter) => letter.toUpperCase());
 ---
 
-<div class="homelab-inspector px-5 pb-8 md:px-6">
-	<InspectorHeader title={card.title}>
-		<Fragment slot="leading"><button type="button" data-experience-close class="homelab-inspector__action" aria-label="Close inspector" title="Close inspector"><Icon name="arrow-left" class="h-6 w-6" /></button></Fragment>
-		<Fragment slot="actions"><div class="flex items-center gap-2"><div data-experience-inspector-favorite><FavoriteToggleButton noteId={note.id} isFavorite={Boolean(note.favorite)} redirectTo={redirectTo} size="md" variant="chromeless" /></div><a href={noteHref} data-experience-open-note data-note-href={noteHref} class="homelab-inspector__action" aria-label="Open full note" title="Open full note"><Icon name="square-arrow-up-right" class="h-6 w-6" /></a></div></Fragment>
-	</InspectorHeader>
-	<div class="mt-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-[.14em] text-sky-700"><Icon name={card.icon} class="h-4 w-4" /><span>{card.kind}</span></div>
+<div class="homelab-inspector">
+	<div class="homelab-inspector__toolbar">
+		<button type="button" data-experience-close aria-label="Close inspector">
+			<Icon name="arrow-left" class="h-5 w-5" />
+		</button>
+		<span>THE LAB / {humanize(classification.entity)}</span>
+		<div data-experience-inspector-favorite>
+			<FavoriteToggleButton
+				noteId={note.id}
+				isFavorite={Boolean(note.favorite)}
+				redirectTo={redirectTo}
+				size="md"
+				variant="chromeless"
+			/>
+		</div>
+	</div>
+
+	<div class="homelab-inspector__artwork">
+		{imageUrl
+			? <img src={imageUrl} alt="" loading="lazy" />
+			: <Icon name={card.icon} class="h-16 w-16" />}
+	</div>
 
 	<div class="homelab-inspector__content">
-		<div class="homelab-inspector__artwork">{imageUrl ? <img src={imageUrl} alt="" loading="lazy" /> : <Icon name={card.icon} class="h-16 w-16 text-sky-700/45" />}</div>
-		{metadataEntries.length > 0 && <div class="homelab-inspector__metadata"><dl class="divide-y divide-slate-200 px-4 py-2">{metadataEntries.map((entry) => <MetadataRow metadataKey={entry.key} icon={entry.icon} label={entry.label} value={entry.value} />)}</dl></div>}
+		<header>
+			<div class="homelab-inspector__eyebrow">
+				<span>{humanize(card.kind)}</span>
+				{card.status && <span class="homelab-inspector__status"><i aria-hidden="true"></i>{humanize(card.status)}</span>}
+			</div>
+			<h1>{card.title}</h1>
+			{card.subtitle && <p class="homelab-inspector__subtitle">{card.subtitle}</p>}
+			<a href={noteHref} data-experience-open-note data-note-href={noteHref} class="homelab-inspector__open">
+				Open homelab note
+				<Icon name="square-arrow-up-right" class="h-4 w-4" />
+			</a>
+		</header>
+
+		{purpose.length > 0 && <section class="homelab-inspector__section">
+			<h2>Purpose</h2>
+			{purpose.length === 1
+				? <p class="homelab-inspector__summary">{purpose[0]}</p>
+				: <ul class="homelab-inspector__purpose">{purpose.map((item) => <li>{item}</li>)}</ul>}
+		</section>}
+
+		{summary && <section class="homelab-inspector__section">
+			<h2>Overview</h2>
+			<p class="homelab-inspector__summary">{summary}</p>
+		</section>}
+
+		{card.facts.length > 0 && <section class="homelab-inspector__section">
+			<h2>At a glance</h2>
+			<dl class="homelab-inspector__facts">
+				{card.facts.map((fact) => <div>
+					<dt><Icon name={fact.icon} class="h-4 w-4" />{fact.label}</dt>
+					<dd>{fact.value}</dd>
+				</div>)}
+			</dl>
+		</section>}
+
+		{metadataEntries.length > 0 && <section class="homelab-inspector__section">
+			<h2>Technical details</h2>
+			<dl class="homelab-inspector__details">
+				{metadataEntries.map((entry) => <div>
+					<dt>{entry.label}</dt>
+					<dd>{entry.value}</dd>
+				</div>)}
+			</dl>
+		</section>}
+
+		{relations.length > 0 && <section class="homelab-inspector__section">
+			<h2>Connected notes</h2>
+			<div class="homelab-inspector__relations">
+				{relations.map((group) => <div>
+					<h3>{group.label}</h3>
+					{group.items.map((item) => <a href={item.href} data-experience-open-note data-note-href={item.href}>
+						<span>{item.title}</span>
+						<small>{humanize(item.kind)}</small>
+						<Icon name="chevron-right" class="h-3.5 w-3.5" />
+					</a>)}
+				</div>)}
+			</div>
+		</section>}
+
+		<footer><span>From your vault</span><span>Updated {note.updatedLabel.toLowerCase()}</span></footer>
 	</div>
-	<div class="my-6 border-t border-slate-300" aria-hidden="true"></div>
-	{summary && <p class="text-sm leading-8 text-slate-700">{summary}</p>}
-	{relations.length > 0 && <div class="homelab-relations">{relations.map((group) => <section><h3>{group.label}</h3><div>{group.items.map((item) => <a href={item.href} data-experience-open-note data-note-href={item.href}><span>{item.title}</span><small>{item.kind}</small><Icon name="chevron-right" class="h-3.5 w-3.5" /></a>)}</div></section>)}</div>}
 </div>
 
 <style>
-	.homelab-inspector__action{display:inline-flex;height:3rem;width:3rem;align-items:center;justify-content:center;color:#475569;transition:color 180ms ease}.homelab-inspector__action:hover{color:#0369a1}
-	.homelab-inspector__content{display:grid;gap:.85rem;padding-top:1rem}
-	.homelab-inspector__artwork{display:flex;width:100%;aspect-ratio:16/7;max-height:15rem;align-items:center;justify-content:center;overflow:hidden;border:1px solid #cbd5e1;border-radius:10px;background:#101b26}
-	.homelab-inspector__artwork img{width:100%;height:100%;object-fit:cover}
-	.homelab-inspector__metadata{width:100%;overflow:hidden;border:1px solid #cbd5e1;border-radius:10px;background:rgba(255,255,255,.65)}
-	.homelab-relations{display:grid;gap:.75rem;margin-top:1.25rem}.homelab-relations section{overflow:hidden;border:1px solid #cbd5e1;border-radius:10px;background:rgba(255,255,255,.58)}.homelab-relations h3{padding:.65rem .8rem;border-bottom:1px solid #e2e8f0;font-size:10px;font-weight:750;text-transform:uppercase;letter-spacing:.12em;color:#0369a1}.homelab-relations section>div{display:grid}.homelab-relations a{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:.55rem;padding:.62rem .8rem;border-top:1px solid #e2e8f0;color:#334155;transition:background 160ms,color 160ms}.homelab-relations a:first-child{border-top:0}.homelab-relations a:hover{background:rgba(14,165,233,.08);color:#0369a1}.homelab-relations a span{overflow:hidden;font-size:12px;font-weight:650;text-overflow:ellipsis;white-space:nowrap}.homelab-relations a small{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8}
+	.homelab-inspector { min-height: 100%; background: var(--homelab-preview-surface, #f7f9fa); color: #17232d; }
+	.homelab-inspector__toolbar { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .55rem .8rem; color: #526575; }
+	.homelab-inspector__toolbar > span { font-size: .6rem; letter-spacing: .15em; text-transform: uppercase; }
+	.homelab-inspector__toolbar > button { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 6px; }
+	.homelab-inspector__toolbar > button:hover { background: #e5edf1; color: #17232d; }
+	.homelab-inspector__artwork { display: grid; width: 100%; aspect-ratio: 16/8; max-height: 17rem; place-items: center; overflow: hidden; background: #101b26; color: #8aa4b5; }
+	.homelab-inspector__artwork img { width: 100%; height: 100%; object-fit: cover; }
+	.homelab-inspector__content { padding: 1.5rem clamp(1rem, 4vw, 1.75rem) 2rem; }
+	.homelab-inspector__eyebrow { display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: .63rem; letter-spacing: .14em; text-transform: uppercase; color: #526575; }
+	.homelab-inspector__status { display: inline-flex; flex-shrink: 0; align-items: center; gap: .4rem; color: #3e6253; letter-spacing: .08em; }
+	.homelab-inspector__status i { width: .38rem; height: .38rem; border-radius: 999px; background: currentColor; }
+	h1 { margin-top: .75rem; font-family: Georgia, serif; font-size: clamp(1.8rem, 4vw, 2.35rem); line-height: 1.1; letter-spacing: -.03em; overflow-wrap: anywhere; }
+	.homelab-inspector__subtitle { margin-top: .7rem; font-size: .8rem; line-height: 1.65; color: #526575; }
+	.homelab-inspector__open { display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: .75rem; margin-top: 1.35rem; padding: .7rem .9rem; border-radius: 6px; background: #dfeaf0; color: #1c455c; font-size: .78rem; font-weight: 650; }
+	.homelab-inspector__open:hover { background: #d2e2ea; }
+	.homelab-inspector__section { margin-top: 1.65rem; padding-top: 1.35rem; border-top: 1px solid #d5e0e5; }
+	h2 { margin-bottom: 1rem; font-size: .7rem; font-weight: 700; letter-spacing: .11em; text-transform: uppercase; color: #34576b; }
+	.homelab-inspector__summary { font-size: .85rem; line-height: 1.8; color: #455966; }
+	.homelab-inspector__purpose { display: grid; gap: .6rem; padding-left: 1.05rem; list-style: disc; font-size: .83rem; line-height: 1.65; color: #455966; }
+	.homelab-inspector__facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1.4rem; row-gap: 1.2rem; }
+	.homelab-inspector__facts dt { display: flex; align-items: center; gap: .45rem; font-size: .68rem; color: #607482; }
+	.homelab-inspector__facts dt :global(svg) { color: #4f7489; }
+	.homelab-inspector__facts dd { margin-top: .35rem; font-size: .94rem; font-weight: 600; line-height: 1.45; overflow-wrap: anywhere; }
+	.homelab-inspector__details > div { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.45fr); gap: 1rem; padding: .62rem 0; border-bottom: 1px solid #e0e7ea; }
+	.homelab-inspector__details > div:last-child { border-bottom: 0; }
+	.homelab-inspector__details dt { font-size: .72rem; color: #607482; }
+	.homelab-inspector__details dd { font-size: .76rem; line-height: 1.55; color: #344b59; overflow-wrap: anywhere; }
+	.homelab-inspector__relations { display: grid; gap: 1.15rem; }
+	.homelab-inspector__relations h3 { margin-bottom: .35rem; font-size: .62rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #607482; }
+	.homelab-inspector__relations a { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: .55rem; min-height: 42px; border-bottom: 1px solid #e0e7ea; color: #2f4654; }
+	.homelab-inspector__relations a:hover { color: #075985; }
+	.homelab-inspector__relations a span { overflow: hidden; font-size: .76rem; font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+	.homelab-inspector__relations a small { font-size: .58rem; letter-spacing: .07em; text-transform: uppercase; color: #758894; }
+	footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #d5e0e5; font-size: .65rem; color: #607482; }
+	.homelab-inspector :is(button, a):focus-visible { outline: 2px solid #286b8a; outline-offset: 3px; }
+	.homelab-inspector__toolbar :global(.favorite-toggle-form[data-favorite-variant="chromeless"] .favorite-toggle-button) { color: #526575; }
+	.homelab-inspector__toolbar :global(.favorite-toggle-form[data-favorite-variant="chromeless"][data-favorite-state="true"] .favorite-toggle-button) { color: #8a6414; }
+	@media (max-width: 1279px) {
+		.homelab-inspector__toolbar { position: sticky; top: 0; z-index: 30; border-bottom: 1px solid #d5e0e5; background: var(--homelab-preview-surface, #f7f9fa); }
+	}
 </style>

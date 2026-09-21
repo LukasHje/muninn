@@ -1001,6 +1001,20 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 		border-color: #d9dfd2;
 	}
 
+	.experience-inspector-panel[data-inspector-family="homelab"] {
+		--homelab-preview-surface: #f7f9fa;
+		background: var(--homelab-preview-surface);
+	}
+
+	.experience-inspector-panel[data-inspector-family="homelab"] .experience-inspector-shell {
+		background: var(--homelab-preview-surface);
+		border-color: #d5e0e5;
+	}
+
+	.experience-inspector-panel[data-inspector-family="homelab"] [data-experience-inspector-panels] {
+		background: var(--homelab-preview-surface);
+	}
+
 	.experience-empty-state {
 		border: 1px solid #e6ddd1;
 		border-radius: 1.5rem;

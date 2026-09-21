@@ -80,4 +80,7 @@ const previewSections = sections.filter(section => ["specs", "specifications", "
  .vehicle-inspector__toolbar :global(.favorite-toggle-form[data-favorite-variant="chromeless"] .favorite-toggle-button) { color: #52645b; }
  .vehicle-inspector__toolbar :global(.favorite-toggle-form[data-favorite-variant="chromeless"][data-favorite-state="true"] .favorite-toggle-button) { color: #946000; }
  .vehicle-inspector__toolbar :global(.favorite-toggle-form[data-favorite-variant="chromeless"] .favorite-toggle-button:hover) { color: #29432c; }
+ @media (max-width: 1279px) {
+  .vehicle-inspector__toolbar { position: sticky; top: 0; z-index: 30; border-bottom: 1px solid #d7e0da; background: var(--vehicle-preview-surface, #f8faf9); }
+ }
 </style>
