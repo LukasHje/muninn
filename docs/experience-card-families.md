@@ -117,6 +117,12 @@ Product-oriented card families should consume a dedicated Product Feature Extrac
 
 Product Cards reserve the same two-line context-tag region even when a note has fewer tags. This keeps lifecycle status and the specification row aligned across a grid rather than allowing sparse metadata to collapse the card hierarchy.
 
+When the desktop Gear inspector reduces the catalogue width, Product Cards switch to an inspector-open compact grid hierarchy: a single truncated title shares the top row with the favorite action, the product image remains centered, and the specification row retains icons while hiding its value labels. Context tags and lifecycle badges are omitted only in this compact grid state. Closed-inspector cards and list layout retain the full Product Card hierarchy.
+
+Product Card list layout is a fixed-height horizontal row rather than an enlarged grid card. Artwork occupies a compact left column, identity and context occupy the flexible center, and extracted comparison specifications align in a bounded right column. Narrow list rows progressively hide specification values and context tags while retaining their icons, title, lifecycle status, favorite action, and stable row height.
+
+The Gear inspector uses one continuous warm-neutral preview surface shared by the outer panel, scroll owner, artwork, and editorial content. It presents the existing vault image, identity and status, extracted comparison facts, authored use case, key features, limitations, metadata, and notes without placing each group in a separate card. The mobile toolbar remains sticky so close and favorite actions remain available while scrolling.
+
 The Default Experience always has a viable fallback through `generic-note`. Registering an Experience does not require creating a new Card Family.
 
 ## Recipe Card Contract

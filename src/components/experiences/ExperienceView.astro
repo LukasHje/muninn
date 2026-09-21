@@ -4,6 +4,7 @@ import DefaultExperienceHero from "src/components/experiences/DefaultExperienceH
 import ExperienceCardRenderer from "src/components/experiences/ExperienceCardRenderer.astro";
 import ExperienceInspectorRenderer from "src/components/experiences/ExperienceInspectorRenderer.astro";
 import ExperienceBrowserControls from "src/components/experiences/ExperienceBrowserControls.astro";
+import ExperienceFilterMenu from "src/components/experiences/ExperienceFilterMenu.astro";
 import Icon from "src/components/Icon.astro";
 import { ui } from "src/i18n";
 import type { ExperienceDefinition } from "src/lib/experiences/registry";
@@ -93,6 +94,10 @@ const initialInspector = initialInspectorNote
 		)
 	: null;
 const [primaryFilterKey, secondaryFilterKey] = definition.showMetadataFilters === false ? [] : definition.metadataFilters;
+const secondaryFilterControl = secondaryFilterKey
+	? definition.metadataFilterControls?.[secondaryFilterKey]
+	: undefined;
+const hasFilterMenu = secondaryFilterControl?.presentation === "dropdown";
 const discoveryContentId = `experience-discovery-${definition.id}`;
 ---
 
@@ -154,7 +159,7 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 			>
 				<section class="experience-hero-shell">
 					<HeroComponent definition={definition} statistics={statistics} notes={notes}>
-						<div class="experience-filter-row">
+						<div class="experience-filter-row" data-has-filter-menu={hasFilterMenu ? "true" : "false"}>
 					{
 						primaryFilterKey && (
 							<div class="experience-primary-filter-viewport">
@@ -186,29 +191,39 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 
 					{
 						secondaryFilterKey && (
-							<div class="experience-filter-scroller">
-								<div class="experience-filter-viewport" data-experience-filter-viewport>
-									<div class="experience-filter-track">
-										<MetadataPill
-											label="All"
-											href={buildFilterHref(secondaryFilterKey, null)}
-											active={!filterState.metadata[secondaryFilterKey]}
-											tone="slate"
-											shape="squircle"
-											className="whitespace-nowrap"
-										/>
-										{(metadataOptions[secondaryFilterKey] ?? []).map((option) => (
+							<div class:list={["experience-filter-scroller", hasFilterMenu && "experience-filter-scroller--menu"]}>
+								{hasFilterMenu ? (
+									<ExperienceFilterMenu
+										filterKey={secondaryFilterKey}
+										label={secondaryFilterControl?.label ?? "Filter"}
+										allLabel={secondaryFilterControl?.allLabel ?? "All"}
+										options={metadataOptions[secondaryFilterKey] ?? []}
+										activeValue={filterState.metadata[secondaryFilterKey]}
+									/>
+								) : (
+									<div class="experience-filter-viewport" data-experience-filter-viewport>
+										<div class="experience-filter-track">
 											<MetadataPill
-												label={option.label}
-												href={buildFilterHref(secondaryFilterKey, option.value)}
-												active={filterState.metadata[secondaryFilterKey] === option.value}
+												label="All"
+												href={buildFilterHref(secondaryFilterKey, null)}
+												active={!filterState.metadata[secondaryFilterKey]}
 												tone="slate"
 												shape="squircle"
 												className="whitespace-nowrap"
 											/>
-										))}
+											{(metadataOptions[secondaryFilterKey] ?? []).map((option) => (
+												<MetadataPill
+													label={option.label}
+													href={buildFilterHref(secondaryFilterKey, option.value)}
+													active={filterState.metadata[secondaryFilterKey] === option.value}
+													tone="slate"
+													shape="squircle"
+													className="whitespace-nowrap"
+												/>
+											))}
+										</div>
 									</div>
-								</div>
+								)}
 							</div>
 						)
 					}
@@ -843,12 +858,18 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 		gap: 0.85rem;
 	}
 
+	.experience-discovery {
+		z-index: 30;
+	}
+
 	.experience-discovery-collapse,
 	.experience-discovery-compact {
 		display: none;
 	}
 
 	.experience-filter-row {
+		position: relative;
+		z-index: 40;
 		display: flex;
 		align-items: center;
 		gap: 0.85rem;
@@ -891,6 +912,11 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 		max-width: min(44rem, 52vw);
 		flex: 1;
 		align-items: center;
+	}
+
+	.experience-filter-scroller--menu {
+		max-width: none;
+		flex: 0 0 auto;
 	}
 
 	.experience-filter-viewport {
@@ -981,6 +1007,17 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 		box-shadow: -10px 0 28px rgba(15, 23, 42, 0.05);
 	}
 
+	.experience-inspector-panel[data-inspector-family="product"] {
+		--gear-preview-surface: #faf8f4;
+		background: var(--gear-preview-surface);
+	}
+
+	.experience-inspector-panel[data-inspector-family="product"] .experience-inspector-shell,
+	.experience-inspector-panel[data-inspector-family="product"] [data-experience-inspector-panels] {
+		background: var(--gear-preview-surface);
+		border-color: #ddd8cf;
+	}
+
 	.experience-inspector-panel[data-inspector-family="vehicle"] {
 		--vehicle-preview-surface: #f8faf9;
 		background: var(--vehicle-preview-surface);
@@ -1039,6 +1076,10 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 			transition:
 				min-height 360ms cubic-bezier(0.2, 0.8, 0.2, 1),
 				box-shadow 280ms ease;
+		}
+
+		.experience-discovery:has(.experience-filter-menu[open]) {
+			overflow: visible;
 		}
 
 		.experience-discovery-collapse {
@@ -1180,6 +1221,34 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 
 		.experience-filter-row::-webkit-scrollbar {
 			display: none;
+		}
+
+		.experience-filter-row[data-has-filter-menu="true"] {
+			flex-wrap: wrap;
+			overflow: visible;
+			padding-bottom: 0;
+		}
+
+		.experience-filter-row[data-has-filter-menu="true"] .experience-primary-filter-viewport {
+			width: 100%;
+			overflow: visible;
+		}
+
+		.experience-filter-row[data-has-filter-menu="true"] .experience-primary-filter-track {
+			display: grid;
+			width: 100%;
+			grid-template-columns: repeat(auto-fit, minmax(4.4rem, 1fr));
+		}
+
+		.experience-filter-row[data-has-filter-menu="true"] .experience-filter-scroller {
+			width: 100%;
+			flex: 0 0 100%;
+		}
+
+		.experience-filter-row[data-has-filter-menu="true"] .experience-sort-group {
+			width: 100%;
+			justify-content: space-between;
+			margin-left: 0;
 		}
 
 		.experience-filter-divider {

@@ -9,7 +9,7 @@ interface Props {
 const { items } = Astro.props;
 ---
 
-<div class="flex h-18 overflow-hidden bg-transparent">
+<div class="product-specification-row flex h-18 overflow-hidden bg-transparent">
 	{
 		items.length > 0
 			? items.map((item, index) => (
@@ -28,7 +28,7 @@ const { items } = Astro.props;
 						<div class="flex h-8 w-8 shrink-0 items-center justify-center text-slate-500">
 							<Icon name={item.iconName} class="h-6 w-6" />
 						</div>
-						<p class="truncate text-[13px] font-semibold text-slate-700">{item.value}</p>
+						<p class="product-specification-row__value truncate text-[13px] font-semibold text-slate-700">{item.value}</p>
 					</div>
 				))
 			: Array.from({ length: 4 }).map((_, index) => (

@@ -51,13 +51,16 @@ const isPlaceholderImage = isPlaceholderExperienceImage(imageUrl, definition);
 	</div>
 	<button
 		type="button"
-		class="block w-full text-left"
+		class="flex h-full w-full flex-col text-left"
 		data-experience-card={note.id}
 		aria-controls="experience-inspector-panel"
 		aria-label={`Inspect ${note.title}`}
 		aria-pressed={selected ? "true" : "false"}
 	>
-		<div class="experience-note-card__top grid grid-cols-[34%_minmax(0,1fr)] items-stretch gap-4 p-4.5">
+		<h2 class="experience-note-card__compact-title" title={note.title}>
+			{note.title}
+		</h2>
+		<div class="experience-note-card__top grid flex-1 grid-cols-[34%_minmax(0,1fr)] items-stretch gap-4 p-4.5">
 			<div
 				class="experience-note-card__image-column relative flex mt-8 self-stretch items-start justify-center overflow-visible bg-transparent"
 			>
@@ -86,8 +89,8 @@ const isPlaceholderImage = isPlaceholderExperienceImage(imageUrl, definition);
 					decoding="async"
 				/>}
 			</div>
-			<div class="min-w-0 flex flex-col pt-8">
-				<h2 class="truncate pr-14 text-[1.2rem] font-semibold leading-[1.02] tracking-[-0.06em] text-slate-900">
+			<div class="experience-note-card__details min-w-0 flex flex-col pt-8">
+				<h2 class="experience-note-card__title truncate pr-14 text-[1.2rem] font-semibold leading-[1.02] tracking-[-0.06em] text-slate-900">
 					{note.title}
 				</h2>
 
@@ -161,6 +164,10 @@ const isPlaceholderImage = isPlaceholderExperienceImage(imageUrl, definition);
 		background: transparent;
 	}
 
+	.experience-note-card__compact-title {
+		display: none;
+	}
+
 	.experience-note-card__image {
 		left: 50%;
 		top: -2.25rem;
@@ -170,6 +177,137 @@ const isPlaceholderImage = isPlaceholderExperienceImage(imageUrl, definition);
 		box-shadow: none;
 		mix-blend-mode: normal;
 		transform: translateX(-50%);
+	}
+
+	:global(.experience-page[data-experience-card-family="product"][data-inspector-open="true"] .experience-browser-grid[data-experience-layout="grid"]) .experience-note-card__compact-title {
+		display: block;
+		overflow: hidden;
+		padding: 1rem 3.25rem 0.4rem 1rem;
+		color: #172033;
+		font-size: 0.92rem;
+		font-weight: 650;
+		letter-spacing: -0.035em;
+		line-height: 1.25;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	:global(.experience-page[data-experience-card-family="product"][data-inspector-open="true"] .experience-browser-grid[data-experience-layout="grid"]) .experience-note-card__top {
+		display: block;
+		padding: 0.15rem 0.8rem 0.3rem;
+	}
+
+	:global(.experience-page[data-experience-card-family="product"][data-inspector-open="true"] .experience-browser-grid[data-experience-layout="grid"]) .experience-note-card__image-column {
+		height: 7.25rem;
+		margin-top: 0;
+	}
+
+	:global(.experience-page[data-experience-card-family="product"][data-inspector-open="true"] .experience-browser-grid[data-experience-layout="grid"]) .experience-note-card__image-spacer,
+	:global(.experience-page[data-experience-card-family="product"][data-inspector-open="true"] .experience-browser-grid[data-experience-layout="grid"]) .experience-note-card__details {
+		display: none;
+	}
+
+	:global(.experience-page[data-experience-card-family="product"][data-inspector-open="true"] .experience-browser-grid[data-experience-layout="grid"]) .experience-note-card__image {
+		top: 50%;
+		height: 100%;
+		width: 100%;
+		transform: translate(-50%, -50%);
+	}
+
+	:global(.experience-page[data-experience-card-family="product"][data-inspector-open="true"] .experience-browser-grid[data-experience-layout="grid"] .product-specification-row) {
+		height: 3.75rem;
+		border-top: 1px solid #e8dfd4;
+	}
+
+	:global(.experience-page[data-experience-card-family="product"][data-inspector-open="true"] .experience-browser-grid[data-experience-layout="grid"] .product-specification-row > div) {
+		gap: 0;
+		padding-inline: 0.35rem;
+	}
+
+	:global(.experience-page[data-experience-card-family="product"][data-inspector-open="true"] .experience-browser-grid[data-experience-layout="grid"] .product-specification-row__value) {
+		display: none;
+	}
+
+	:global(.experience-page[data-experience-card-family="product"] .experience-browser-grid[data-experience-layout="list"]) .experience-note-card {
+		height: 8.25rem;
+	}
+
+	:global(.experience-page[data-experience-card-family="product"] .experience-browser-grid[data-experience-layout="list"]) .experience-note-card > button {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) clamp(18rem, 34%, 28rem);
+	}
+
+	:global(.experience-page[data-experience-card-family="product"] .experience-browser-grid[data-experience-layout="list"]) .experience-note-card__top {
+		min-height: 0;
+		grid-template-columns: 8.5rem minmax(0, 1fr);
+		gap: 1rem;
+		padding: 0.75rem 1rem;
+	}
+
+	:global(.experience-page[data-experience-card-family="product"] .experience-browser-grid[data-experience-layout="list"]) .experience-note-card__image-column {
+		height: 6.75rem;
+		min-height: 0;
+		margin-top: 0;
+		align-self: center;
+	}
+
+	:global(.experience-page[data-experience-card-family="product"] .experience-browser-grid[data-experience-layout="list"]) .experience-note-card__image-spacer {
+		display: none;
+	}
+
+	:global(.experience-page[data-experience-card-family="product"] .experience-browser-grid[data-experience-layout="list"]) .experience-note-card__image {
+		top: 50%;
+		height: 100%;
+		width: 100%;
+		transform: translate(-50%, -50%);
+	}
+
+	:global(.experience-page[data-experience-card-family="product"] .experience-browser-grid[data-experience-layout="list"]) .experience-note-card__details {
+		min-height: 0;
+		padding-top: 0.2rem;
+		padding-bottom: 0.1rem;
+	}
+
+	:global(.experience-page[data-experience-card-family="product"] .experience-browser-grid[data-experience-layout="list"]) .experience-note-card__title {
+		padding-right: 1rem;
+		font-size: 1rem;
+		letter-spacing: -0.04em;
+	}
+
+	:global(.experience-page[data-experience-card-family="product"] .experience-browser-grid[data-experience-layout="list"]) .experience-note-card__details > div:first-of-type {
+		min-height: 1.6rem;
+		max-height: 1.6rem;
+		flex-wrap: nowrap;
+		margin-top: 0.55rem;
+		overflow: hidden;
+	}
+
+	:global(.experience-page[data-experience-card-family="product"] .experience-browser-grid[data-experience-layout="list"]) .experience-note-card__details > div:last-child {
+		padding-top: 0.4rem;
+		padding-bottom: 0;
+	}
+
+	:global(.experience-page[data-experience-card-family="product"] .experience-browser-grid[data-experience-layout="list"] .product-specification-row) {
+		height: 100%;
+		border-left: 1px solid #e5dbcf;
+	}
+
+	:global(.experience-page[data-experience-card-family="product"] .experience-browser-grid[data-experience-layout="list"] .product-specification-row > div) {
+		padding-inline: 0.55rem;
+	}
+
+	@media (max-width: 900px) {
+		:global(.experience-page[data-experience-card-family="product"] .experience-browser-grid[data-experience-layout="list"]) .experience-note-card > button {
+			grid-template-columns: minmax(0, 1fr) 12rem;
+		}
+
+		:global(.experience-page[data-experience-card-family="product"] .experience-browser-grid[data-experience-layout="list"]) .experience-note-card__top {
+			grid-template-columns: 6.5rem minmax(0, 1fr);
+		}
+
+		:global(.experience-page[data-experience-card-family="product"] .experience-browser-grid[data-experience-layout="list"] .product-specification-row__value) {
+			display: none;
+		}
 	}
 
 	@media (max-width: 720px) {
@@ -195,6 +333,38 @@ const isPlaceholderImage = isPlaceholderExperienceImage(imageUrl, definition);
 
 		.experience-note-card__top > :global(div:last-child) {
 			padding-top: 1.5rem;
+		}
+
+		:global(.experience-page[data-experience-card-family="product"] .experience-browser-grid[data-experience-layout="list"]) .experience-note-card {
+			height: 7.5rem;
+		}
+
+		:global(.experience-page[data-experience-card-family="product"] .experience-browser-grid[data-experience-layout="list"]) .experience-note-card > button {
+			grid-template-columns: minmax(0, 1fr) 8.5rem;
+		}
+
+		:global(.experience-page[data-experience-card-family="product"] .experience-browser-grid[data-experience-layout="list"]) .experience-note-card__top {
+			grid-template-columns: 5rem minmax(0, 1fr);
+			gap: 0.7rem;
+			padding: 0.55rem 0.7rem;
+		}
+
+		:global(.experience-page[data-experience-card-family="product"] .experience-browser-grid[data-experience-layout="list"]) .experience-note-card__image-column {
+			height: 6rem;
+			margin-top: 0;
+		}
+
+		:global(.experience-page[data-experience-card-family="product"] .experience-browser-grid[data-experience-layout="list"]) .experience-note-card__details {
+			min-height: 0;
+			padding-top: 0.15rem;
+		}
+
+		:global(.experience-page[data-experience-card-family="product"] .experience-browser-grid[data-experience-layout="list"]) .experience-note-card__details > div:first-of-type {
+			display: none;
+		}
+
+		:global(.experience-page[data-experience-card-family="product"] .experience-browser-grid[data-experience-layout="list"] .product-specification-row > div) {
+			padding-inline: 0.2rem;
 		}
 	}
 </style>
