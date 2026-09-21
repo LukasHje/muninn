@@ -42,11 +42,6 @@ export async function getFavoriteNoteIdSet() {
 	return new Set(await getFavoriteNoteIds());
 }
 
-export async function getFavoritesCount() {
-	const ids = await getFavoriteNoteIds();
-	return ids.length;
-}
-
 export async function toggleFavoriteNote(noteId: string) {
 	const trimmedId = noteId.trim();
 	if (!trimmedId) {
@@ -69,6 +64,5 @@ export async function toggleFavoriteNote(noteId: string) {
 
 	return {
 		isFavorite: !isFavorite,
-		favoritesCount: ids.size,
 	};
 }

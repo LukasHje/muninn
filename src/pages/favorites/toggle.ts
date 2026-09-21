@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { toggleFavoriteNote } from "src/lib/favorites";
+import { getFavoriteLibraryItems } from "src/lib/vault";
 
 export const prerender = false;
 
@@ -25,7 +26,8 @@ export const POST: APIRoute = async ({ request, redirect }) => {
 	try {
 		const result = await toggleFavoriteNote(noteId);
 		if (returnsJson) {
-			return json({ noteId, ...result });
+			const favoritesCount = (await getFavoriteLibraryItems()).length;
+			return json({ noteId, ...result, favoritesCount });
 		}
 	} catch {
 		if (returnsJson) {

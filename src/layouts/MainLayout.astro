@@ -3,7 +3,6 @@ import Sidebar from "src/components/Sidebar.astro";
 import Icon from "src/components/Icon.astro";
 import { getLanguage, ui } from "src/i18n";
 import { buildSidebarExperienceLinks } from "src/lib/experiences/sidebar";
-import { getFavoritesCount } from "src/lib/favorites";
 import { getScratchpadNotesCount } from "src/lib/scratchpad";
 import { getLibraryItems, getSidebarNavigation } from "src/lib/vault";
 import { ClientRouter } from "astro:transitions";
@@ -20,11 +19,11 @@ const {
 } = Astro.props;
 const mobileTitle = title.replace(/\s+[|–—-]\s+Muninn$/i, "");
 
-const [favoritesCount, scratchpadNotesCount, libraryItems] = await Promise.all([
-	getFavoritesCount(),
+const [scratchpadNotesCount, libraryItems] = await Promise.all([
 	getScratchpadNotesCount(),
 	getLibraryItems(),
 ]);
+const favoritesCount = libraryItems.filter((item) => item.favorite).length;
 const sidebarExperiences = buildSidebarExperienceLinks(libraryItems);
 const navigation = getSidebarNavigation().map((item) => {
 	if (item.href === "/scratchpad") {
