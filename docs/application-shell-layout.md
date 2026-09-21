@@ -205,6 +205,8 @@ Experiences without registered artwork use the same layer structure with a theme
 
 Opening the inspector must not transfer scrolling to the document or displace the surrounding application shell.
 
+On wide desktop, opening the inspector may reduce a grid's column count according to the remaining canvas width, but it must not force a fixed count or enlarge cards unnecessarily. List layout remains a single list and only narrows to make room for the inspector.
+
 Below `xl`, the same inspector content is presented by the shell as a full-screen modal overlay:
 
 - it fills `100dvh` and respects every safe-area inset

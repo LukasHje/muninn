@@ -10,7 +10,11 @@ The ingredient pipeline currently has one responsibility: recover authored ingre
 
 Recipe presentation classification is separate. Signals such as coffee, tea, chocolate drinks, desserts, and cocktails may select an appropriate recipe kind or icon. These signals describe the recipe's visual presentation; they do not classify or rewrite individual ingredients.
 
-## Restrictions
+## Preview presentation
+
+The Recipe inspector is a light editorial surface, independent of catalogue cards: a compact close/favorite toolbar, edge-to-edge 16:10 artwork, serif recipe title, category/cuisine context, lifecycle/rating, an explicit Open full recipe action, compact facts, and authored ingredient/method/notes sections. Thin dividers replace nested metadata panels. The frame and content share one neutral surface, including space below short content. Missing artwork has a stable chef-icon fallback. Text and controls need strong contrast; no vault data or card presentation changes belong to preview styling. Ingredients and the complete authored method continue through NoteContent unchanged, regardless of blank-line formatting between numbered steps. Notes may remain a compact first-paragraph preview. Existing shell focus, selection, favorite, and scroll ownership remain intact.
+
+## Ingredient restrictions
 
 - Never replace the inspector's authored ingredient text with normalized labels.
 - Never infer translated ingredient names for display in the inspector.

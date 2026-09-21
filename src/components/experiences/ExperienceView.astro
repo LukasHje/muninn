@@ -991,6 +991,16 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 		border-color: #d7e0da;
 	}
 
+	.experience-inspector-panel[data-inspector-family="recipe"] {
+		--recipe-preview-surface: #fafaf8;
+		background: var(--recipe-preview-surface);
+	}
+
+	.experience-inspector-panel[data-inspector-family="recipe"] .experience-inspector-shell {
+		background: var(--recipe-preview-surface);
+		border-color: #d9dfd2;
+	}
+
 	.experience-empty-state {
 		border: 1px solid #e6ddd1;
 		border-radius: 1.5rem;
@@ -1218,8 +1228,8 @@ const discoveryContentId = `experience-discovery-${definition.id}`;
 			padding-right: calc(clamp(29rem, 36vw, 34rem) + 1.5rem);
 		}
 
-		.experience-page[data-inspector-open="true"] .experience-browser-grid {
-			grid-template-columns: repeat(2, minmax(0, 1fr));
+		.experience-page[data-inspector-open="true"] .experience-browser-grid[data-experience-layout="grid"] {
+			grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
 		}
 
 		.experience-inspector-backdrop {

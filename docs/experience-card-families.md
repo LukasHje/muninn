@@ -130,8 +130,11 @@ The `recipe` family uses an editorial hierarchy optimized for meal discovery:
 - one compact facts row for rating, servings, and cooking or total time; cookie recipes expressed as pieces use the cookie icon instead of the people icon
 - an optional lifecycle footer for the normalized `Made` or `To try` recipe status
 - a compact list presentation at every viewport size with a full-height, cropped cover at left, the same information hierarchy in the center, and the favorite action in the top-right corner
+- one fixed list-row height for every recipe, regardless of lifecycle status or number of facts; list images crop inside that shared boundary
 
 Grid cards deliberately omit the note summary. The full note and contextual inspector remain responsible for descriptive content.
+
+Real recipe images are block-level, edge-bound layers inside the fixed image frame. They use `object-fit: cover` and must not expose a surface strip along any edge because of intrinsic image dimensions or inline-image baseline spacing.
 
 It consumes normalized recipe metadata from `src/lib/experiences/recipes.ts`. Cards must omit absent values rather than invent defaults, and they must retain the shared `data-experience-card` selection contract so the generic browser can open the Recipe inspector.
 
