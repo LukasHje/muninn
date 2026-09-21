@@ -355,6 +355,13 @@ export function getInspectorImage(
 	);
 }
 
+/** Uses resolved note assets, never reparses Markdown or includes non-image attachments. */
+export function getInspectorGalleryImages(note: LibraryItem, primaryImage: string | null): string[] {
+	const isImage = (url: string) => /\.(?:avif|gif|jpe?g|png|svg|webp|bmp)(?:[?#]|$)/i.test(url);
+	const images = Object.values(note.imageReferences ?? {}).filter(isImage);
+	return [...new Set([...(primaryImage ? [primaryImage] : []), ...images])];
+}
+
 export function resolveExperienceCategoryArtwork(
 	definition: ExperienceDefinition,
 	category: string | null,

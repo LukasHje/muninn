@@ -117,6 +117,12 @@ Product-oriented card families should consume a dedicated Product Feature Extrac
 
 Product Cards reserve the same two-line context-tag region even when a note has fewer tags. This keeps lifecycle status and the specification row aligned across a grid rather than allowing sparse metadata to collapse the card hierarchy.
 
+When the desktop Gear inspector reduces the catalogue width, Product Cards switch to an inspector-open compact grid hierarchy: a single truncated title shares the top row with the favorite action, the product image remains centered, and the specification row retains icons while hiding its value labels. Context tags and lifecycle badges are omitted only in this compact grid state. Closed-inspector cards and list layout retain the full Product Card hierarchy.
+
+Product Card list layout is a fixed-height horizontal row rather than an enlarged grid card. Artwork occupies a compact left column, identity and context occupy the flexible center, and extracted comparison specifications align in a bounded right column. Narrow list rows progressively hide specification values and context tags while retaining their icons, title, lifecycle status, favorite action, and stable row height.
+
+The Gear inspector uses one continuous warm-neutral preview surface shared by the outer panel, scroll owner, artwork, and editorial content. It presents the existing vault image, identity and status, extracted comparison facts, authored use case, key features, limitations, metadata, and notes without placing each group in a separate card. The mobile toolbar remains sticky so close and favorite actions remain available while scrolling.
+
 The Default Experience always has a viable fallback through `generic-note`. Registering an Experience does not require creating a new Card Family.
 
 ## Recipe Card Contract
@@ -130,8 +136,11 @@ The `recipe` family uses an editorial hierarchy optimized for meal discovery:
 - one compact facts row for rating, servings, and cooking or total time; cookie recipes expressed as pieces use the cookie icon instead of the people icon
 - an optional lifecycle footer for the normalized `Made` or `To try` recipe status
 - a compact list presentation at every viewport size with a full-height, cropped cover at left, the same information hierarchy in the center, and the favorite action in the top-right corner
+- one fixed list-row height for every recipe, regardless of lifecycle status or number of facts; list images crop inside that shared boundary
 
 Grid cards deliberately omit the note summary. The full note and contextual inspector remain responsible for descriptive content.
+
+Real recipe images are block-level, edge-bound layers inside the fixed image frame. They use `object-fit: cover` and must not expose a surface strip along any edge because of intrinsic image dimensions or inline-image baseline spacing.
 
 It consumes normalized recipe metadata from `src/lib/experiences/recipes.ts`. Cards must omit absent values rather than invent defaults, and they must retain the shared `data-experience-card` selection contract so the generic browser can open the Recipe inspector.
 
@@ -148,12 +157,26 @@ The `vehicle` family uses a compact garage/archive hierarchy optimized for vehic
 - cover, thumbnail, note image, category-specific placeholder, or configured generic placeholder
 - manufacturer and model when available, otherwise the note title
 - generation, year, and body style as secondary context
-- title, variant, and status presented over a theme-aware image fade
+- title, variant, and status presented over a dark image fade, with the dark surface and warm light text retained regardless of system theme
 - up to four specs, prioritizing drivetrain, fuel, year, body style, and transmission
 - a compact updated timestamp below the spec divider
 - the shared favorite control
 
 It consumes normalized vehicle metadata from `src/lib/experiences/vehicles.ts`. Cards must omit absent values rather than invent defaults, and they must retain the shared `data-experience-card` selection contract so the generic browser can open the Vehicle inspector.
+
+### Vehicle preview
+
+Multiple resolved note images use a manual inspector gallery, with the primary image first, duplicate URLs removed, and non-image attachments excluded. Previous/next arrows, selectable position dots, and keyboard arrows control the gallery; it never advances automatically. Zero/one-image previews retain their artwork/fallback presentation without gallery controls. Gallery state is transient Application UI, never persisted to the vault. The client must initialize both server-rendered and lazily inserted inspectors. Catalogue cards are unaffected.
+
+The inspector frame and content share the same surface token, including empty space below short previews and safe-area padding. This styling is scoped to the vehicle inspector and must not change catalogue card colors or other inspector families.
+
+The gallery matches the single-image preview's fixed 16:10 frame and full-bleed `object-fit: cover` crop. Translucent arrows and position dots overlay the image; controls must not reserve an extra row or increase the artwork height.
+
+Vehicle preview category/default artwork uses that same edge-to-edge cover treatment without inset padding. Only a missing or broken asset reveals the centered category icon. This does not change placeholder treatment in catalogue cards or other families.
+
+The Vehicle inspector has a light neutral-and-sage presentation with dark text, independent of the catalogue card and shell theme. Text pairs must meet WCAG AA contrast (4.5:1 for normal text); controls and focus indicators remain clearly visible on the light surfaces. It shows existing artwork, vehicle identity and phase/status, a primary Open vehicle note action, relevant facts, authored summary, details, and contextual note excerpts. No external enrichment is required.
+
+The inspector's read-only adapter prioritizes frame, wheels, gearing, and brakes for bicycles. Other vehicles show drivetrain, fuel, transmission, and year when documented. Custom builds retain the note title. Explicit concept/prototype phases receive explanatory copy and planned specifications; missing metadata never implies a prototype. Missing or broken images reveal a category illustration/icon within a stable image frame. Existing shell selection, close, favorite, focus, and scrolling contracts remain in force.
 
 ## Generic Note Image Contract
 

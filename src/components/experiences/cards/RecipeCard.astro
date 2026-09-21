@@ -81,7 +81,7 @@ const statusPresentation = recipe.status === "made"
 
 	<button
 		type="button"
-		class="recipe-card__trigger block h-full w-full text-left"
+		class="recipe-card__trigger w-full text-left"
 		data-experience-card={note.id}
 		aria-controls="experience-inspector-panel"
 		aria-label={`Inspect ${note.title}`}
@@ -198,15 +198,35 @@ const statusPresentation = recipe.status === "made"
 		color: #8a6a32;
 	}
 
+	.recipe-card__trigger {
+		display: flex;
+		width: 100%;
+		flex-direction: column;
+		align-items: stretch;
+		border: 0;
+		padding: 0;
+	}
+
+	.recipe-card__image {
+		width: 100%;
+		flex: none;
+	}
+
+	.recipe-card__image img {
+		position: absolute;
+		inset: 0;
+		display: block;
+	}
+
 	:global([data-experience-layout="list"]) .recipe-card {
-		min-height: 6rem;
+		height: 7rem;
 		border-radius: 8px;
 		box-shadow: 0 5px 16px rgba(77, 48, 25, 0.045);
 	}
 
 	:global([data-experience-layout="list"]) .recipe-card__trigger {
 		display: grid;
-		min-height: 6rem;
+		height: 100%;
 		grid-template-columns: 6.5rem minmax(0, 1fr);
 		align-items: stretch;
 		padding-right: 3rem;
@@ -214,7 +234,7 @@ const statusPresentation = recipe.status === "made"
 
 	:global([data-experience-layout="list"]) .recipe-card__image {
 		height: 100%;
-		min-height: 6rem;
+		min-height: 0;
 		aspect-ratio: auto;
 		border-right: 1px solid #eadfd3;
 		border-bottom: 0;
@@ -261,6 +281,10 @@ const statusPresentation = recipe.status === "made"
 	}
 
 	@media (min-width: 40rem) {
+		:global([data-experience-layout="list"]) .recipe-card {
+			height: 7.5rem;
+		}
+
 		:global([data-experience-layout="list"]) .recipe-card__trigger {
 			grid-template-columns: 8rem minmax(0, 1fr);
 			padding-right: 3.75rem;

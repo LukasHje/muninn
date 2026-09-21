@@ -1,198 +1,86 @@
 ---
 import FavoriteToggleButton from "src/components/FavoriteToggleButton.astro";
 import Icon from "src/components/Icon.astro";
-import InspectorHeader from "src/components/experiences/InspectorHeader.astro";
-import InspectorSection from "src/components/experiences/InspectorSection.astro";
-import MetadataRow from "src/components/experiences/MetadataRow.astro";
-import StatusBadge from "src/components/experiences/StatusBadge.astro";
+import VehicleArtwork from "./VehicleArtwork.astro";
+import InspectorGallery from "./InspectorGallery.astro";
 import NoteContent from "src/components/notes/NoteContent.astro";
 import { getInspectorFirstParagraph, type InspectorSection as InspectorSectionData } from "src/lib/experiences/inspector";
 import type { ExperienceDefinition } from "src/lib/experiences/registry";
-import {
-	getExperienceMetadataEntries,
-	getInspectorImage,
-	getNoteSummary,
-	isPlaceholderExperienceImage,
-} from "src/lib/experiences/selectors";
-import {
-	formatVehicleStatus,
-	getVehicleCategoryIcon,
-	getVehicleMetadata,
-	getVehicleTitleParts,
-	resolveVehiclePlaceholderThumbnail,
-} from "src/lib/experiences/vehicles";
+import { getInspectorImage, getInspectorGalleryImages, getNoteSummary, isPlaceholderExperienceImage, getExperienceMetadataEntries } from "src/lib/experiences/selectors";
+import { getVehiclePreview, getVehicleCategoryIcon, resolveVehiclePlaceholderThumbnail } from "src/lib/experiences/vehicles";
 import type { LibraryItem } from "src/lib/vault";
-
-interface Props {
-	definition: ExperienceDefinition;
-	note: LibraryItem;
-	sections: InspectorSectionData[];
-	noteHref: string;
-	redirectTo: string;
-}
-
+interface Props { definition: ExperienceDefinition; note: LibraryItem; sections: InspectorSectionData[]; noteHref: string; redirectTo: string; }
 const { definition, note, sections, noteHref, redirectTo } = Astro.props;
-const vehicle = getVehicleMetadata(note);
-const titleParts = getVehicleTitleParts(note);
-const statusLabel = formatVehicleStatus(vehicle.status);
-const metadataEntries = getExperienceMetadataEntries(note, definition.inspectorMetadata).map((entry) =>
-	entry.key === "body_style" || entry.key === "model"
-		? {
-				...entry,
-				icon: {
-					...entry.icon,
-					name: getVehicleCategoryIcon(vehicle.bodyStyle ?? entry.value),
-				},
-			}
-		: entry
-);
-const placeholderThumbnail = resolveVehiclePlaceholderThumbnail(definition, vehicle.bodyStyle);
-const imageUrl = getInspectorImage(note, definition, placeholderThumbnail);
-const isPlaceholderImage = isPlaceholderExperienceImage(imageUrl, definition);
-const isCategoryPlaceholderImage = Boolean(
-	imageUrl
-	&& imageUrl === placeholderThumbnail
-	&& placeholderThumbnail !== definition.assets.placeholderThumbnail
-);
+const preview = getVehiclePreview(note);
+const image = getInspectorImage(note, definition, resolveVehiclePlaceholderThumbnail(definition, preview.vehicle.bodyStyle));
+const images = getInspectorGalleryImages(note, isPlaceholderExperienceImage(image, definition) ? null : image);
 const summary = getNoteSummary(note);
-
-function findSection(...titles: string[]) {
-	const normalizedTitles = titles.map((title) => title.toLocaleLowerCase("en"));
-	return sections.find((section) => normalizedTitles.includes(section.title.trim().toLocaleLowerCase("en"))) ?? null;
-}
-
-const specsSection = findSection("Specs", "Specifications");
-const ownershipSection = findSection("Ownership", "Planning");
-const maintenanceSection = findSection("Maintenance");
-const notesSection = findSection("Notes", "Review");
-const filesSection = findSection("Files", "Attachments");
-const previewSections = [
-	specsSection ? { section: specsSection, icon: "sliders-horizontal" } : null,
-	ownershipSection ? { section: ownershipSection, icon: "users" } : null,
-	maintenanceSection ? { section: maintenanceSection, icon: "clipboard-list" } : null,
-	notesSection ? { section: notesSection, icon: "notebook-pen" } : null,
-	filesSection ? { section: filesSection, icon: "archive" } : null,
-].filter(Boolean) as Array<{ section: InspectorSectionData; icon: string }>;
+const metadata = getExperienceMetadataEntries(note, definition.inspectorMetadata)
+ .filter(entry => !preview.facts.some(fact => fact.key === entry.key) && !["manufacturer", "model", "status", "vehicle_status", "updated"].includes(entry.key));
+const previewSections = sections.filter(section => ["specs", "specifications", "notes", "review", "planning", "ownership", "maintenance", "files", "attachments"].includes(section.title.trim().toLowerCase()));
 ---
-
-<div class="vehicle-inspector px-5 pb-9 md:px-6">
-	<InspectorHeader title={titleParts.title}>
-		<Fragment slot="leading">
-			<button type="button" data-experience-close class="vehicle-inspector-action" aria-label="Close inspector" title="Close inspector">
-				<Icon name="arrow-left" class="h-6 w-6" />
-			</button>
-		</Fragment>
-		<Fragment slot="actions">
-			<div class="flex items-center gap-2">
-				<div data-experience-inspector-favorite>
-					<FavoriteToggleButton
-						noteId={note.id}
-						isFavorite={Boolean(note.favorite)}
-						redirectTo={redirectTo}
-						size="md"
-						variant="chromeless"
-					/>
-				</div>
-				<a
-					href={noteHref}
-					data-experience-open-note
-					data-note-href={noteHref}
-					class="vehicle-inspector-action"
-					aria-label="Open full vehicle note"
-					title="Open full vehicle note"
-				>
-					<Icon name="square-arrow-up-right" class="h-6 w-6" />
-				</a>
-			</div>
-		</Fragment>
-	</InspectorHeader>
-
-	<div class="mt-2 flex items-center justify-between gap-3">
-		{titleParts.subtitle && <p class="truncate text-sm text-slate-500">{titleParts.subtitle}</p>}
-		{statusLabel && <StatusBadge value={statusLabel} tone={definition.theme} />}
-	</div>
-
-	<div class="relative mt-4 overflow-hidden rounded-[10px] border border-[#d9c6a8] bg-[#eee0cf]">
-		<div class="aspect-[16/9]">
-			{
-				imageUrl ? (
-					<img
-						src={imageUrl}
-						alt=""
-						class:list={[
-							"h-full w-full",
-							isPlaceholderImage && !isCategoryPlaceholderImage
-								? "object-contain p-8 opacity-70 mix-blend-multiply"
-								: "object-cover",
-						]}
-					/>
-				) : (
-					<div class="flex h-full items-center justify-center">
-						<Icon
-							name={vehicle.bodyStyle ? getVehicleCategoryIcon(vehicle.bodyStyle) : "car-front"}
-							class="h-16 w-16 text-[#9a6b35]/42"
-						/>
-					</div>
-				)
-			}
-		</div>
-		<div class="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/48 to-transparent" aria-hidden="true"></div>
-	</div>
-
-	{summary && <p class="mt-5 text-sm leading-7 text-slate-600">{summary}</p>}
-
-	{
-		metadataEntries.length > 0 && (
-			<div class="mt-6 overflow-hidden rounded-[10px] border border-[#e2d4c3] bg-white/58">
-				<dl class="grid md:grid-cols-2">
-					{metadataEntries.map((entry) => (
-						<div class="border-b border-[#eadfd2] px-4 last:border-b-0 md:odd:border-r">
-							<MetadataRow metadataKey={entry.key} icon={entry.icon} label={entry.label} value={entry.value} />
-						</div>
-					))}
-				</dl>
-			</div>
-		)
-	}
-
-	{
-		previewSections.map(({ section, icon }) => {
-			const preview = getInspectorFirstParagraph(section.content);
-			return preview ? (
-				<InspectorSection title={section.title} highlightKey="notes" iconColor="#a36d2c" surface="panel" className="mt-7">
-					<div class="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-amber-700">
-						<Icon name={icon} class="h-4 w-4" />
-						<span>Documented</span>
-					</div>
-					<NoteContent note={note} content={preview} />
-				</InspectorSection>
-			) : null;
-		})
-	}
-
-	<a
-		href={noteHref}
-		data-experience-open-note
-		data-note-href={noteHref}
-		class="mt-8 flex items-center justify-center gap-2 rounded-[8px] border border-[#b68541] px-4 py-3 text-sm font-semibold text-[#8a5d24] transition hover:bg-[#fff4df]"
-	>
-		<Icon name="square-arrow-up-right" class="h-4 w-4" />
-		Open in Note
-	</a>
+<div class="vehicle-inspector">
+ <div class="vehicle-inspector__toolbar">
+  <button type="button" data-experience-close aria-label="Close inspector"><Icon name="arrow-left" class="h-5 w-5" /></button>
+  <span>THE GARAGE / {preview.category}</span>
+  <div data-experience-inspector-favorite><FavoriteToggleButton noteId={note.id} isFavorite={Boolean(note.favorite)} redirectTo={redirectTo} variant="chromeless" size="md" /></div>
+ </div>
+ <div class="vehicle-inspector__art">
+  {images.length > 1 ? <InspectorGallery images={images} title={preview.title} /> : <VehicleArtwork src={images[0] ?? image} category={preview.category} icon={getVehicleCategoryIcon(preview.category)} />}
+ </div>
+ <div class="vehicle-inspector__content">
+  <header>
+   <div class="vehicle-inspector__eyebrow"><span>{preview.kicker}</span>{preview.status && <span class="vehicle-inspector__badge">{preview.status}</span>}</div>
+   <h1>{preview.title}</h1>
+   <p class="vehicle-inspector__subtitle">{[preview.subtitle, preview.vehicle.bodyStyle?.replaceAll("-", " ")].filter(Boolean).join(" · ")}</p>
+   <a class="vehicle-inspector__open" href={noteHref} data-experience-open-note data-note-href={noteHref}>Open vehicle note <Icon name="square-arrow-up-right" class="h-4 w-4" /></a>
+  </header>
+  {preview.concept && <aside class="vehicle-inspector__concept"><Icon name="sliders-horizontal" class="h-5 w-5 shrink-0" /><div><strong>A vehicle in the making</strong><p>This concept describes the intended build. Specifications may evolve as the project develops.</p></div></aside>}
+  <section class="vehicle-inspector__section">
+   <h2>{preview.specificationLabel}</h2>
+   {preview.facts.length ? <dl class="vehicle-inspector__facts">{preview.facts.map(fact => <div><dt>{fact.label}</dt><dd>{fact.value}</dd></div>)}</dl> : <p class="vehicle-inspector__muted">Specifications have not been documented yet.</p>}
+  </section>
+  {summary && <section class="vehicle-inspector__section"><h2>About this vehicle</h2><p class="vehicle-inspector__summary">{summary}</p></section>}
+  {metadata.length > 0 && <section class="vehicle-inspector__section"><h2>Vehicle details</h2><dl class="vehicle-inspector__metadata">{metadata.map(entry => <div><dt>{entry.label}</dt><dd>{entry.value}</dd></div>)}</dl></section>}
+  {previewSections.map(section => {
+   const paragraph = getInspectorFirstParagraph(section.content);
+   return paragraph ? <section class="vehicle-inspector__section"><h2>{section.title}</h2><NoteContent note={note} content={paragraph} /></section> : null;
+  })}
+  <footer><span>From your vault</span><span>Updated {note.updatedLabel.toLowerCase()}</span></footer>
+ </div>
 </div>
-
 <style>
-	.vehicle-inspector-action {
-		display: inline-flex;
-		height: 3rem;
-		width: 3rem;
-		align-items: center;
-		justify-content: center;
-		color: rgb(71 85 105);
-		transition: color 180ms ease;
-	}
-
-	.vehicle-inspector-action:hover {
-		color: rgb(163 109 44);
-	}
+ .vehicle-inspector { min-height: 100%; background: var(--vehicle-preview-surface, #f8faf9); color: #202d28; }
+ .vehicle-inspector__toolbar { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .55rem .8rem; color: #52645b; }
+ .vehicle-inspector__toolbar > span { font-size: .6rem; letter-spacing: .15em; text-transform: uppercase; }
+ .vehicle-inspector__toolbar > button { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 6px; }
+ .vehicle-inspector__toolbar > button:hover { background: #e6ece8; color: #202d28; }
+ .vehicle-inspector__content { padding: 1.5rem clamp(1rem, 4vw, 1.75rem) 2rem; }
+ .vehicle-inspector__eyebrow { display: flex; justify-content: space-between; align-items: center; gap: 1rem; font-size: .63rem; letter-spacing: .16em; text-transform: uppercase; color: #52645b; }
+ .vehicle-inspector__badge { border: 1px solid #829785; border-radius: 4px; padding: .3rem .6rem; background: #e8efe5; color: #36533d; letter-spacing: .08em; }
+ h1 { margin-top: .75rem; font-family: Georgia, serif; font-size: clamp(1.8rem, 4vw, 2.4rem); line-height: 1.1; letter-spacing: -.03em; overflow-wrap: anywhere; }
+ .vehicle-inspector__subtitle { margin-top: .7rem; font-size: .78rem; line-height: 1.6; color: #52645b; }
+ .vehicle-inspector__open { display: flex; justify-content: space-between; align-items: center; min-height: 44px; margin-top: 1.35rem; padding: .7rem .9rem; border-radius: 6px; background: #e0e9dd; color: #29432c; font-size: .75rem; font-weight: 650; }
+ .vehicle-inspector__open:hover { background: #d3e0ce; }
+ .vehicle-inspector :is(button,a):focus-visible { outline: 2px solid #456c4d; outline-offset: 3px; }
+ .vehicle-inspector__concept { display: flex; align-items: start; gap: .8rem; margin-top: 1.5rem; padding: 1rem; border: 1px solid #bbcbbc; border-radius: 6px; background: #edf3eb; color: #304d35; }
+ .vehicle-inspector__concept strong { font-size: .75rem; font-weight: 600; }
+ .vehicle-inspector__concept p { margin-top: .3rem; font-size: .7rem; line-height: 1.7; color: #49604a; }
+ .vehicle-inspector__section { margin-top: 1.6rem; padding-top: 1.3rem; border-top: 1px solid #d7e0da; }
+ h2 { font-size: .7rem; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: #3f5947; margin-bottom: 1rem; }
+ .vehicle-inspector__facts { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1.2rem; }
+ dt { font-size: .68rem; color: #52645b; }
+ dd { color: #202d28; overflow-wrap: anywhere; }
+ .vehicle-inspector__facts dd { font-size: 1.02rem; margin-top: .3rem; font-weight: 550; }
+ .vehicle-inspector__metadata > div { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.4fr); gap: 1rem; padding: .55rem 0; }
+ .vehicle-inspector__metadata dd { font-size: .75rem; line-height: 1.5; }
+ .vehicle-inspector__summary, .vehicle-inspector__muted { font-size: .8rem; line-height: 1.8; color: #43594c; }
+ .vehicle-inspector__section :global(.note-content) { color: #43594c; font-size: .8rem; line-height: 1.8; }
+ footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .5rem; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #d7e0da; font-size: .63rem; color: #52645b; }
+ .vehicle-inspector__toolbar :global(.favorite-toggle-form[data-favorite-variant="chromeless"] .favorite-toggle-button) { color: #52645b; }
+ .vehicle-inspector__toolbar :global(.favorite-toggle-form[data-favorite-variant="chromeless"][data-favorite-state="true"] .favorite-toggle-button) { color: #946000; }
+ .vehicle-inspector__toolbar :global(.favorite-toggle-form[data-favorite-variant="chromeless"] .favorite-toggle-button:hover) { color: #29432c; }
+ @media (max-width: 1279px) {
+  .vehicle-inspector__toolbar { position: sticky; top: 0; z-index: 30; border-bottom: 1px solid #d7e0da; background: var(--vehicle-preview-surface, #f8faf9); }
+ }
 </style>

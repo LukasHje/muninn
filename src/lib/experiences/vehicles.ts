@@ -206,3 +206,30 @@ export function buildVehicleDashboardModel(notes: LibraryItem[]): VehicleDashboa
 export function formatVehicleStatus(value: string | null) {
 	return value ? vehicleStatusLabels[value] ?? titleCase(value) : null;
 }
+
+/** Read-only presentation for the vehicle inspector. */
+export function getVehiclePreview(note: LibraryItem) {
+	const vehicle = getVehicleMetadata(note);
+	const phase = getNoteMetadataValue(note, "project_phase");
+	const custom = getNoteMetadataValue(note, "build_type") === "custom";
+	const concept = ["concept", "prototype", "prototyp"].includes(phase?.toLowerCase() ?? "");
+	const category = getVehicleCategory(vehicle.bodyStyle ?? vehicle.categories[0] ?? "");
+	const planned = vehicle.status === "planned" || concept;
+	const useful = (value: string | null) => value && !["n/a", "na", "none", "-", "not applicable"].includes(value.toLowerCase()) ? value : null;
+	const fields = category === "Bicycle"
+		? [["frame_material", "Frame", "layers"], ["wheel_size", "Wheels", "diameter"], ["drivetrain", "Gearing", "sliders-horizontal"], ["brake_type", "Brakes", "disc-3"]]
+		: [["drivetrain", "Drivetrain", "gauge"], ["fuel", "Fuel", "fuel"], ["transmission", "Transmission", "sliders-horizontal"], ["year", "Year", "metadata-calendar"]];
+	const facts = fields.flatMap(([key, label, iconName]) => {
+		const value = useful(getNoteMetadataValue(note, key));
+		return value ? [{ key, label, iconName, value: value.replace(/[-_](?=[a-z])/g, " ") }] : [];
+	});
+	const titleParts = getVehicleTitleParts(note);
+	return {
+		vehicle, category, concept, planned, facts,
+		title: custom ? note.title : titleParts.title,
+		subtitle: [vehicle.generation, vehicle.year].filter(Boolean).join(" · "),
+		kicker: custom ? "Custom build" : vehicle.manufacturer ?? category,
+		status: phase ? titleCase(phase) : formatVehicleStatus(vehicle.status),
+		specificationLabel: planned ? "Planned specification" : "At a glance",
+	};
+}

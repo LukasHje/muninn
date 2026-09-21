@@ -34,16 +34,16 @@ const { note } = Astro.props;
 	<div class="note-metadata-drawer__shell">
 		<header class="note-metadata-drawer__header">
 			<div class="min-w-0">
-				<p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+				<p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#728078]">
 					{ui.noteDetail.metadata}
 				</p>
-				<h2 id="note-metadata-heading" class="mt-1 truncate text-lg font-semibold tracking-tight text-slate-900">
+				<h2 id="note-metadata-heading" class="mt-1 truncate font-serif text-xl font-semibold tracking-[-0.025em] text-[#1d2926]">
 					{note.title}
 				</h2>
 			</div>
 			<button
 				type="button"
-				class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#e4dacd] bg-white/75 text-slate-500 transition hover:bg-white hover:text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-400"
+				class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border-0 bg-transparent text-[#667277] transition hover:bg-[#eef1ee] hover:text-[#1f2b2e] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#64816e]"
 				data-note-metadata-close
 				aria-label={ui.noteDetail.closeMetadata}
 			>
@@ -54,7 +54,7 @@ const { note } = Astro.props;
 		<div class="note-metadata-drawer__content" data-note-metadata-scroll>
 			{
 				note.imageUrl && (
-					<div class="overflow-hidden rounded-[5px] border border-[#e8dfd3] bg-[#f8f4ed] shadow-[0_14px_30px_rgba(15,23,42,0.08)]">
+					<div class="overflow-hidden rounded-lg bg-[#eef1ee]">
 						<img
 							src={note.imageUrl}
 							alt=""

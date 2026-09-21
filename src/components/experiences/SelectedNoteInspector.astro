@@ -1,51 +1,46 @@
 ---
 import FavoriteToggleButton from "src/components/FavoriteToggleButton.astro";
 import Icon from "src/components/Icon.astro";
-import InspectorHeader from "src/components/experiences/InspectorHeader.astro";
-import InspectorSection from "src/components/experiences/InspectorSection.astro";
-import MetadataRow from "src/components/experiences/MetadataRow.astro";
 import NoteContent from "src/components/notes/NoteContent.astro";
 import {
 	getInspectorBulletItems,
 	getInspectorFirstParagraph,
-	type InspectorSection as InspectorSectionData,
+	type InspectorSection,
 } from "src/lib/experiences/inspector";
-import { slugifySegment } from "src/lib/parser";
+import { extractProductFeatures } from "src/lib/experiences/productFeatures";
 import type { ExperienceDefinition } from "src/lib/experiences/registry";
 import {
 	getExperienceMetadataEntries,
-	getNoteSummary,
 	getInspectorImage,
+	getNoteMetadataValue,
+	getNoteSummary,
 	isPlaceholderExperienceImage,
 } from "src/lib/experiences/selectors";
+import { slugifySegment } from "src/lib/parser";
 import type { LibraryItem } from "src/lib/vault";
 
 interface Props {
 	definition: ExperienceDefinition;
 	note: LibraryItem;
-	sections: InspectorSectionData[];
+	sections: InspectorSection[];
 	noteHref: string;
 	redirectTo: string;
 }
 
-const {
-	definition,
-	note,
-	sections,
-	noteHref,
-	redirectTo,
-} = Astro.props;
-
+const { definition, note, sections, noteHref, redirectTo } = Astro.props;
 const metadataEntries = getExperienceMetadataEntries(note, definition.inspectorMetadata);
 const imageUrl = getInspectorImage(note, definition);
-const summary = getNoteSummary(note);
 const isPlaceholderImage = imageUrl ? isPlaceholderExperienceImage(imageUrl, definition) : false;
+const summary = getNoteSummary(note);
+const status = getNoteMetadataValue(note, "status");
+const category = getNoteMetadataValue(note, "category");
+const manufacturer = getNoteMetadataValue(note, "manufacturer");
+const variant = getNoteMetadataValue(note, "variant");
+const productFeatures = extractProductFeatures(note, definition.featureSections, 4);
 
 function findSection(...titles: string[]) {
 	const normalizedTitles = titles.map((title) => title.trim().toLocaleLowerCase("en"));
-	return (
-		sections.find((section) => normalizedTitles.includes(section.title.trim().toLocaleLowerCase("en"))) ?? null
-	);
+	return sections.find((section) => normalizedTitles.includes(section.title.trim().toLocaleLowerCase("en"))) ?? null;
 }
 
 const useCaseSection = findSection("Use case");
@@ -57,6 +52,9 @@ const limitationItems = limitationsSection ? getInspectorBulletItems(limitations
 const notesExcerpt = notesSection ? getInspectorFirstParagraph(notesSection.content) : summary;
 const notesIsTruncated = notesSection ? notesExcerpt.trim() !== notesSection.content.trim() : false;
 const notesSectionHref = `${noteHref}#${slugifySegment(notesSection?.title ?? "notes")}`;
+const technicalMetadata = metadataEntries.filter((entry) =>
+	!["type", "status", "category", "manufacturer", "variant", "updated"].includes(entry.key)
+);
 const renderedSectionTitles = new Set(
 	[useCaseSection, keyFeaturesSection, limitationsSection, notesSection]
 		.filter(Boolean)
@@ -65,188 +63,135 @@ const renderedSectionTitles = new Set(
 const remainingSectionCount = sections.filter(
 	(section) => !renderedSectionTitles.has(section.title.trim().toLocaleLowerCase("en"))
 ).length;
+const humanize = (value: string) => value
+	.replace(/[-_]+/g, " ")
+	.replace(/\b\w/g, (letter) => letter.toUpperCase());
 ---
 
-<div class="px-5 pb-8 pt-0 md:px-6">
-	<InspectorHeader title={note.title}>
-		<Fragment slot="leading">
-			<button
-				type="button"
-				data-experience-close
-				class="experience-inspector-icon-button"
-				aria-label="Close inspector"
-				title="Close inspector"
-			>
-				<Icon name="arrow-left" class="h-6 w-6" />
-			</button>
-		</Fragment>
-		<Fragment slot="actions">
-			<div class="flex items-center gap-2">
-				<div data-experience-inspector-favorite>
-					<FavoriteToggleButton
-						noteId={note.id}
-						isFavorite={Boolean(note.favorite)}
-						redirectTo={redirectTo}
-						size="md"
-						variant="chromeless"
-					/>
-				</div>
-				<a
-					href={noteHref}
-					data-experience-open-note
-					data-note-href={noteHref}
-					class="experience-inspector-icon-button"
-					aria-label="Open full note"
-					title="Open full note"
-				>
-					<Icon name="square-arrow-up-right" class="h-6 w-6" />
-				</a>
-			</div>
-		</Fragment>
-	</InspectorHeader>
-
-	<div class="experience-inspector-section pt-3">
-			<div
-				class:list={[
-					"grid gap-4",
-					metadataEntries.length > 0 ? "md:grid-cols-[minmax(0,1fr)_15.5rem] md:items-start" : "",
-				]}
-			>
-					<div class="self-start overflow-hidden rounded-[10px] border border-[#e7dfd4] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.94),rgba(246,240,232,0.96)_72%,rgba(242,236,227,0.98))]">
-					<div
-						class:list={[
-							"relative aspect-[3/5] w-full",
-							isPlaceholderImage ? "flex items-center justify-center p-6" : "overflow-hidden",
-						]}
-					>
-						<img
-							src={imageUrl}
-							alt=""
-							class:list={[
-								"h-full w-full",
-								isPlaceholderImage ? "object-contain opacity-80 mix-blend-multiply" : "object-cover",
-							]}
-						/>
-					</div>
-			</div>
-
-			{
-				metadataEntries.length > 0 && (
-						<div class="overflow-hidden rounded-[10px] border border-[#e2d9cd] bg-white/58">
-						<dl class="divide-y divide-[#ebe2d7] px-4 py-2">
-								{
-									metadataEntries.map((entry) => (
-										<div>
-											<MetadataRow
-												metadataKey={entry.key}
-												icon={entry.icon}
-												label={entry.label}
-												value={entry.value}
-											/>
-										</div>
-									))
-								}
-						</dl>
-					</div>
-				)
-			}
+<div class="gear-inspector">
+	<div class="gear-inspector__toolbar">
+		<button type="button" data-experience-close aria-label="Close inspector">
+			<Icon name="arrow-left" class="h-5 w-5" />
+		</button>
+		<span>FIELD KIT / {category ? humanize(category) : "GEAR"}</span>
+		<div data-experience-inspector-favorite>
+			<FavoriteToggleButton
+				noteId={note.id}
+				isFavorite={Boolean(note.favorite)}
+				redirectTo={redirectTo}
+				size="md"
+				variant="chromeless"
+			/>
 		</div>
 	</div>
 
-	<div class="my-6 w-full border-t border-[#d8d0c5]" aria-hidden="true"></div>
+	<div class:list={["gear-inspector__artwork", isPlaceholderImage && "is-placeholder"]}>
+		{imageUrl
+			? <img src={imageUrl} alt="" loading="lazy" />
+			: <Icon name="gear" class="h-16 w-16" />}
+	</div>
 
-	<div class="w-full min-w-0">
-		{
-			useCaseSection && (
-				<InspectorSection title="Use case" highlightKey="usecase">
-					<NoteContent note={note} content={useCaseSection.content} />
-				</InspectorSection>
-			)
-		}
+	<div class="gear-inspector__content">
+		<header>
+			<div class="gear-inspector__eyebrow">
+				<span>{manufacturer ?? category ?? "Field equipment"}</span>
+				{status && <span class="gear-inspector__status"><i aria-hidden="true"></i>{humanize(status)}</span>}
+			</div>
+			<h1>{note.title}</h1>
+			{variant && <p class="gear-inspector__subtitle">{variant}</p>}
+			<a href={noteHref} data-experience-open-note data-note-href={noteHref} class="gear-inspector__open">
+				Open gear note
+				<Icon name="square-arrow-up-right" class="h-4 w-4" />
+			</a>
+		</header>
 
-		{
-			keyFeaturesSection && (
-				<InspectorSection title="Key features" highlightKey="keyfeatures" className="mt-8">
-					<ul class="w-full list-outside list-disc space-y-2.5 pl-5 text-sm leading-7 text-slate-700 marker:text-slate-500">
-						{
-							keyFeatureItems.map((item) => (
-								<li>{item}</li>
-							))
-						}
-					</ul>
-				</InspectorSection>
-			)
-		}
+		{productFeatures.length > 0 && <section class="gear-inspector__section">
+			<h2>At a glance</h2>
+			<dl class="gear-inspector__facts">
+				{productFeatures.map((feature) => <div>
+					<dt><Icon name={feature.iconName} class="h-4 w-4" />{feature.label}</dt>
+					<dd>{feature.value}</dd>
+				</div>)}
+			</dl>
+		</section>}
 
-		{
-			limitationsSection && (
-				<InspectorSection title="Limitations" highlightKey="limitations" className="mt-8">
-					<ul class="w-full list-outside list-disc space-y-2.5 pl-5 text-sm leading-7 text-slate-700 marker:text-slate-500">
-						{
-							limitationItems.map((item) => (
-								<li>{item}</li>
-							))
-						}
-					</ul>
-				</InspectorSection>
-			)
-		}
+		{useCaseSection && <section class="gear-inspector__section">
+			<h2>Use case</h2>
+			<div class="gear-inspector__prose"><NoteContent note={note} content={useCaseSection.content} /></div>
+		</section>}
 
-		<InspectorSection title="Notes" highlightKey="notes" surface="panel" className="mt-10 experience-inspector-notes">
-			<p class="w-full text-sm leading-8">
+		{keyFeatureItems.length > 0 && <section class="gear-inspector__section">
+			<h2>Key features</h2>
+			<ul class="gear-inspector__list">{keyFeatureItems.map((item) => <li>{item}</li>)}</ul>
+		</section>}
+
+		{limitationItems.length > 0 && <section class="gear-inspector__section">
+			<h2>Limitations</h2>
+			<ul class="gear-inspector__list">{limitationItems.map((item) => <li>{item}</li>)}</ul>
+		</section>}
+
+		{technicalMetadata.length > 0 && <section class="gear-inspector__section">
+			<h2>Gear details</h2>
+			<dl class="gear-inspector__metadata">
+				{technicalMetadata.map((entry) => <div><dt>{entry.label}</dt><dd>{entry.value}</dd></div>)}
+			</dl>
+		</section>}
+
+		{notesExcerpt && <section class="gear-inspector__section">
+			<h2>Notes</h2>
+			<p class="gear-inspector__summary">
 				{notesExcerpt}
-				{
-					notesIsTruncated && (
-						<a
-							href={notesSectionHref}
-							data-experience-open-note
-							data-note-href={notesSectionHref}
-							class="ml-2 inline text-slate-400 underline-offset-4 transition-colors hover:text-slate-500 hover:underline"
-						>
-							<span aria-hidden="true">. . .</span>
-							<span class="ml-1">open note for full description</span>
-						</a>
-					)
-				}
+				{notesIsTruncated && <a href={notesSectionHref} data-experience-open-note data-note-href={notesSectionHref}>Open the full description</a>}
 			</p>
-		</InspectorSection>
+		</section>}
 
-		{
-			remainingSectionCount > 0 && (
-				<p class="experience-inspector-section w-full text-sm leading-7 text-slate-500">
-					{remainingSectionCount} more section{remainingSectionCount === 1 ? "" : "s"} available in the full note.
-				</p>
-			)
-		}
+		{remainingSectionCount > 0 && <p class="gear-inspector__remaining">
+			{remainingSectionCount} more section{remainingSectionCount === 1 ? "" : "s"} in the full note.
+		</p>}
+
+		<footer><span>From your vault</span><span>Updated {note.updatedLabel.toLowerCase()}</span></footer>
 	</div>
 </div>
 
 <style>
-	.experience-inspector-icon-button {
-		display: inline-flex;
-		height: 3rem;
-		width: 3rem;
-		align-items: center;
-		justify-content: center;
-		border: none;
-		background: transparent;
-		color: rgb(71 85 105);
-		transition: color 180ms ease;
-	}
-
-	.experience-inspector-icon-button:hover {
-		color: rgb(15 23 42);
-	}
-
-	.experience-inspector-section {
-		margin-top: 0;
-	}
-
-	.experience-inspector-notes {
-		color: rgb(142 156 113 / 50%);
-	}
-
-	.experience-inspector-notes :is(h3, p, a) {
-		color: inherit;
+	.gear-inspector { min-height: 100%; background: var(--gear-preview-surface, #faf8f4); color: #20272f; }
+	.gear-inspector__toolbar { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .55rem .8rem; color: #667078; }
+	.gear-inspector__toolbar > span { overflow: hidden; font-size: .6rem; letter-spacing: .15em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+	.gear-inspector__toolbar > button { display: grid; width: 44px; height: 44px; flex-shrink: 0; place-items: center; border-radius: 6px; }
+	.gear-inspector__toolbar > button:hover { background: #eee9e0; color: #20272f; }
+	.gear-inspector__artwork { display: grid; width: 100%; aspect-ratio: 16/9; max-height: 18rem; place-items: center; overflow: hidden; background: #e9e5de; color: #7a827f; }
+	.gear-inspector__artwork img { width: 100%; height: 100%; object-fit: cover; }
+	.gear-inspector__artwork.is-placeholder { padding: 2rem; background: #efebe4; }
+	.gear-inspector__artwork.is-placeholder img { object-fit: contain; opacity: .8; mix-blend-mode: multiply; }
+	.gear-inspector__content { padding: 1.5rem clamp(1rem, 4vw, 1.75rem) 2rem; }
+	.gear-inspector__eyebrow { display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-size: .63rem; letter-spacing: .13em; text-transform: uppercase; color: #68746f; }
+	.gear-inspector__status { display: inline-flex; flex-shrink: 0; align-items: center; gap: .4rem; color: #8a5a20; letter-spacing: .08em; }
+	.gear-inspector__status i { width: .38rem; height: .38rem; border-radius: 999px; background: currentColor; }
+	h1 { margin-top: .75rem; font-family: Georgia, serif; font-size: clamp(1.8rem, 4vw, 2.35rem); line-height: 1.08; letter-spacing: -.035em; overflow-wrap: anywhere; }
+	.gear-inspector__subtitle { margin-top: .7rem; font-size: .8rem; line-height: 1.6; color: #68746f; }
+	.gear-inspector__open { display: flex; min-height: 44px; align-items: center; justify-content: space-between; gap: .75rem; margin-top: 1.35rem; padding: .7rem .9rem; border-radius: 6px; background: #e7eadf; color: #34462d; font-size: .78rem; font-weight: 650; }
+	.gear-inspector__open:hover { background: #dce2d2; }
+	.gear-inspector__section { margin-top: 1.65rem; padding-top: 1.35rem; border-top: 1px solid #ddd8cf; }
+	h2 { margin-bottom: 1rem; font-size: .7rem; font-weight: 700; letter-spacing: .11em; text-transform: uppercase; color: #52634a; }
+	.gear-inspector__facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1.4rem; row-gap: 1.2rem; }
+	.gear-inspector__facts dt { display: flex; align-items: center; gap: .45rem; font-size: .68rem; color: #6a746f; }
+	.gear-inspector__facts dt :global(svg) { color: #667c5b; }
+	.gear-inspector__facts dd { margin-top: .35rem; font-size: .94rem; font-weight: 600; line-height: 1.45; overflow-wrap: anywhere; }
+	.gear-inspector__prose, .gear-inspector__summary, .gear-inspector__list { font-size: .82rem; line-height: 1.8; color: #4c5855; }
+	.gear-inspector__prose :global(.note-content) { color: inherit; font-size: inherit; line-height: inherit; }
+	.gear-inspector__list { display: grid; gap: .55rem; padding-left: 1.05rem; list-style: disc; }
+	.gear-inspector__list li::marker { color: #7c8c70; }
+	.gear-inspector__metadata > div { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.45fr); gap: 1rem; padding: .62rem 0; border-bottom: 1px solid #e5e0d8; }
+	.gear-inspector__metadata > div:last-child { border-bottom: 0; }
+	.gear-inspector__metadata dt { font-size: .72rem; color: #707975; }
+	.gear-inspector__metadata dd { font-size: .76rem; line-height: 1.55; color: #3f4b48; overflow-wrap: anywhere; }
+	.gear-inspector__summary a { display: inline-block; margin-left: .35rem; color: #536a48; font-weight: 650; text-decoration: underline; text-underline-offset: 3px; }
+	.gear-inspector__remaining { margin-top: 1.5rem; font-size: .7rem; color: #747d79; }
+	footer { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #ddd8cf; font-size: .65rem; color: #707975; }
+	.gear-inspector :is(button, a):focus-visible { outline: 2px solid #667c5b; outline-offset: 3px; }
+	.gear-inspector__toolbar :global(.favorite-toggle-form[data-favorite-variant="chromeless"] .favorite-toggle-button) { color: #667078; }
+	.gear-inspector__toolbar :global(.favorite-toggle-form[data-favorite-variant="chromeless"][data-favorite-state="true"] .favorite-toggle-button) { color: #8a6414; }
+	@media (max-width: 1279px) {
+		.gear-inspector__toolbar { position: sticky; top: 0; z-index: 30; border-bottom: 1px solid #ddd8cf; background: var(--gear-preview-surface, #faf8f4); }
 	}
 </style>

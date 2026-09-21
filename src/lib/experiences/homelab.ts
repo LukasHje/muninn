@@ -437,6 +437,19 @@ export function getHomelabInspectorMetadataEntries(note: LibraryItem, keys: stri
 	});
 }
 
+/**
+ * Returns authored purpose text for the Homelab inspector.
+ *
+ * Purpose metadata is read directly from the normalized vault model so an
+ * inline Dataview expression in the Markdown body never leaks into
+ * Application UI as literal `this.usecase` source text.
+ */
+export function getHomelabInspectorPurpose(note: LibraryItem) {
+	return rawValues(note, "purpose", "usecase", "description")
+		.map((value) => value.replace(/^[-*]\s+/, "").replace(/\[\[|\]\]/g, "").replace(/\s+/g, " ").trim())
+		.filter(Boolean);
+}
+
 function inferTechnologies(note: LibraryItem) {
 	const source = normalized(`${note.relativePath} ${note.title} ${note.content.slice(0, 2500)}`);
 	const known = ["Docker", "TrueNAS", "Linux", "Grafana", "Prometheus", "Kubernetes", "k3s", "Pi-hole", "Jellyfin", "Cloudflare", "GitOps", "Raspberry Pi"];

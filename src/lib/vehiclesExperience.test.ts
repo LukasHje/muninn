@@ -7,16 +7,31 @@ import {
 	getVehicleCategory,
 	getVehicleCategoryIcon,
 	getVehicleMetadata,
+	getVehiclePreview,
 	resolveVehiclePlaceholderThumbnail,
 } from "./experiences/vehicles";
 import { getExperienceDefinition } from "./experiences/registry";
 import {
 	getCardImage,
+	getInspectorGalleryImages,
 	getExperienceNotes,
 	getNoteMetadataValues,
 	isPlaceholderExperienceImage,
 } from "./experiences/selectors";
 import type { LibraryItem } from "./vault";
+
+test("inspector gallery keeps the primary image first and deduplicates resolved image aliases", () => {
+	const note = createVehicle("gallery", {}, { imageReferences: {
+		"front.jpg": "/assets/front.jpg", "folder/front.jpg": "/assets/front.jpg",
+		"rear.webp": "/assets/rear.webp", "manual.pdf": "/assets/manual.pdf",
+		"detail.png": "https://example.com/detail.png?size=large",
+	} });
+	assert.deepEqual(getInspectorGalleryImages(note, "/assets/rear.webp"), [
+		"/assets/rear.webp", "/assets/front.jpg", "https://example.com/detail.png?size=large",
+	]);
+	assert.deepEqual(getInspectorGalleryImages(createVehicle("empty", {}), null), []);
+	assert.deepEqual(getInspectorGalleryImages(createVehicle("single", {}), "/cover.jpg"), ["/cover.jpg"]);
+});
 
 function createVehicle(
 	id: string,
@@ -57,6 +72,23 @@ function createVehicle(
 		...overrides,
 	};
 }
+
+test("Vehicle preview preserves custom identity and presents planned bicycle facts", () => {
+	const note = createVehicle("Sleipnir Mk. I", {
+		type: "vehicle", status: "planned", build_type: "custom", project_phase: "concept",
+		manufacturer: "Custom", model: "Sleipnir", body_style: "expedition-cargo-bicycle",
+		frame_material: "chromoly-steel", wheel_size: "29-inch", target_drivetrain: "1x11",
+		brake_type: "hydraulic-disc",
+	});
+	const preview = getVehiclePreview(note);
+	assert.equal(preview.title, "Sleipnir Mk. I");
+	assert.equal(preview.concept, true);
+	assert.equal(preview.specificationLabel, "Planned specification");
+	assert.deepEqual(preview.facts.map(fact => fact.value), ["chromoly steel", "29 inch", "1x11", "hydraulic disc"]);
+	const sparse = getVehiclePreview(createVehicle("Undocumented vehicle", { type: "vehicle" }));
+	assert.equal(sparse.concept, false);
+	assert.equal(sparse.title, "Undocumented vehicle");
+});
 
 test("Vehicles selector accepts vehicle, vehicles and fordon without route-specific matching", () => {
 	const definition = getExperienceDefinition("vehicles");

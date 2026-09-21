@@ -31,6 +31,12 @@ export type ExperienceStatisticsDefinition =
 			metrics: ExperienceStatisticMetric[];
 	  };
 
+export interface ExperienceMetadataFilterControl {
+	presentation: "pills" | "dropdown";
+	label?: string;
+	allLabel?: string;
+}
+
 export interface ExperienceDefinition {
 	id: ExperienceId;
 	title: string;
@@ -56,6 +62,7 @@ export interface ExperienceDefinition {
 	inspector?: ExperienceInspector;
 	featureSections: string[];
 	metadataFilters: string[];
+	metadataFilterControls?: Record<string, ExperienceMetadataFilterControl>;
 	showMetadataFilters?: boolean;
 	cardMetadata: string[];
 	inspectorMetadata: string[];
@@ -128,6 +135,9 @@ export const experienceDefinitions = [
 		inspector: "gear",
 		featureSections: gearFeatureSections,
 		metadataFilters: ["status", "category"],
+		metadataFilterControls: {
+			category: { presentation: "dropdown", label: "Gear type", allLabel: "All gear types" },
+		},
 		cardMetadata: ["status", "category", "manufacturer"],
 		inspectorMetadata: ["type", "status", "category", "manufacturer", "variant", "tags", "updated"],
 		inspectorSections: commonInspectorSections,

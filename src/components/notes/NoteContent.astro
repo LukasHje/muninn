@@ -31,9 +31,16 @@ interface Props {
 	content?: string;
 	segments?: MarkdownDocumentSegment[];
 	markdownContext?: MarkdownParseContext;
+	suppressMatchingTitle?: boolean;
 }
 
-const { note, content = note.content, segments: providedSegments, markdownContext: providedContext } = Astro.props;
+const {
+	note,
+	content = note.content,
+	segments: providedSegments,
+	markdownContext: providedContext,
+	suppressMatchingTitle = false,
+} = Astro.props;
 const markdownContext = providedContext ?? {
 	note,
 	allNotes: await getLibraryItems(),
@@ -76,6 +83,13 @@ function resolveWikiLink(target: string) {
 
 function stripHtmlTags(value: string) {
 	return value.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function normalizeComparableTitle(value: string) {
+	return stripHtmlTags(value)
+		.replace(/^[\p{Extended_Pictographic}\uFE0F\u200D\s]+/u, "")
+		.trim()
+		.toLocaleLowerCase("sv-SE");
 }
 
 function isRecipeNote(currentNote: LibraryItem) {
@@ -200,6 +214,11 @@ renderer.table = function (token) {
 renderer.heading = function ({ depth, tokens, text }: Tokens.Heading) {
 	const content = this.parser.parseInline(tokens);
 	const headingId = toHeadingId(text || content);
+	const comparableHeading = normalizeComparableTitle(content);
+	const comparableTitle = normalizeComparableTitle(note.title);
+	if (suppressMatchingTitle && depth === 1 && comparableHeading === comparableTitle) {
+		return `<h1 id="${escapeAttribute(headingId)}" class="note-content__matching-title" aria-hidden="true">${content}</h1>`;
+	}
 	return `<h${depth} id="${escapeAttribute(headingId)}">${content}</h${depth}>`;
 };
 
@@ -417,10 +436,14 @@ function renderMarkdownHtml(raw: string) {
 
 		min-width: 0;
 		max-width: 100%;
-		color: #334155;
-		font-size: 1rem;
-		line-height: 1.9;
+		color: #465356;
+		font-size: 1.02rem;
+		line-height: 1.86;
 		overflow-wrap: anywhere;
+	}
+
+	.note-content :global(.note-content__matching-title) {
+		display: none;
 	}
 
 	.note-content :global(img),
@@ -436,14 +459,23 @@ function renderMarkdownHtml(raw: string) {
 	}
 
 	.note-content :global(h1),
-	.note-content :global(h2),
+	.note-content :global(h2) {
+		color: #1d2926;
+		font-family: Georgia, "Times New Roman", serif;
+		font-weight: 600;
+		letter-spacing: -0.035em;
+		line-height: 1.18;
+		margin-top: 2.8rem;
+		margin-bottom: 1rem;
+	}
+
 	.note-content :global(h3) {
-		color: #0f172a;
-		font-weight: 700;
-		letter-spacing: -0.03em;
-		line-height: 1.12;
-		margin-top: 2.65rem;
-		margin-bottom: 0.95rem;
+		color: #24322f;
+		font-weight: 650;
+		letter-spacing: -0.02em;
+		line-height: 1.25;
+		margin-top: 2.25rem;
+		margin-bottom: 0.85rem;
 	}
 
 	.note-content :global(h1[id]),
@@ -456,17 +488,15 @@ function renderMarkdownHtml(raw: string) {
 	}
 
 	.note-content :global(h1) {
-		font-size: 2rem;
+		font-size: 2.05rem;
 	}
 
 	.note-content :global(h2) {
-		font-size: 1.56rem;
-		padding-top: 0.4rem;
+		font-size: 1.62rem;
 	}
 
 	.note-content :global(h3) {
-		font-size: 1.18rem;
-		color: #1e293b;
+		font-size: 1.12rem;
 	}
 
 	.note-content :global(p),
@@ -478,7 +508,7 @@ function renderMarkdownHtml(raw: string) {
 	.note-content :global(ul),
 	.note-content :global(ol) {
 		padding-left: 1.45rem;
-		color: #475569;
+		color: #465356;
 	}
 
 	.note-content :global(li + li) {
@@ -486,7 +516,7 @@ function renderMarkdownHtml(raw: string) {
 	}
 
 	.note-content :global(strong) {
-		color: #0f172a;
+		color: #1f2b2e;
 		font-weight: 650;
 	}
 
@@ -497,18 +527,20 @@ function renderMarkdownHtml(raw: string) {
 	}
 
 	.note-content :global(p:first-of-type) {
-		font-size: 1.08rem;
-		line-height: 1.9;
-		color: #475569;
+		font-size: 1.045rem;
+		color: #465356;
 	}
 
 	.note-content :global(blockquote) {
-		margin: 1.7rem 0;
-		border-left: 4px solid #d6b777;
-		padding: 1rem 1.2rem 1rem 1rem;
-		color: #475569;
-		background: linear-gradient(135deg, #fcfaf6 0%, #f8f4ed 100%);
-		border-radius: 0 18px 18px 0;
+		margin: 1.8rem 0;
+		border-left: 2px solid #83988c;
+		padding: 0.35rem 0 0.35rem 1.15rem;
+		color: #586663;
+		background: transparent;
+	}
+
+	.note-content :global(blockquote > :last-child) {
+		margin-bottom: 0;
 	}
 
 	.note-content :global(code) {
@@ -636,10 +668,7 @@ function renderMarkdownHtml(raw: string) {
 		min-width: 100%;
 		border-collapse: collapse;
 		margin: 0;
-		overflow: hidden;
-		border-radius: 1rem;
-		border: 1px solid #ebe4d8;
-		box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+		border-block: 1px solid #dfe5e2;
 	}
 
 	.note-content :global(.muninn-table-wrap) {
@@ -652,16 +681,20 @@ function renderMarkdownHtml(raw: string) {
 
 	.note-content :global(th),
 	.note-content :global(td) {
-		border-bottom: 1px solid #ece6da;
-		padding: 0.8rem 1rem;
+		border-bottom: 1px solid #e3e8e5;
+		padding: 0.78rem 0.9rem;
 		text-align: left;
 		vertical-align: top;
 	}
 
 	.note-content :global(th) {
-		background: #fbf8f3;
-		color: #0f172a;
+		background: #f1f4f1;
+		color: #26332f;
 		font-weight: 600;
+	}
+
+	.note-content :global(tr:last-child td) {
+		border-bottom: 0;
 	}
 
 	.note-content :global(.muninn-image-figure) {

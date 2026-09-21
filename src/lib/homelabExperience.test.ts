@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildHomelabDashboardModel, buildHomelabRelations, formatHomelabCpu, formatHomelabMemory, formatHomelabNetwork, formatHomelabStorage, getHomelabArtworkCategory, getHomelabCardPresentation, getHomelabClassification, getHomelabFormFactor, getHomelabInspectorMetadataEntries, getHomelabNode, getHomelabNodeCategory, getHomelabMetadataValues, getHomelabServiceCategory } from "src/lib/experiences/homelab";
+import { buildHomelabDashboardModel, buildHomelabRelations, formatHomelabCpu, formatHomelabMemory, formatHomelabNetwork, formatHomelabStorage, getHomelabArtworkCategory, getHomelabCardPresentation, getHomelabClassification, getHomelabFormFactor, getHomelabInspectorMetadataEntries, getHomelabInspectorPurpose, getHomelabNode, getHomelabNodeCategory, getHomelabMetadataValues, getHomelabServiceCategory } from "src/lib/experiences/homelab";
 import type { LibraryItem } from "src/lib/vault";
 
 function note(relativePath: string, frontmatter: LibraryItem["frontmatter"] = {}): LibraryItem {
@@ -322,6 +322,16 @@ test("Homelab service lifecycle never canonicalizes active as owned", () => {
 	assert.equal(getHomelabNode(archived).operationalStatus, "archived");
 	assert.equal(getHomelabNode(invalid).operationalStatus, null);
 	assert.equal(getHomelabInspectorMetadataEntries(active, ["status"])[0]?.value, "Active");
+});
+
+test("Homelab inspector purpose consumes authored metadata instead of inline Dataview source", () => {
+	const charon = note("07 Mitt Homelab/07.05 Hardware_specs/07.05.01 Current/Charon.md", {
+		type: "server",
+		usecase: ["DNS resolver", "Blocklistning av annonser"],
+	});
+	charon.content = "# Charon\n\n> **Syfte:** `= this.usecase`";
+	assert.deepEqual(getHomelabInspectorPurpose(charon), ["DNS resolver", "Blocklistning av annonser"]);
+	assert.doesNotMatch(getHomelabInspectorPurpose(charon).join(" "), /this\.usecase/);
 });
 
 test("Homelab compacts raw node specifications into comparable card facts", () => {

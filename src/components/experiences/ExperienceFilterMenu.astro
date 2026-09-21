@@ -1,0 +1,82 @@
+---
+import Icon from "src/components/Icon.astro";
+import type { ExperienceFilterOption } from "src/lib/experiences/filters";
+
+interface Props {
+	filterKey: string;
+	label: string;
+	allLabel?: string;
+	options: ExperienceFilterOption[];
+	activeValue?: string;
+}
+
+const { filterKey, label, allLabel = "All", options, activeValue } = Astro.props;
+const path = Astro.url.pathname;
+const activeOption = options.find((option) => option.value === activeValue);
+
+function buildFilterHref(value: string | null) {
+	const params = new URLSearchParams(Astro.url.searchParams);
+	const queryKey = `filter-${filterKey}`;
+	if (value) {
+		params.set(queryKey, value);
+	} else {
+		params.delete(queryKey);
+	}
+	params.delete("selected");
+	params.delete("inspector");
+	params.delete("experienceScroll");
+	const query = params.toString();
+	return `${path}${query ? `?${query}` : ""}#experience-library`;
+}
+---
+
+<details class="experience-filter-menu">
+	<summary aria-label={`Choose ${label.toLocaleLowerCase("en")}`}>
+		<span class="experience-filter-menu__icon"><Icon name="sliders-horizontal" class="h-4 w-4" /></span>
+		<span class="experience-filter-menu__copy">
+			<small>{label}</small>
+			<strong>{activeOption?.label ?? allLabel}</strong>
+		</span>
+		<Icon name="chevron-down" class="experience-filter-menu__chevron h-4 w-4" />
+	</summary>
+	<div class="experience-filter-menu__popover">
+		<p>{label}</p>
+		<nav aria-label={label}>
+			<a href={buildFilterHref(null)} aria-current={!activeValue ? "true" : undefined}>
+				<span>{allLabel}</span>
+				{!activeValue && <Icon name="check" class="h-4 w-4" />}
+			</a>
+			{options.map((option) => <a href={buildFilterHref(option.value)} aria-current={activeValue === option.value ? "true" : undefined}>
+				<span>{option.label}</span>
+				<small>{option.count}</small>
+				{activeValue === option.value && <Icon name="check" class="h-4 w-4" />}
+			</a>)}
+		</nav>
+	</div>
+</details>
+
+<style>
+	.experience-filter-menu { position: relative; width: min(13rem, 100%); flex-shrink: 0; color: #435164; }
+	.experience-filter-menu summary { display: flex; min-height: 2.65rem; cursor: pointer; list-style: none; align-items: center; gap: .65rem; border: 1px solid rgba(215, 196, 168, .88); border-radius: 9px; background: rgba(255, 253, 249, .86); padding: .38rem .65rem; box-shadow: 0 5px 14px rgba(87, 55, 30, .04); transition: border-color 160ms ease, background 160ms ease, color 160ms ease; }
+	.experience-filter-menu summary::-webkit-details-marker { display: none; }
+	.experience-filter-menu summary:hover { border-color: rgba(182, 127, 55, .4); background: rgba(255, 250, 241, .96); color: #1e293b; }
+	.experience-filter-menu summary:focus-visible { outline: 2px solid #8c6b3f; outline-offset: 3px; }
+	.experience-filter-menu__icon { display: grid; width: 1.8rem; height: 1.8rem; flex-shrink: 0; place-items: center; border-radius: 6px; background: #f1ede6; color: #64748b; }
+	.experience-filter-menu__copy { display: flex; min-width: 0; flex: 1; flex-direction: column; line-height: 1.05; }
+	.experience-filter-menu__copy small { color: #7a8490; font-size: .55rem; font-weight: 650; letter-spacing: .09em; text-transform: uppercase; }
+	.experience-filter-menu__copy strong { overflow: hidden; margin-top: .2rem; font-size: .72rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+	.experience-filter-menu__chevron { flex-shrink: 0; transition: transform 160ms ease; }
+	.experience-filter-menu[open] .experience-filter-menu__chevron { transform: rotate(180deg); }
+	.experience-filter-menu__popover { position: absolute; top: calc(100% + .45rem); left: 0; z-index: 80; width: min(19rem, calc(100vw - 2rem)); overflow: hidden; border: 1px solid #ddd3c5; border-radius: 10px; background: #fffdf9; box-shadow: 0 20px 48px rgba(31, 41, 55, .17), 0 4px 12px rgba(31, 41, 55, .08); }
+	.experience-filter-menu__popover > p { border-bottom: 1px solid #ebe4da; padding: .75rem .85rem .6rem; color: #7a6a57; font-size: .58rem; font-weight: 750; letter-spacing: .11em; text-transform: uppercase; }
+	.experience-filter-menu nav { max-height: min(22rem, 56vh); overflow-y: auto; overscroll-behavior: contain; padding: .35rem; }
+	.experience-filter-menu nav a { display: grid; min-height: 2.35rem; grid-template-columns: minmax(0, 1fr) auto 1rem; align-items: center; gap: .65rem; border-radius: 7px; padding: .45rem .6rem; color: #475569; font-size: .75rem; }
+	.experience-filter-menu nav a:hover { background: #f4efe7; color: #1e293b; }
+	.experience-filter-menu nav a[aria-current="true"] { background: #eaf1e7; color: #31513b; font-weight: 700; }
+	.experience-filter-menu nav a small { color: #8b94a0; font-size: .62rem; font-weight: 600; }
+	.experience-filter-menu nav a :global(svg) { color: #52705a; }
+	@media (max-width: 767px) {
+		.experience-filter-menu { width: 100%; }
+		.experience-filter-menu__popover { width: 100%; }
+	}
+</style>

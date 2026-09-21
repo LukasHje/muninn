@@ -16,8 +16,11 @@ Each `ExperienceDefinition` owns:
 - a Card Family
 - optional landing page and inspector overrides
 - filter, statistics, metadata, and section preferences
+- optional per-filter presentation preferences, such as a bounded dropdown instead of a pill rail
 
 The registry does not implement selectors, traverse the Vault, parse Markdown, or render UI.
+
+Metadata filter presentation remains declarative. An Experience may select the shared `pills` or `dropdown` control for a registered filter key and provide its visible labels; matching, query parameters, counts, and navigation remain owned by the shared filter pipeline. Gear uses a dropdown for its large category taxonomy so the complete type list stays directly accessible without a horizontal chip rail.
 
 ## Registered Experiences
 
