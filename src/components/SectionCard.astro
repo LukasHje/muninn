@@ -14,7 +14,7 @@ const { title, subtitle, sectionClass = "", bodyClass = "" } = Astro.props;
 		<div>
 			<h2 class="panel-title">{title}</h2>
 			{
-				subtitle && <p class="mt-1 text-sm text-slate-500">{subtitle}</p>
+				subtitle && <p class="mt-1 text-sm text-slate-500" data-section-card-subtitle>{subtitle}</p>
 			}
 		</div>
 		<div class="flex items-center gap-2 text-slate-500">

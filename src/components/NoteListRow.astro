@@ -32,7 +32,7 @@ const snippetHtml = searchQuery && searchSnippet && searchField
 	: null;
 ---
 
-<article class="group">
+<article data-library-note-id={item.id} class="group">
 	<div class="relative rounded-[14px] px-3 py-3 transition hover:bg-[#f5f8fa]">
 		<a href={noteHref} class="flex min-w-0 items-start gap-4">
 			{

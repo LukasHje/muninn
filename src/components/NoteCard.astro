@@ -95,7 +95,7 @@ const snippetHtml = searchQuery && searchSnippet && searchField
 	: null;
 ---
 
-<article class="group relative overflow-hidden rounded-[14px] border border-[#e3e9ed] bg-white shadow-[0_8px_20px_rgba(15,23,42,0.04)] transition-colors duration-200 hover:border-[#c8d4dc]">
+<article data-library-note-id={item.id} class="group relative overflow-hidden rounded-[14px] border border-[#e3e9ed] bg-white shadow-[0_8px_20px_rgba(15,23,42,0.04)] transition-colors duration-200 hover:border-[#c8d4dc]">
 	<div class="absolute right-3 top-0 z-10 sm:top-3">
 		<FavoriteToggleButton
 			noteId={item.id}

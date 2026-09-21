@@ -177,6 +177,10 @@ The browser is a full-height flex column at every size:
 
 List and grid layouts must share the same scroll container. Filtering, sorting, and search must not change scroll ownership.
 
+Favorite mutations are reflected immediately in the Favorites browser. Removing
+an item updates the visible result set, result count, and empty state from the
+shared `muninn:favorite-change` event without requiring a route reload.
+
 Below the `xl` shell breakpoint, the search and filter panel may be collapsed into its persistent one-row header. The collapsed row keeps the Library title, a truncated summary of the active query/category/tags, and a semantic toggle with `aria-expanded`. Collapse state is a session-scoped presentation preference shared by All Notes, Favorites, and Recently Updated; it is not search state and must not be added to the URL or the shared search engine.
 
 Desktop always presents the complete controls regardless of the stored mobile preference. Collapsing the panel must only release vertical space to the existing Results panel; it must not introduce another scroll owner, reset the results list, or change filtering and ranking behavior.
